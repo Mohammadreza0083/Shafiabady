@@ -1,4 +1,7 @@
 using System.Reflection;
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
 using Serilog.Events;
@@ -10,7 +13,7 @@ using ShafieiAbadi.Infrastructure.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configure Serilog & Grafana Loki structured logging
+// 1. Configure Serilog & Grafana Loki structured logging
 var lokiUrl = builder.Configuration["Loki:Uri"] ?? "http://localhost:3100";
 
 Log.Logger = new LoggerConfiguration()
@@ -29,14 +32,56 @@ Log.Logger = new LoggerConfiguration()
 
 builder.Host.UseSerilog();
 
-// Add Layer Services
+// 2. Add Layer Services (Application & Infrastructure)
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
 
-// Add Controllers
+// 3. Configure JWT Bearer Authentication with HttpOnly Cookie extraction
+var jwtSecretKey = builder.Configuration["Jwt:SecretKey"] ?? "DrShafieiAbadi_SuperSecretKey_ProductionGrade_2026_DotNet9_CleanArch!";
+var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "ShafieiAbadi.Api";
+var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "ShafieiAbadi.Client";
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.RequireHttpsMetadata = false;
+    options.SaveToken = true;
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecretKey)),
+        ValidateIssuer = true,
+        ValidIssuer = jwtIssuer,
+        ValidateAudience = true,
+        ValidAudience = jwtAudience,
+        ValidateLifetime = true,
+        ClockSkew = TimeSpan.Zero
+    };
+
+    // Extract JWT from HttpOnly cookie 'AdminAuthToken' or Authorization Bearer header
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            if (context.Request.Cookies.TryGetValue("AdminAuthToken", out var cookieToken) && !string.IsNullOrWhiteSpace(cookieToken))
+            {
+                context.Token = cookieToken;
+            }
+            return Task.CompletedTask;
+        }
+    };
+});
+
+builder.Services.AddAuthorization();
+
+// 4. Add Controllers
 builder.Services.AddControllers();
 
-// Configure CORS
+// 5. Configure CORS Policy
 var allowedOrigins = builder.Configuration.GetSection("AllowedCorsOrigins").Get<string[]>() ?? new[]
 {
     "http://localhost:4500",
@@ -57,58 +102,95 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Configure Swagger / OpenAPI with XML Documentation Comments
+// 6. Configure Swagger / OpenAPI with Professional English Metadata & XML Comments
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo
     {
-        Title = "سامانه وب و برند شخصی دکتر محمد حسین شفیع‌آبادی",
+        Title = "Dr. Mohammad Hossein Shafiei Abadi - API",
         Version = "v1",
-        Description = "مجموعه APIهای مدیریت محتوا، مقالات، کتاب‌ها، دوره‌های آموزشی و آمار بر اساس Clean Architecture و DDD در .NET 9",
+        Description = "RESTful API for the Personal Branding & Educational Platform of Dr. Mohammad Hossein Shafiei Abadi, built with .NET 9, Clean Architecture, and Domain-Driven Design (DDD).",
         Contact = new OpenApiContact
         {
-            Name = "دکتر محمد حسین شفیع‌آبادی",
+            Name = "Dr. Mohammad Hossein Shafiei Abadi",
             Url = new Uri("http://localhost:4500")
         }
     });
 
-    // Load XML Documentation file
-    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-    if (File.Exists(xmlPath))
+    // Add JWT Bearer / Cookie Security Definition in Swagger UI
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
-        options.IncludeXmlComments(xmlPath, includeControllerXmlComments: true);
+        Description = "JWT Authorization header using the Bearer scheme or automatic HttpOnly cookie. Example: \"Bearer {token}\"",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer"
+    });
+
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+
+    // Load XML Documentation Comments from API, Application, and Domain assemblies
+    var assemblies = new[]
+    {
+        Assembly.GetExecutingAssembly(),
+        typeof(ShafieiAbadi.Application.DependencyInjection).Assembly,
+        typeof(ShafieiAbadi.Domain.Common.BaseEntity).Assembly
+    };
+
+    foreach (var assembly in assemblies)
+    {
+        var xmlFile = $"{assembly.GetName().Name}.xml";
+        var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+        if (File.Exists(xmlPath))
+        {
+            options.IncludeXmlComments(xmlPath, includeControllerXmlComments: true);
+        }
     }
 });
 
 var app = builder.Build();
 
-// Global Exception Handling Middleware
+// 7. Global Exception Handling Middleware
 app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 
-// Serilog Request Logging
+// 8. Serilog HTTP Request Logging
 app.UseSerilogRequestLogging();
 
-// Swagger UI
+// 9. Swagger & Swagger UI Setup
 if (app.Environment.IsDevelopment() || true)
 {
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Dr. ShafieiAbadi API v1");
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Dr. Mohammad Hossein Shafiei Abadi - API v1");
         c.RoutePrefix = "swagger";
-        c.DocumentTitle = "مستندات API دکتر محمد حسین شفیع‌آبادی";
+        c.DocumentTitle = "Dr. Mohammad Hossein Shafiei Abadi - API Documentation";
     });
 }
 
+// 10. CORS, Authentication, and Authorization Middleware Pipeline
 app.UseCors("DefaultCorsPolicy");
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
 
-// Seed initial database records
+// 11. Seed Initial Database Records (Admin user, categories, sample articles, books, and courses)
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -117,12 +199,12 @@ using (var scope = app.Services.CreateScope())
 
 try
 {
-    Log.Information("Starting ShafieiAbadi.Api Web Host...");
+    Log.Information("Starting ShafieiAbadi.Api Web Host on port {Port}...", builder.Configuration["PORT"] ?? "5000");
     app.Run();
 }
 catch (Exception ex)
 {
-    Log.Fatal(ex, "Host terminated unexpectedly");
+    Log.Fatal(ex, "ShafieiAbadi.Api host terminated unexpectedly");
 }
 finally
 {

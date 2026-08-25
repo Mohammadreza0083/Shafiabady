@@ -27,10 +27,10 @@ public class GenericRepositoryTests
         // Arrange
         var article = new Article
         {
-            Title = "تست تست‌نویسی در سی‌شارپ",
+            Title = "C# Testing Guide",
             Slug = "csharp-testing-guide",
-            Summary = "راهنمای جامع آزمون در دات نت",
-            Content = "<p>توضیحات</p>",
+            Summary = "Comprehensive guide for testing in .NET",
+            Content = "<p>Content</p>",
             ThumbnailUrl = "https://images.unsplash.com/photo-1517694712202-14dd9538aa97",
             CategoryId = Guid.NewGuid()
         };
@@ -42,7 +42,7 @@ public class GenericRepositoryTests
 
         // Assert
         retrieved.Should().NotBeNull();
-        retrieved!.Title.Should().Be("تست تست‌نویسی در سی‌شارپ");
+        retrieved!.Title.Should().Be("C# Testing Guide");
         retrieved.AuthorName.Should().Be("دکتر محمد حسین شفیع‌آبادی");
     }
 
@@ -55,10 +55,10 @@ public class GenericRepositoryTests
         {
             await _repository.AddAsync(new Article
             {
-                Title = $"مقاله شماره {i}",
+                Title = $"Article #{i}",
                 Slug = $"article-{i}",
-                Summary = $"خلاصه {i}",
-                Content = $"<p>محتوا {i}</p>",
+                Summary = $"Summary {i}",
+                Content = $"<p>Content {i}</p>",
                 ThumbnailUrl = "/placeholder.jpg",
                 CategoryId = catId
             });
@@ -66,10 +66,12 @@ public class GenericRepositoryTests
         await _context.SaveChangesAsync();
 
         // Act
-        var (items, totalCount) = await _repository.GetPagedAsync(pageNumber: 2, pageSize: 5);
+        var result = await _repository.GetPagedAsync(pageNumber: 2, pageSize: 5);
 
         // Assert
-        totalCount.Should().Be(15);
-        items.Should().HaveCount(5);
+        result.TotalCount.Should().Be(15);
+        result.Items.Should().HaveCount(5);
+        result.PageNumber.Should().Be(2);
+        result.PageSize.Should().Be(5);
     }
 }

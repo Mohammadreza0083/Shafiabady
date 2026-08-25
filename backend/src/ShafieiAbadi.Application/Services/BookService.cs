@@ -8,6 +8,9 @@ using ShafieiAbadi.Domain.Entities;
 
 namespace ShafieiAbadi.Application.Services;
 
+/// <summary>
+/// Service implementation for managing academic books and publications.
+/// </summary>
 public class BookService : IBookService
 {
     private readonly IUnitOfWork _unitOfWork;
@@ -21,28 +24,34 @@ public class BookService : IBookService
         _logger = logger;
     }
 
-    public async Task<Result<PagedResult<BookDto>>> GetPagedBooksAsync(PaginationParams p, CancellationToken ct = default)
+    public async Task<Result<PagedResult<BookDto>>> GetPagedAsync(PaginationParams @params, CancellationToken ct = default)
     {
-        _logger.LogInformation("Retrieving books page {PageNumber} with size {PageSize}", p.PageNumber, p.PageSize);
+        _logger.LogInformation("Fetching books page {PageNumber} with size {PageSize}", @params.PageNumber, @params.PageSize);
 
-        Expression<Func<Book, bool>> predicate = b =>
+        Expression<Func<Book, bool>> filter = b =>
             !b.IsDeleted &&
-            (!p.CategoryId.HasValue || b.CategoryId == p.CategoryId.Value) &&
-            (string.IsNullOrWhiteSpace(p.SearchTerm) || b.Title.Contains(p.SearchTerm) || b.Description.Contains(p.SearchTerm) || b.Publisher.Contains(p.SearchTerm));
+            (string.IsNullOrWhiteSpace(@params.Search) || b.Title.Contains(@params.Search) || b.Description.Contains(@params.Search) || b.Publisher.Contains(@params.Search)) &&
+            (string.IsNullOrWhiteSpace(@params.CategorySlug) || (b.Category != null && b.Category.Slug == @params.CategorySlug));
 
-        Func<IQueryable<Book>, IOrderedQueryable<Book>> orderBy = q => q.OrderByDescending(b => b.CreatedAt);
+        var pagedEntities = await _unitOfWork.Repository<Book>().GetPagedAsync(
+            @params.PageNumber,
+            @params.PageSize,
+            filter: filter,
+            orderBy: b => b.CreatedAt,
+            ascending: false,
+            ct: ct,
+            includes: new Expression<Func<Book, object>>[] { b => b.Category! });
 
-        var (items, totalCount) = await _unitOfWork.Repository<Book>()
-            .GetPagedAsync(p.PageNumber, p.PageSize, predicate, orderBy, "Category,Comments", ct);
+        var dtos = _mapper.Map<IReadOnlyList<BookDto>>(pagedEntities.Items);
+        var result = new PagedResult<BookDto>(dtos, pagedEntities.TotalCount, pagedEntities.PageNumber, pagedEntities.PageSize);
 
-        var dtos = _mapper.Map<IReadOnlyList<BookDto>>(items);
-        var pagedResult = new PagedResult<BookDto>(dtos, totalCount, p.PageNumber, p.PageSize);
-
-        return Result<PagedResult<BookDto>>.Success(pagedResult);
+        return Result<PagedResult<BookDto>>.Success(result);
     }
 
-    public async Task<Result<BookDto>> GetBookBySlugAsync(string slug, CancellationToken ct = default)
+    public async Task<Result<BookDto>> GetBySlugAsync(string slug, CancellationToken ct = default)
     {
+        _logger.LogInformation("Retrieving book by slug '{Slug}'", slug);
+
         var books = await _unitOfWork.Repository<Book>()
             .FindAsync(b => b.Slug == slug && !b.IsDeleted, ct);
 
@@ -50,47 +59,51 @@ public class BookService : IBookService
         if (book == null)
         {
             _logger.LogWarning("Book with slug '{Slug}' was not found", slug);
-            return Result<BookDto>.NotFound($"کتاب با نامک '{slug}' یافت نشد.");
+            return Result<BookDto>.NotFound($"Book with slug '{slug}' was not found.");
         }
 
         return Result<BookDto>.Success(_mapper.Map<BookDto>(book));
     }
 
-    public async Task<Result<BookDto>> GetBookByIdAsync(Guid id, CancellationToken ct = default)
+    public async Task<Result<BookDto>> GetByIdAsync(Guid id, CancellationToken ct = default)
     {
         var book = await _unitOfWork.Repository<Book>().GetByIdAsync(id, ct);
         if (book == null || book.IsDeleted)
         {
-            _logger.LogWarning("Book with Id '{Id}' was not found", id);
-            return Result<BookDto>.NotFound("کتاب مورد نظر یافت نشد.");
+            _logger.LogWarning("Book with ID '{BookId}' was not found", id);
+            return Result<BookDto>.NotFound($"Book with ID '{id}' was not found.");
         }
 
         return Result<BookDto>.Success(_mapper.Map<BookDto>(book));
     }
 
-    public async Task<Result<BookDto>> CreateBookAsync(CreateBookDto dto, CancellationToken ct = default)
+    public async Task<Result<BookDto>> CreateAsync(CreateBookDto dto, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(dto.Title))
-            return Result<BookDto>.Failure("عنوان کتاب الزامی است.");
+            return Result<BookDto>.Failure("Book title is required.");
 
-        var exists = await _unitOfWork.Repository<Book>()
-            .ExistsAsync(b => b.Slug == dto.Slug && !b.IsDeleted, ct);
-        if (exists)
-            return Result<BookDto>.Failure("نامک (Slug) وارد شده تکراری است.");
+        if (string.IsNullOrWhiteSpace(dto.Slug))
+            dto.Slug = dto.Title.Trim().Replace(" ", "-").ToLower();
+
+        var existing = await _unitOfWork.Repository<Book>()
+            .FindAsync(b => b.Slug == dto.Slug && !b.IsDeleted, ct);
+
+        if (existing.Any())
+            return Result<BookDto>.Failure($"A book with slug '{dto.Slug}' already exists.");
 
         var book = _mapper.Map<Book>(dto);
         await _unitOfWork.Repository<Book>().AddAsync(book, ct);
         await _unitOfWork.SaveChangesAsync(ct);
 
-        _logger.LogInformation("Book '{Title}' created successfully with Id {BookId}", book.Title, book.Id);
+        _logger.LogInformation("Book '{BookTitle}' created with ID {BookId}", book.Title, book.Id);
         return Result<BookDto>.Success(_mapper.Map<BookDto>(book), 201);
     }
 
-    public async Task<Result<BookDto>> UpdateBookAsync(UpdateBookDto dto, CancellationToken ct = default)
+    public async Task<Result<BookDto>> UpdateAsync(Guid id, UpdateBookDto dto, CancellationToken ct = default)
     {
-        var book = await _unitOfWork.Repository<Book>().GetByIdAsync(dto.Id, ct);
+        var book = await _unitOfWork.Repository<Book>().GetByIdAsync(id, ct);
         if (book == null || book.IsDeleted)
-            return Result<BookDto>.NotFound("کتاب جهت ویرایش یافت نشد.");
+            return Result<BookDto>.NotFound($"Book with ID '{id}' was not found.");
 
         _mapper.Map(dto, book);
         book.UpdatedAt = DateTime.UtcNow;
@@ -98,23 +111,20 @@ public class BookService : IBookService
         _unitOfWork.Repository<Book>().Update(book);
         await _unitOfWork.SaveChangesAsync(ct);
 
-        _logger.LogInformation("Book {BookId} updated successfully", book.Id);
+        _logger.LogInformation("Book '{BookTitle}' (ID {BookId}) updated successfully", book.Title, book.Id);
         return Result<BookDto>.Success(_mapper.Map<BookDto>(book));
     }
 
-    public async Task<Result> DeleteBookAsync(Guid id, CancellationToken ct = default)
+    public async Task<Result> DeleteAsync(Guid id, CancellationToken ct = default)
     {
         var book = await _unitOfWork.Repository<Book>().GetByIdAsync(id, ct);
         if (book == null || book.IsDeleted)
-            return Result.NotFound("کتاب جهت حذف یافت نشد.");
+            return Result.NotFound($"Book with ID '{id}' was not found.");
 
-        book.IsDeleted = true;
-        book.UpdatedAt = DateTime.UtcNow;
-
-        _unitOfWork.Repository<Book>().Update(book);
+        _unitOfWork.Repository<Book>().SoftDelete(book);
         await _unitOfWork.SaveChangesAsync(ct);
 
-        _logger.LogInformation("Book {BookId} soft-deleted successfully", id);
+        _logger.LogInformation("Book with ID {BookId} soft-deleted successfully", id);
         return Result.Success();
     }
 }

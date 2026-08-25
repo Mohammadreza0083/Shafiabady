@@ -4,46 +4,47 @@ using ShafieiAbadi.Domain.Entities;
 
 namespace ShafieiAbadi.Application.Mappings;
 
+/// <summary>
+/// AutoMapper profile defining entity-to-DTO and DTO-to-entity mappings.
+/// </summary>
 public class MappingProfile : Profile
 {
     public MappingProfile()
     {
-        // Category
+        // Category Mappings
         CreateMap<Category, CategoryDto>()
             .ForMember(d => d.ArticlesCount, opt => opt.MapFrom(s => s.Articles.Count))
             .ForMember(d => d.BooksCount, opt => opt.MapFrom(s => s.Books.Count))
             .ForMember(d => d.CoursesCount, opt => opt.MapFrom(s => s.Courses.Count));
         CreateMap<CreateCategoryDto, Category>();
 
-        // Article
+        // Article Mappings
         CreateMap<Article, ArticleDto>()
             .ForMember(d => d.CategoryTitle, opt => opt.MapFrom(s => s.Category != null ? s.Category.Title : string.Empty))
-            .ForMember(d => d.CommentsCount, opt => opt.MapFrom(s => s.Comments.Count));
+            .ForMember(d => d.CategorySlug, opt => opt.MapFrom(s => s.Category != null ? s.Category.Slug : string.Empty));
         CreateMap<CreateArticleDto, Article>();
         CreateMap<UpdateArticleDto, Article>();
 
-        // Book
+        // Book Mappings
         CreateMap<Book, BookDto>()
             .ForMember(d => d.CategoryTitle, opt => opt.MapFrom(s => s.Category != null ? s.Category.Title : string.Empty))
-            .ForMember(d => d.CommentsCount, opt => opt.MapFrom(s => s.Comments.Count));
+            .ForMember(d => d.CategorySlug, opt => opt.MapFrom(s => s.Category != null ? s.Category.Slug : string.Empty));
         CreateMap<CreateBookDto, Book>();
         CreateMap<UpdateBookDto, Book>();
 
-        // Course
+        // Course Mappings
         CreateMap<Course, CourseDto>()
             .ForMember(d => d.CategoryTitle, opt => opt.MapFrom(s => s.Category != null ? s.Category.Title : string.Empty))
-            .ForMember(d => d.CommentsCount, opt => opt.MapFrom(s => s.Comments.Count));
+            .ForMember(d => d.CategorySlug, opt => opt.MapFrom(s => s.Category != null ? s.Category.Slug : string.Empty));
         CreateMap<CreateCourseDto, Course>();
         CreateMap<UpdateCourseDto, Course>();
 
-        // Comment
+        // Comment Mappings
         CreateMap<Comment, CommentDto>()
             .ForMember(d => d.Replies, opt => opt.MapFrom(s => s.Replies));
         CreateMap<CreateCommentDto, Comment>();
 
-        // AdminUser
-        CreateMap<AdminUser, LoginResponseDto>()
-            .ForMember(d => d.Token, opt => opt.Ignore())
-            .ForMember(d => d.ExpiresAt, opt => opt.Ignore());
+        // Admin User Mappings
+        CreateMap<AdminUser, AdminUserDto>();
     }
 }

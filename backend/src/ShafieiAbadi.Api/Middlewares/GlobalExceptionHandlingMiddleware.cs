@@ -4,15 +4,18 @@ using ShafieiAbadi.Application.Common;
 
 namespace ShafieiAbadi.Api.Middlewares;
 
+/// <summary>
+/// Global exception handling middleware capturing unhandled exceptions and returning standardized 500 error results.
+/// </summary>
 public class GlobalExceptionHandlingMiddleware
 {
     private readonly RequestDelegate _next;
     private readonly ILogger<GlobalExceptionHandlingMiddleware> _logger;
     private readonly IHostEnvironment _env;
 
-    public GlobalExceptionHandlingMiddleware(RequestDelegate _next, ILogger<GlobalExceptionHandlingMiddleware> logger, IHostEnvironment env)
+    public GlobalExceptionHandlingMiddleware(RequestDelegate next, ILogger<GlobalExceptionHandlingMiddleware> logger, IHostEnvironment env)
     {
-        this._next = _next;
+        _next = next;
         _logger = logger;
         _env = env;
     }
@@ -36,8 +39,8 @@ public class GlobalExceptionHandlingMiddleware
         context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
 
         var message = _env.IsDevelopment()
-            ? $"خطای داخلی سرور: {exception.Message}"
-            : "یک خطای پیش‌بینی نشده در سمت سرور رخ داد. لطفاً با مدیر سیستم تماس بگیرید.";
+            ? $"Internal Server Error: {exception.Message}"
+            : "An unexpected error occurred on the server. Please contact the administrator.";
 
         var response = Result.Failure(message, (int)HttpStatusCode.InternalServerError);
 

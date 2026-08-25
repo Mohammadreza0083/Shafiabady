@@ -1,5 +1,8 @@
 namespace ShafieiAbadi.Application.DTOs;
 
+/// <summary>
+/// Data transfer object representing training course details in responses.
+/// </summary>
 public class CourseDto
 {
     public Guid Id { get; set; }
@@ -14,14 +17,17 @@ public class CourseDto
     public decimal OriginalPrice { get; set; }
     public decimal? DiscountedPrice { get; set; }
     public int? DiscountPercentage { get; set; }
-    public bool IsFree { get; set; }
-    public int ViewsCount { get; set; }
-    public DateTime CreatedAt { get; set; }
-    public Guid CategoryId { get; set; }
+    public long ViewsCount { get; set; }
+    public Guid? CategoryId { get; set; }
     public string? CategoryTitle { get; set; }
-    public int CommentsCount { get; set; }
+    public string? CategorySlug { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
 }
 
+/// <summary>
+/// Request payload for creating a new training course.
+/// </summary>
 public class CreateCourseDto
 {
     public string Title { get; set; } = string.Empty;
@@ -29,17 +35,18 @@ public class CreateCourseDto
     public string Description { get; set; } = string.Empty;
     public string ThumbnailUrl { get; set; } = string.Empty;
     public string? AparatVideoUrl { get; set; }
-    public string Level { get; set; } = "پیشرفته";
+    public string Level { get; set; } = "متوسط";
     public string Duration { get; set; } = string.Empty;
-    public int LessonsCount { get; set; }
-    public decimal OriginalPrice { get; set; }
+    public int LessonsCount { get; set; } = 0;
+    public decimal OriginalPrice { get; set; } = 0;
     public decimal? DiscountedPrice { get; set; }
     public int? DiscountPercentage { get; set; }
-    public bool IsFree { get; set; } = false;
-    public Guid CategoryId { get; set; }
+    public Guid? CategoryId { get; set; }
 }
 
+/// <summary>
+/// Request payload for updating an existing training course.
+/// </summary>
 public class UpdateCourseDto : CreateCourseDto
 {
-    public Guid Id { get; set; }
 }

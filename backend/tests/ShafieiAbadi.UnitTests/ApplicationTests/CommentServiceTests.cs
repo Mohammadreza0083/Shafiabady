@@ -40,9 +40,9 @@ public class CommentServiceTests
         // Arrange
         var dto = new CreateCommentDto
         {
-            GuestName = "علی رضایی",
-            GuestEmail = "ali@example.com",
-            Text = "استاد عزیز بسیار عالی بود.",
+            GuestName = "Ali Rezaei",
+            Email = "ali@example.com",
+            Text = "Great article, very comprehensive.",
             ArticleId = Guid.NewGuid()
         };
 
@@ -67,15 +67,15 @@ public class CommentServiceTests
 
         var comments = new List<Comment>
         {
-            new() { Id = rootId, ArticleId = articleId, GuestName = "دانشجو ۱", Text = "ریشه", Status = CommentStatus.Approved },
-            new() { Id = replyId, ArticleId = articleId, ParentCommentId = rootId, GuestName = "دکتر شفیع‌آبادی", Text = "پاسخ", Status = CommentStatus.Approved }
+            new() { Id = rootId, ArticleId = articleId, GuestName = "Student 1", Text = "Root Comment", Status = CommentStatus.Approved },
+            new() { Id = replyId, ArticleId = articleId, ParentCommentId = rootId, GuestName = "Dr. Shafiei Abadi", Text = "Reply", Status = CommentStatus.Approved }
         };
 
         _mockCommentRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<Comment, bool>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(comments);
 
         // Act
-        var result = await _service.GetApprovedCommentsTreeAsync(articleId, null, null);
+        var result = await _service.GetApprovedCommentsTreeAsync(EntityType.Article, articleId);
 
         // Assert
         result.IsSuccess.Should().BeTrue();

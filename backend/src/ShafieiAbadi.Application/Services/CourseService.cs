@@ -8,6 +8,9 @@ using ShafieiAbadi.Domain.Entities;
 
 namespace ShafieiAbadi.Application.Services;
 
+/// <summary>
+/// Service implementation for managing educational video courses.
+/// </summary>
 public class CourseService : ICourseService
 {
     private readonly IUnitOfWork _unitOfWork;
@@ -21,28 +24,34 @@ public class CourseService : ICourseService
         _logger = logger;
     }
 
-    public async Task<Result<PagedResult<CourseDto>>> GetPagedCoursesAsync(PaginationParams p, CancellationToken ct = default)
+    public async Task<Result<PagedResult<CourseDto>>> GetPagedAsync(PaginationParams @params, CancellationToken ct = default)
     {
-        _logger.LogInformation("Retrieving courses page {PageNumber} with size {PageSize}", p.PageNumber, p.PageSize);
+        _logger.LogInformation("Fetching courses page {PageNumber} with size {PageSize}", @params.PageNumber, @params.PageSize);
 
-        Expression<Func<Course, bool>> predicate = c =>
+        Expression<Func<Course, bool>> filter = c =>
             !c.IsDeleted &&
-            (!p.CategoryId.HasValue || c.CategoryId == p.CategoryId.Value) &&
-            (string.IsNullOrWhiteSpace(p.SearchTerm) || c.Title.Contains(p.SearchTerm) || c.Description.Contains(p.SearchTerm));
+            (string.IsNullOrWhiteSpace(@params.Search) || c.Title.Contains(@params.Search) || c.Description.Contains(@params.Search)) &&
+            (string.IsNullOrWhiteSpace(@params.CategorySlug) || (c.Category != null && c.Category.Slug == @params.CategorySlug));
 
-        Func<IQueryable<Course>, IOrderedQueryable<Course>> orderBy = q => q.OrderByDescending(c => c.CreatedAt);
+        var pagedEntities = await _unitOfWork.Repository<Course>().GetPagedAsync(
+            @params.PageNumber,
+            @params.PageSize,
+            filter: filter,
+            orderBy: c => c.CreatedAt,
+            ascending: false,
+            ct: ct,
+            includes: new Expression<Func<Course, object>>[] { c => c.Category! });
 
-        var (items, totalCount) = await _unitOfWork.Repository<Course>()
-            .GetPagedAsync(p.PageNumber, p.PageSize, predicate, orderBy, "Category,Comments", ct);
+        var dtos = _mapper.Map<IReadOnlyList<CourseDto>>(pagedEntities.Items);
+        var result = new PagedResult<CourseDto>(dtos, pagedEntities.TotalCount, pagedEntities.PageNumber, pagedEntities.PageSize);
 
-        var dtos = _mapper.Map<IReadOnlyList<CourseDto>>(items);
-        var pagedResult = new PagedResult<CourseDto>(dtos, totalCount, p.PageNumber, p.PageSize);
-
-        return Result<PagedResult<CourseDto>>.Success(pagedResult);
+        return Result<PagedResult<CourseDto>>.Success(result);
     }
 
-    public async Task<Result<CourseDto>> GetCourseBySlugAsync(string slug, CancellationToken ct = default)
+    public async Task<Result<CourseDto>> GetBySlugAsync(string slug, CancellationToken ct = default)
     {
+        _logger.LogInformation("Retrieving course by slug '{Slug}'", slug);
+
         var courses = await _unitOfWork.Repository<Course>()
             .FindAsync(c => c.Slug == slug && !c.IsDeleted, ct);
 
@@ -50,47 +59,51 @@ public class CourseService : ICourseService
         if (course == null)
         {
             _logger.LogWarning("Course with slug '{Slug}' was not found", slug);
-            return Result<CourseDto>.NotFound($"دوره با نامک '{slug}' یافت نشد.");
+            return Result<CourseDto>.NotFound($"Course with slug '{slug}' was not found.");
         }
 
         return Result<CourseDto>.Success(_mapper.Map<CourseDto>(course));
     }
 
-    public async Task<Result<CourseDto>> GetCourseByIdAsync(Guid id, CancellationToken ct = default)
+    public async Task<Result<CourseDto>> GetByIdAsync(Guid id, CancellationToken ct = default)
     {
         var course = await _unitOfWork.Repository<Course>().GetByIdAsync(id, ct);
         if (course == null || course.IsDeleted)
         {
-            _logger.LogWarning("Course with Id '{Id}' was not found", id);
-            return Result<CourseDto>.NotFound("دوره مورد نظر یافت نشد.");
+            _logger.LogWarning("Course with ID '{CourseId}' was not found", id);
+            return Result<CourseDto>.NotFound($"Course with ID '{id}' was not found.");
         }
 
         return Result<CourseDto>.Success(_mapper.Map<CourseDto>(course));
     }
 
-    public async Task<Result<CourseDto>> CreateCourseAsync(CreateCourseDto dto, CancellationToken ct = default)
+    public async Task<Result<CourseDto>> CreateAsync(CreateCourseDto dto, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(dto.Title))
-            return Result<CourseDto>.Failure("عنوان دوره الزامی است.");
+            return Result<CourseDto>.Failure("Course title is required.");
 
-        var exists = await _unitOfWork.Repository<Course>()
-            .ExistsAsync(c => c.Slug == dto.Slug && !c.IsDeleted, ct);
-        if (exists)
-            return Result<CourseDto>.Failure("نامک (Slug) وارد شده تکراری است.");
+        if (string.IsNullOrWhiteSpace(dto.Slug))
+            dto.Slug = dto.Title.Trim().Replace(" ", "-").ToLower();
+
+        var existing = await _unitOfWork.Repository<Course>()
+            .FindAsync(c => c.Slug == dto.Slug && !c.IsDeleted, ct);
+
+        if (existing.Any())
+            return Result<CourseDto>.Failure($"A course with slug '{dto.Slug}' already exists.");
 
         var course = _mapper.Map<Course>(dto);
         await _unitOfWork.Repository<Course>().AddAsync(course, ct);
         await _unitOfWork.SaveChangesAsync(ct);
 
-        _logger.LogInformation("Course '{Title}' created successfully with Id {CourseId}", course.Title, course.Id);
+        _logger.LogInformation("Course '{CourseTitle}' created with ID {CourseId}", course.Title, course.Id);
         return Result<CourseDto>.Success(_mapper.Map<CourseDto>(course), 201);
     }
 
-    public async Task<Result<CourseDto>> UpdateCourseAsync(UpdateCourseDto dto, CancellationToken ct = default)
+    public async Task<Result<CourseDto>> UpdateAsync(Guid id, UpdateCourseDto dto, CancellationToken ct = default)
     {
-        var course = await _unitOfWork.Repository<Course>().GetByIdAsync(dto.Id, ct);
+        var course = await _unitOfWork.Repository<Course>().GetByIdAsync(id, ct);
         if (course == null || course.IsDeleted)
-            return Result<CourseDto>.NotFound("دوره جهت ویرایش یافت نشد.");
+            return Result<CourseDto>.NotFound($"Course with ID '{id}' was not found.");
 
         _mapper.Map(dto, course);
         course.UpdatedAt = DateTime.UtcNow;
@@ -98,23 +111,20 @@ public class CourseService : ICourseService
         _unitOfWork.Repository<Course>().Update(course);
         await _unitOfWork.SaveChangesAsync(ct);
 
-        _logger.LogInformation("Course {CourseId} updated successfully", course.Id);
+        _logger.LogInformation("Course '{CourseTitle}' (ID {CourseId}) updated successfully", course.Title, course.Id);
         return Result<CourseDto>.Success(_mapper.Map<CourseDto>(course));
     }
 
-    public async Task<Result> DeleteCourseAsync(Guid id, CancellationToken ct = default)
+    public async Task<Result> DeleteAsync(Guid id, CancellationToken ct = default)
     {
         var course = await _unitOfWork.Repository<Course>().GetByIdAsync(id, ct);
         if (course == null || course.IsDeleted)
-            return Result.NotFound("دوره جهت حذف یافت نشد.");
+            return Result.NotFound($"Course with ID '{id}' was not found.");
 
-        course.IsDeleted = true;
-        course.UpdatedAt = DateTime.UtcNow;
-
-        _unitOfWork.Repository<Course>().Update(course);
+        _unitOfWork.Repository<Course>().SoftDelete(course);
         await _unitOfWork.SaveChangesAsync(ct);
 
-        _logger.LogInformation("Course {CourseId} soft-deleted successfully", id);
+        _logger.LogInformation("Course with ID {CourseId} soft-deleted successfully", id);
         return Result.Success();
     }
 }

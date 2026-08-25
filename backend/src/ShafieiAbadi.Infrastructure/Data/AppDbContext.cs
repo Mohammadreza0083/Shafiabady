@@ -3,6 +3,9 @@ using ShafieiAbadi.Domain.Entities;
 
 namespace ShafieiAbadi.Infrastructure.Data;
 
+/// <summary>
+/// Entity Framework Core database context for the Dr. Shafiei Abadi platform.
+/// </summary>
 public class AppDbContext : DbContext
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)

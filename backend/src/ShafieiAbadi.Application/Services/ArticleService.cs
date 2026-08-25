@@ -8,6 +8,9 @@ using ShafieiAbadi.Domain.Entities;
 
 namespace ShafieiAbadi.Application.Services;
 
+/// <summary>
+/// Service implementation for managing articles.
+/// </summary>
 public class ArticleService : IArticleService
 {
     private readonly IUnitOfWork _unitOfWork;
@@ -21,29 +24,35 @@ public class ArticleService : IArticleService
         _logger = logger;
     }
 
-    public async Task<Result<PagedResult<ArticleDto>>> GetPagedArticlesAsync(PaginationParams p, CancellationToken ct = default)
+    public async Task<Result<PagedResult<ArticleDto>>> GetPagedAsync(PaginationParams @params, CancellationToken ct = default)
     {
-        _logger.LogInformation("Retrieving articles page {PageNumber} with size {PageSize}", p.PageNumber, p.PageSize);
+        _logger.LogInformation("Fetching articles page {PageNumber} with page size {PageSize}", @params.PageNumber, @params.PageSize);
 
-        Expression<Func<Article, bool>> predicate = a =>
+        Expression<Func<Article, bool>> filter = a =>
             !a.IsDeleted &&
-            a.IsPublished &&
-            (!p.CategoryId.HasValue || a.CategoryId == p.CategoryId.Value) &&
-            (string.IsNullOrWhiteSpace(p.SearchTerm) || a.Title.Contains(p.SearchTerm) || a.Summary.Contains(p.SearchTerm));
+            (string.IsNullOrWhiteSpace(@params.Search) || a.Title.Contains(@params.Search) || a.Summary.Contains(@params.Search) || a.Tags.Contains(@params.Search)) &&
+            (string.IsNullOrWhiteSpace(@params.CategorySlug) || (a.Category != null && a.Category.Slug == @params.CategorySlug)) &&
+            (string.IsNullOrWhiteSpace(@params.Tag) || a.Tags.Contains(@params.Tag));
 
-        Func<IQueryable<Article>, IOrderedQueryable<Article>> orderBy = q => q.OrderByDescending(a => a.CreatedAt);
+        var pagedEntities = await _unitOfWork.Repository<Article>().GetPagedAsync(
+            @params.PageNumber,
+            @params.PageSize,
+            filter: filter,
+            orderBy: a => a.CreatedAt,
+            ascending: false,
+            ct: ct,
+            includes: new Expression<Func<Article, object>>[] { a => a.Category! });
 
-        var (items, totalCount) = await _unitOfWork.Repository<Article>()
-            .GetPagedAsync(p.PageNumber, p.PageSize, predicate, orderBy, "Category,Comments", ct);
+        var dtos = _mapper.Map<IReadOnlyList<ArticleDto>>(pagedEntities.Items);
+        var result = new PagedResult<ArticleDto>(dtos, pagedEntities.TotalCount, pagedEntities.PageNumber, pagedEntities.PageSize);
 
-        var dtos = _mapper.Map<IReadOnlyList<ArticleDto>>(items);
-        var pagedResult = new PagedResult<ArticleDto>(dtos, totalCount, p.PageNumber, p.PageSize);
-
-        return Result<PagedResult<ArticleDto>>.Success(pagedResult);
+        return Result<PagedResult<ArticleDto>>.Success(result);
     }
 
-    public async Task<Result<ArticleDto>> GetArticleBySlugAsync(string slug, CancellationToken ct = default)
+    public async Task<Result<ArticleDto>> GetBySlugAsync(string slug, CancellationToken ct = default)
     {
+        _logger.LogInformation("Retrieving article by slug '{Slug}'", slug);
+
         var articles = await _unitOfWork.Repository<Article>()
             .FindAsync(a => a.Slug == slug && !a.IsDeleted, ct);
 
@@ -51,47 +60,53 @@ public class ArticleService : IArticleService
         if (article == null)
         {
             _logger.LogWarning("Article with slug '{Slug}' was not found", slug);
-            return Result<ArticleDto>.NotFound($"مقاله با نامک '{slug}' یافت نشد.");
+            return Result<ArticleDto>.NotFound($"Article with slug '{slug}' was not found.");
         }
 
         return Result<ArticleDto>.Success(_mapper.Map<ArticleDto>(article));
     }
 
-    public async Task<Result<ArticleDto>> GetArticleByIdAsync(Guid id, CancellationToken ct = default)
+    public async Task<Result<ArticleDto>> GetByIdAsync(Guid id, CancellationToken ct = default)
     {
         var article = await _unitOfWork.Repository<Article>().GetByIdAsync(id, ct);
         if (article == null || article.IsDeleted)
         {
-            _logger.LogWarning("Article with Id '{Id}' was not found", id);
-            return Result<ArticleDto>.NotFound("مقاله مورد نظر یافت نشد.");
+            _logger.LogWarning("Article with Id '{ArticleId}' was not found", id);
+            return Result<ArticleDto>.NotFound($"Article with ID '{id}' was not found.");
         }
 
         return Result<ArticleDto>.Success(_mapper.Map<ArticleDto>(article));
     }
 
-    public async Task<Result<ArticleDto>> CreateArticleAsync(CreateArticleDto dto, CancellationToken ct = default)
+    public async Task<Result<ArticleDto>> CreateAsync(CreateArticleDto dto, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(dto.Title))
-            return Result<ArticleDto>.Failure("عنوان مقاله الزامی است.");
+            return Result<ArticleDto>.Failure("Article title is required.");
 
-        var exists = await _unitOfWork.Repository<Article>()
-            .ExistsAsync(a => a.Slug == dto.Slug && !a.IsDeleted, ct);
-        if (exists)
-            return Result<ArticleDto>.Failure("نامک (Slug) وارد شده تکراری است.");
+        if (string.IsNullOrWhiteSpace(dto.Slug))
+            dto.Slug = dto.Title.Trim().Replace(" ", "-").ToLower();
+
+        var existing = await _unitOfWork.Repository<Article>()
+            .FindAsync(a => a.Slug == dto.Slug && !a.IsDeleted, ct);
+
+        if (existing.Any())
+            return Result<ArticleDto>.Failure($"An article with slug '{dto.Slug}' already exists.");
 
         var article = _mapper.Map<Article>(dto);
+        article.AuthorName = string.IsNullOrWhiteSpace(dto.AuthorName) ? "دکتر محمد حسین شفیع‌آبادی" : dto.AuthorName;
+
         await _unitOfWork.Repository<Article>().AddAsync(article, ct);
         await _unitOfWork.SaveChangesAsync(ct);
 
-        _logger.LogInformation("Article '{Title}' created successfully with Id {ArticleId}", article.Title, article.Id);
+        _logger.LogInformation("Article '{ArticleTitle}' created with ID {ArticleId}", article.Title, article.Id);
         return Result<ArticleDto>.Success(_mapper.Map<ArticleDto>(article), 201);
     }
 
-    public async Task<Result<ArticleDto>> UpdateArticleAsync(UpdateArticleDto dto, CancellationToken ct = default)
+    public async Task<Result<ArticleDto>> UpdateAsync(Guid id, UpdateArticleDto dto, CancellationToken ct = default)
     {
-        var article = await _unitOfWork.Repository<Article>().GetByIdAsync(dto.Id, ct);
+        var article = await _unitOfWork.Repository<Article>().GetByIdAsync(id, ct);
         if (article == null || article.IsDeleted)
-            return Result<ArticleDto>.NotFound("مقاله جهت ویرایش یافت نشد.");
+            return Result<ArticleDto>.NotFound($"Article with ID '{id}' was not found.");
 
         _mapper.Map(dto, article);
         article.UpdatedAt = DateTime.UtcNow;
@@ -99,23 +114,20 @@ public class ArticleService : IArticleService
         _unitOfWork.Repository<Article>().Update(article);
         await _unitOfWork.SaveChangesAsync(ct);
 
-        _logger.LogInformation("Article {ArticleId} updated successfully", article.Id);
+        _logger.LogInformation("Article '{ArticleTitle}' (ID {ArticleId}) updated successfully", article.Title, article.Id);
         return Result<ArticleDto>.Success(_mapper.Map<ArticleDto>(article));
     }
 
-    public async Task<Result> DeleteArticleAsync(Guid id, CancellationToken ct = default)
+    public async Task<Result> DeleteAsync(Guid id, CancellationToken ct = default)
     {
         var article = await _unitOfWork.Repository<Article>().GetByIdAsync(id, ct);
         if (article == null || article.IsDeleted)
-            return Result.NotFound("مقاله جهت حذف یافت نشد.");
+            return Result.NotFound($"Article with ID '{id}' was not found.");
 
-        article.IsDeleted = true;
-        article.UpdatedAt = DateTime.UtcNow;
-
-        _unitOfWork.Repository<Article>().Update(article);
+        _unitOfWork.Repository<Article>().SoftDelete(article);
         await _unitOfWork.SaveChangesAsync(ct);
 
-        _logger.LogInformation("Article {ArticleId} soft-deleted successfully", id);
+        _logger.LogInformation("Article with ID {ArticleId} soft-deleted successfully", id);
         return Result.Success();
     }
 }

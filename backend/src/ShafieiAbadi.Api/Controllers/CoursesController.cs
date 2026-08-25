@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ShafieiAbadi.Application.Common;
 using ShafieiAbadi.Application.DTOs;
@@ -6,7 +7,7 @@ using ShafieiAbadi.Application.Interfaces;
 namespace ShafieiAbadi.Api.Controllers;
 
 /// <summary>
-/// مدیریت دوره‌های آموزشی و ویدیوها
+/// Endpoints for managing, browsing, and querying educational video courses, Aparat video embeds, and course pricing.
 /// </summary>
 public class CoursesController : BaseApiController
 {
@@ -18,93 +19,98 @@ public class CoursesController : BaseApiController
     }
 
     /// <summary>
-    /// دریافت لیست دوره‌ها به صورت صفحه‌بندی شده (جهت اسکرول نامحدود)
+    /// Retrieves a paginated list of educational courses to support infinite scrolling and archive filtering.
     /// </summary>
-    /// <param name="paginationParams">پارامترهای صفحه‌بندی و فیلتر</param>
-    /// <param name="ct">توکن لغو عملیات</param>
-    /// <returns>لیست دوره‌ها همراه با متادیتا صفحه‌بندی</returns>
+    /// <param name="paginationParams">Filtering, search, and pagination parameters.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>Paginated course collection with total counts and pagination metadata.</returns>
     [HttpGet]
     [ProducesResponseType(typeof(Result<PagedResult<CourseDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetPaged([FromQuery] PaginationParams paginationParams, CancellationToken ct)
     {
-        var result = await _courseService.GetPagedCoursesAsync(paginationParams, ct);
+        var result = await _courseService.GetPagedAsync(paginationParams, ct);
         return HandleResult(result);
     }
 
     /// <summary>
-    /// دریافت جزئیات دوره بر اساس نامک (Slug)
+    /// Retrieves full course details, Aparat video player URLs, and pricing by unique URL slug.
     /// </summary>
-    /// <param name="slug">نامک اختصاصی دوره</param>
-    /// <param name="ct">توکن لغو عملیات</param>
-    /// <returns>اطلاعات کامل دوره شامل ویدیوی آپارات و سرفصل‌ها</returns>
+    /// <param name="slug">Unique URL slug identifier.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>Detailed course data payload.</returns>
     [HttpGet("by-slug/{slug}")]
     [ProducesResponseType(typeof(Result<CourseDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Result<CourseDto>), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetBySlug(string slug, CancellationToken ct)
     {
-        var result = await _courseService.GetCourseBySlugAsync(slug, ct);
+        var result = await _courseService.GetBySlugAsync(slug, ct);
         return HandleResult(result);
     }
 
     /// <summary>
-    /// دریافت جزئیات دوره بر اساس شناسه (ID)
+    /// Retrieves full course details by its unique identifier (GUID).
     /// </summary>
-    /// <param name="id">شناسه یکتای دوره</param>
-    /// <param name="ct">توکن لغو عملیات</param>
-    /// <returns>اطلاعات کامل دوره</returns>
+    /// <param name="id">Unique course GUID.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>Detailed course data payload.</returns>
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(Result<CourseDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Result<CourseDto>), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid id, CancellationToken ct)
     {
-        var result = await _courseService.GetCourseByIdAsync(id, ct);
+        var result = await _courseService.GetByIdAsync(id, ct);
         return HandleResult(result);
     }
 
     /// <summary>
-    /// ایجاد دوره جدید (پنل مدیریت)
+    /// Creates a new educational course (Admin only).
     /// </summary>
-    /// <param name="dto">اطلاعات دوره جدید شامل لینک ویدیو آپارات و قیمت‌گذاری</param>
-    /// <param name="ct">توکن لغو عملیات</param>
-    /// <returns>دوره ایجاد شده</returns>
+    /// <param name="dto">Course creation payload.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>Created course details.</returns>
     [HttpPost]
+    [Authorize]
     [ProducesResponseType(typeof(Result<CourseDto>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(Result<CourseDto>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(Result<CourseDto>), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Create([FromBody] CreateCourseDto dto, CancellationToken ct)
     {
-        var result = await _courseService.CreateCourseAsync(dto, ct);
+        var result = await _courseService.CreateAsync(dto, ct);
         return HandleResult(result);
     }
 
     /// <summary>
-    /// ویرایش دوره موجود (پنل مدیریت)
+    /// Updates an existing course's metadata, pricing, or video URLs (Admin only).
     /// </summary>
-    /// <param name="id">شناسه دوره جهت ویرایش</param>
-    /// <param name="dto">اطلاعات ویرایش شده دوره</param>
-    /// <param name="ct">توکن لغو عملیات</param>
-    /// <returns>دوره ویرایش شده</returns>
+    /// <param name="id">Unique course GUID to update.</param>
+    /// <param name="dto">Updated course payload.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>Updated course details.</returns>
     [HttpPut("{id:guid}")]
+    [Authorize]
     [ProducesResponseType(typeof(Result<CourseDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Result<CourseDto>), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(Result<CourseDto>), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateCourseDto dto, CancellationToken ct)
     {
-        dto.Id = id;
-        var result = await _courseService.UpdateCourseAsync(dto, ct);
+        var result = await _courseService.UpdateAsync(id, dto, ct);
         return HandleResult(result);
     }
 
     /// <summary>
-    /// حذف منطقی (Soft Delete) دوره
+    /// Soft-deletes a course by its unique identifier (Admin only).
     /// </summary>
-    /// <param name="id">شناسه دوره جهت حذف</param>
-    /// <param name="ct">توکن لغو عملیات</param>
-    /// <returns>نتیجه عملیات حذف</returns>
+    /// <param name="id">Unique course GUID to delete.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>Standardized result indicating success or failure.</returns>
     [HttpDelete("{id:guid}")]
+    [Authorize]
     [ProducesResponseType(typeof(Result), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Result), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(Result), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
-        var result = await _courseService.DeleteCourseAsync(id, ct);
+        var result = await _courseService.DeleteAsync(id, ct);
         return HandleResult(result);
     }
 }

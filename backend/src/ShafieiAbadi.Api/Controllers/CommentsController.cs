@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ShafieiAbadi.Application.Common;
 using ShafieiAbadi.Application.DTOs;
@@ -7,7 +8,7 @@ using ShafieiAbadi.Domain.Enums;
 namespace ShafieiAbadi.Api.Controllers;
 
 /// <summary>
-/// مدیریت دیدگاه‌ها و پاسخ‌های تو در تو
+/// Endpoints for submitting public comments, querying recursive reply trees, and managing moderation statuses.
 /// </summary>
 public class CommentsController : BaseApiController
 {
@@ -19,43 +20,44 @@ public class CommentsController : BaseApiController
     }
 
     /// <summary>
-    /// دریافت درخت سلسله‌مراتبی دیدگاه‌های تایید شده برای یک مقاله، کتاب یا دوره
+    /// Retrieves a recursive tree of approved comments and nested replies for an entity.
     /// </summary>
-    /// <param name="articleId">شناسه مقاله (اختیاری)</param>
-    /// <param name="bookId">شناسه کتاب (اختیاری)</param>
-    /// <param name="courseId">شناسه دوره (اختیاری)</param>
-    /// <param name="ct">توکن لغو عملیات</param>
-    /// <returns>درخت سلسله‌مراتبی دیدگاه‌ها با پاسخ‌های نامحدود</returns>
+    /// <param name="type">Target entity type (1: Article, 2: Book, 3: Course).</param>
+    /// <param name="entityId">Unique target entity GUID.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>Hierarchical tree of approved root comments with nested replies.</returns>
     [HttpGet("tree")]
     [ProducesResponseType(typeof(Result<List<CommentDto>>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetTree([FromQuery] Guid? articleId, [FromQuery] Guid? bookId, [FromQuery] Guid? courseId, CancellationToken ct)
+    public async Task<IActionResult> GetCommentsTree([FromQuery] EntityType type, [FromQuery] Guid entityId, CancellationToken ct)
     {
-        var result = await _commentService.GetApprovedCommentsTreeAsync(articleId, bookId, courseId, ct);
+        var result = await _commentService.GetApprovedCommentsTreeAsync(type, entityId, ct);
         return HandleResult(result);
     }
 
     /// <summary>
-    /// دریافت کلیه دیدگاه‌ها جهت صف بررسی و تایید مدیر (پنل مدیریت)
+    /// Retrieves paginated comments for the administrative moderation queue (Admin only).
     /// </summary>
-    /// <param name="pageNumber">شماره صفحه</param>
-    /// <param name="pageSize">تعداد در هر صفحه</param>
-    /// <param name="status">فیلتر وضعیت دیدگاه (در انتظار، تایید شده، رد شده)</param>
-    /// <param name="ct">توکن لغو عملیات</param>
-    /// <returns>لیست دیدگاه‌ها همراه با متادیتا</returns>
+    /// <param name="pageNumber">1-based page number (defaults to 1).</param>
+    /// <param name="pageSize">Number of items per page (defaults to 10).</param>
+    /// <param name="status">Optional filter by status (0: Pending, 1: Approved, 2: Rejected).</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>Paginated collection of comments for moderation.</returns>
     [HttpGet("admin/paged")]
+    [Authorize]
     [ProducesResponseType(typeof(Result<PagedResult<CommentDto>>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetAdminPaged([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 15, [FromQuery] CommentStatus? status = null, CancellationToken ct = default)
+    [ProducesResponseType(typeof(Result<PagedResult<CommentDto>>), StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> GetPagedForAdmin([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10, [FromQuery] CommentStatus? status = null, CancellationToken ct = default)
     {
-        var result = await _commentService.GetAllCommentsPagedAsync(pageNumber, pageSize, status, ct);
+        var result = await _commentService.GetPagedCommentsForAdminAsync(pageNumber, pageSize, status, ct);
         return HandleResult(result);
     }
 
     /// <summary>
-    /// ثبت دیدگاه جدید توسط کاربر یا دانشجو (نیازمند تایید مدیر)
+    /// Submits a new user comment or reply with initial Pending status.
     /// </summary>
-    /// <param name="dto">اطلاعات دیدگاه یا پاسخ</param>
-    /// <param name="ct">توکن لغو عملیات</param>
-    /// <returns>دیدگاه ثبت شده در وضعیت در انتظار</returns>
+    /// <param name="dto">Comment submission payload.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>Created comment details awaiting review.</returns>
     [HttpPost]
     [ProducesResponseType(typeof(Result<CommentDto>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(Result<CommentDto>), StatusCodes.Status400BadRequest)]
@@ -66,29 +68,33 @@ public class CommentsController : BaseApiController
     }
 
     /// <summary>
-    /// تغییر وضعیت دیدگاه (تایید یا رد دیدگاه توسط مدیر)
+    /// Updates a comment's moderation approval status (Admin only).
     /// </summary>
-    /// <param name="dto">شناسه دیدگاه و وضعیت جدید</param>
-    /// <param name="ct">توکن لغو عملیات</param>
-    /// <returns>نتیجه عملیات تغییر وضعیت</returns>
+    /// <param name="dto">Status update payload (Approved / Rejected).</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>Standardized result indicating success or failure.</returns>
     [HttpPut("status")]
+    [Authorize]
     [ProducesResponseType(typeof(Result), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Result), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(Result), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> UpdateStatus([FromBody] UpdateCommentStatusDto dto, CancellationToken ct)
     {
-        var result = await _commentService.UpdateCommentStatusAsync(dto.CommentId, dto.Status, ct);
+        var result = await _commentService.UpdateCommentStatusAsync(dto, ct);
         return HandleResult(result);
     }
 
     /// <summary>
-    /// حذف دیدگاه
+    /// Soft-deletes a comment by its unique identifier (Admin only).
     /// </summary>
-    /// <param name="id">شناسه دیدگاه</param>
-    /// <param name="ct">توکن لغو عملیات</param>
-    /// <returns>نتیجه عملیات حذف</returns>
+    /// <param name="id">Unique comment GUID to delete.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>Standardized result indicating success or failure.</returns>
     [HttpDelete("{id:guid}")]
+    [Authorize]
     [ProducesResponseType(typeof(Result), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Result), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(Result), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
         var result = await _commentService.DeleteCommentAsync(id, ct);

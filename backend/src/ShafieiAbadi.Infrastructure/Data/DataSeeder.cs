@@ -2,10 +2,12 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using ShafieiAbadi.Domain.Entities;
-using ShafieiAbadi.Domain.Enums;
 
 namespace ShafieiAbadi.Infrastructure.Data;
 
+/// <summary>
+/// Seeds initial default data into the database upon application startup.
+/// </summary>
 public static class DataSeeder
 {
     public static async Task SeedAsync(AppDbContext context)
@@ -15,7 +17,7 @@ public static class DataSeeder
         if (await context.AdminUsers.AnyAsync())
             return;
 
-        // Seed Admin User
+        // 1. Seed Default Administrator (admin / Admin@123)
         var admin = new AdminUser
         {
             Username = "admin",
@@ -25,7 +27,7 @@ public static class DataSeeder
         };
         context.AdminUsers.Add(admin);
 
-        // Seed Category
+        // 2. Seed Initial Categories
         var catArchitecture = new Category
         {
             Title = "معماری نرم‌افزار و مهندسی داده",
@@ -42,7 +44,7 @@ public static class DataSeeder
         };
         context.Categories.AddRange(catArchitecture, catAI);
 
-        // Seed Article
+        // 3. Seed Featured Article
         var article = new Article
         {
             Title = "راهنمای جامع پیاده‌سازی معماری تمیز (Clean Architecture) در دات‌نت ۹",
@@ -58,7 +60,7 @@ public static class DataSeeder
         };
         context.Articles.Add(article);
 
-        // Seed Book
+        // 4. Seed Academic Book
         var book = new Book
         {
             Title = "طراحی سیستم‌های توزیع‌شده با رویکرد میکروسرویس",
@@ -77,7 +79,7 @@ public static class DataSeeder
         };
         context.Books.Add(book);
 
-        // Seed Course
+        // 5. Seed Training Course
         var course = new Course
         {
             Title = "دوره جامع معماری میکروسرویس و طراحی سیستم‌های مقیاس‌پذیر",

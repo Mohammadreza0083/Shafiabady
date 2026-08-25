@@ -1,5 +1,4 @@
 using System.Linq.Expressions;
-using AutoMapper;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -15,7 +14,6 @@ public class ViewTrackerServiceTests
     private readonly Mock<IUnitOfWork> _mockUow;
     private readonly Mock<IGenericRepository<ViewLog>> _mockViewRepo;
     private readonly Mock<IGenericRepository<Article>> _mockArticleRepo;
-    private readonly Mock<IMapper> _mockMapper;
     private readonly Mock<ILogger<ViewTrackerService>> _mockLogger;
     private readonly ViewTrackerService _service;
 
@@ -24,13 +22,12 @@ public class ViewTrackerServiceTests
         _mockUow = new Mock<IUnitOfWork>();
         _mockViewRepo = new Mock<IGenericRepository<ViewLog>>();
         _mockArticleRepo = new Mock<IGenericRepository<Article>>();
-        _mockMapper = new Mock<IMapper>();
         _mockLogger = new Mock<ILogger<ViewTrackerService>>();
 
         _mockUow.Setup(u => u.Repository<ViewLog>()).Returns(_mockViewRepo.Object);
         _mockUow.Setup(u => u.Repository<Article>()).Returns(_mockArticleRepo.Object);
 
-        _service = new ViewTrackerService(_mockUow.Object, _mockMapper.Object, _mockLogger.Object);
+        _service = new ViewTrackerService(_mockUow.Object, _mockLogger.Object);
     }
 
     [Fact]
@@ -61,7 +58,7 @@ public class ViewTrackerServiceTests
     {
         // Arrange
         var articleId = Guid.NewGuid();
-        var article = new Article { Id = articleId, Title = "تست معماری", ViewsCount = 10 };
+        var article = new Article { Id = articleId, Title = "Architecture Article", ViewsCount = 10 };
 
         _mockViewRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<ViewLog, bool>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<ViewLog>());

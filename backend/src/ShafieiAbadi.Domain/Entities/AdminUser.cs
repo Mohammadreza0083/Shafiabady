@@ -2,12 +2,38 @@ using ShafieiAbadi.Domain.Common;
 
 namespace ShafieiAbadi.Domain.Entities;
 
+/// <summary>
+/// Represents an authenticated system administrator with administrative dashboard access.
+/// </summary>
 public class AdminUser : BaseEntity, IAggregateRoot
 {
+    /// <summary>
+    /// Unique administrative login username.
+    /// </summary>
     public string Username { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Administrative email address.
+    /// </summary>
     public string Email { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Cryptographic hash of the administrator password.
+    /// </summary>
     public string PasswordHash { get; set; } = string.Empty;
-    public string FullName { get; set; } = "دکتر محمد حسین شفیع‌آبادی";
-    public DateTime? LastLoginAt { get; set; }
+
+    /// <summary>
+    /// Full name of the administrator.
+    /// </summary>
+    public string FullName { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Indicates whether the administrator account is currently active.
+    /// </summary>
     public bool IsActive { get; set; } = true;
+
+    /// <summary>
+    /// UTC timestamp of the most recent successful login.
+    /// </summary>
+    public DateTime? LastLoginAt { get; set; }
 }

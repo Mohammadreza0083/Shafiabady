@@ -1,4 +1,5 @@
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ShafieiAbadi.Application.Common;
 using ShafieiAbadi.Application.DTOs;
@@ -8,7 +9,7 @@ using ShafieiAbadi.Domain.Entities;
 namespace ShafieiAbadi.Api.Controllers;
 
 /// <summary>
-/// مدیریت دسته‌بندی‌ها
+/// Endpoints for managing and querying content taxonomy and categories.
 /// </summary>
 public class CategoriesController : BaseApiController
 {
@@ -22,29 +23,31 @@ public class CategoriesController : BaseApiController
     }
 
     /// <summary>
-    /// دریافت تمامی دسته‌بندی‌ها به همراه تعداد مقالات، کتاب‌ها و دوره‌ها
+    /// Retrieves all active categories along with counts of associated articles, books, and courses.
     /// </summary>
-    /// <param name="ct">توکن لغو عملیات</param>
-    /// <returns>لیست کامل دسته‌بندی‌ها</returns>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>Collection of category summaries.</returns>
     [HttpGet]
     [ProducesResponseType(typeof(Result<IReadOnlyList<CategoryDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(CancellationToken ct)
     {
-        var (items, _) = await _unitOfWork.Repository<Category>()
-            .GetPagedAsync(1, 100, c => !c.IsDeleted, q => q.OrderBy(c => c.DisplayOrder), "Articles,Books,Courses", ct);
+        var pagedCategories = await _unitOfWork.Repository<Category>()
+            .GetPagedAsync(1, 100, c => !c.IsDeleted, c => c.DisplayOrder, true, ct, c => c.Articles, c => c.Books, c => c.Courses);
 
-        var dtos = _mapper.Map<IReadOnlyList<CategoryDto>>(items);
+        var dtos = _mapper.Map<IReadOnlyList<CategoryDto>>(pagedCategories.Items);
         return HandleResult(Result<IReadOnlyList<CategoryDto>>.Success(dtos));
     }
 
     /// <summary>
-    /// ایجاد دسته‌بندی جدید
+    /// Creates a new category classification (Admin only).
     /// </summary>
-    /// <param name="dto">اطلاعات دسته‌بندی</param>
-    /// <param name="ct">توکن لغو عملیات</param>
-    /// <returns>دسته‌بندی ایجاد شده</returns>
+    /// <param name="dto">Category creation payload.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>Created category details.</returns>
     [HttpPost]
+    [Authorize]
     [ProducesResponseType(typeof(Result<CategoryDto>), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(Result<CategoryDto>), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Create([FromBody] CreateCategoryDto dto, CancellationToken ct)
     {
         var category = _mapper.Map<Category>(dto);

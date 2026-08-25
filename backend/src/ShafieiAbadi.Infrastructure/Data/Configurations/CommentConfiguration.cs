@@ -4,6 +4,9 @@ using ShafieiAbadi.Domain.Entities;
 
 namespace ShafieiAbadi.Infrastructure.Data.Configurations;
 
+/// <summary>
+/// Entity Framework Core entity mapping configuration for the Comment entity.
+/// </summary>
 public class CommentConfiguration : IEntityTypeConfiguration<Comment>
 {
     public void Configure(EntityTypeBuilder<Comment> builder)
@@ -16,7 +19,7 @@ public class CommentConfiguration : IEntityTypeConfiguration<Comment>
             .IsRequired()
             .HasMaxLength(200);
 
-        builder.Property(c => c.GuestEmail)
+        builder.Property(c => c.Email)
             .HasMaxLength(200);
 
         builder.Property(c => c.Text)

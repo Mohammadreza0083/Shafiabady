@@ -1,24 +1,39 @@
 namespace ShafieiAbadi.Application.Common;
 
+/// <summary>
+/// Query parameters for filtering, searching, and paginating entity collections.
+/// </summary>
 public class PaginationParams
 {
     private const int MaxPageSize = 50;
     private int _pageSize = 10;
-    private int _pageNumber = 1;
 
-    public int PageNumber
-    {
-        get => _pageNumber;
-        set => _pageNumber = value < 1 ? 1 : value;
-    }
+    /// <summary>
+    /// Requested page number (1-based index, defaults to 1).
+    /// </summary>
+    public int PageNumber { get; set; } = 1;
 
+    /// <summary>
+    /// Requested items count per page (defaults to 10, capped at 50).
+    /// </summary>
     public int PageSize
     {
         get => _pageSize;
         set => _pageSize = value > MaxPageSize ? MaxPageSize : (value < 1 ? 1 : value);
     }
 
-    public string? SearchTerm { get; set; }
-    public Guid? CategoryId { get; set; }
-    public string? SortBy { get; set; }
+    /// <summary>
+    /// Optional search term matching against titles, summaries, or content.
+    /// </summary>
+    public string? Search { get; set; }
+
+    /// <summary>
+    /// Optional category slug filter.
+    /// </summary>
+    public string? CategorySlug { get; set; }
+
+    /// <summary>
+    /// Optional tag keyword filter.
+    /// </summary>
+    public string? Tag { get; set; }
 }

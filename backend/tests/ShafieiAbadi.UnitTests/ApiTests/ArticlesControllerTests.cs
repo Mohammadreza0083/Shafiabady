@@ -25,12 +25,12 @@ public class ArticlesControllerTests
         // Arrange
         var pagedData = new PagedResult<ArticleDto>(new List<ArticleDto>
         {
-            new() { Title = "تست مقاله ۱", Slug = "test-1" }
+            new() { Title = "Test Article 1", Slug = "test-1" }
         }, totalCount: 1, pageNumber: 1, pageSize: 10);
 
         var expectedResult = Result<PagedResult<ArticleDto>>.Success(pagedData);
 
-        _mockArticleService.Setup(s => s.GetPagedArticlesAsync(It.IsAny<PaginationParams>(), It.IsAny<CancellationToken>()))
+        _mockArticleService.Setup(s => s.GetPagedAsync(It.IsAny<PaginationParams>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedResult);
 
         // Act

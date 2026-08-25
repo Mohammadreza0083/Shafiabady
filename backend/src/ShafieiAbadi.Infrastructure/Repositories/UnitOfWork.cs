@@ -5,6 +5,9 @@ using ShafieiAbadi.Infrastructure.Data;
 
 namespace ShafieiAbadi.Infrastructure.Repositories;
 
+/// <summary>
+/// Unit of Work implementation coordinating EF Core persistence and repository caching.
+/// </summary>
 public class UnitOfWork : IUnitOfWork
 {
     private readonly AppDbContext _context;
@@ -17,15 +20,12 @@ public class UnitOfWork : IUnitOfWork
 
     public IGenericRepository<T> Repository<T>() where T : BaseEntity
     {
-        return (IGenericRepository<T>)_repositories.GetOrAdd(
-            typeof(T),
-            _ => new GenericRepository<T>(_context)
-        );
+        return (IGenericRepository<T>)_repositories.GetOrAdd(typeof(T), _ => new GenericRepository<T>(_context));
     }
 
-    public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    public async Task<int> SaveChangesAsync(CancellationToken ct = default)
     {
-        return await _context.SaveChangesAsync(cancellationToken);
+        return await _context.SaveChangesAsync(ct);
     }
 
     public void Dispose()

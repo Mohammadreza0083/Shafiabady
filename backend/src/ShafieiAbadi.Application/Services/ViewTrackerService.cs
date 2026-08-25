@@ -1,4 +1,3 @@
-using AutoMapper;
 using Microsoft.Extensions.Logging;
 using ShafieiAbadi.Application.Common;
 using ShafieiAbadi.Application.DTOs;
@@ -8,37 +7,44 @@ using ShafieiAbadi.Domain.Enums;
 
 namespace ShafieiAbadi.Application.Services;
 
+/// <summary>
+/// Service implementation for recording entity views and tracking engagement metrics.
+/// </summary>
 public class ViewTrackerService : IViewTrackerService
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IMapper _mapper;
     private readonly ILogger<ViewTrackerService> _logger;
 
-    public ViewTrackerService(IUnitOfWork unitOfWork, IMapper mapper, ILogger<ViewTrackerService> logger)
+    public ViewTrackerService(IUnitOfWork unitOfWork, ILogger<ViewTrackerService> logger)
     {
         _unitOfWork = unitOfWork;
-        _mapper = mapper;
         _logger = logger;
     }
 
-    public async Task<Result<bool>> RecordViewAsync(EntityType entityType, Guid entityId, string ipAddress, string? userAgent, CancellationToken ct = default)
+    public async Task<Result<bool>> RecordViewAsync(EntityType entityType, Guid entityId, string ipAddress, string? userAgent = null, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(ipAddress))
-            ipAddress = "127.0.0.1";
-
-        var cutoffTime = DateTime.UtcNow.AddHours(-24);
-
-        // Check if a view from this IP for this entity occurred in the last 24 hours
-        var existingLogs = await _unitOfWork.Repository<ViewLog>()
-            .FindAsync(v => v.EntityType == entityType && v.EntityId == entityId && v.IpAddress == ipAddress && v.ViewedAt >= cutoffTime, ct);
-
-        if (existingLogs.Any())
         {
-            _logger.LogWarning("Duplicate view attempt for {EntityType} {EntityId} from IP {IpAddress} within 24-hour window", entityType, entityId, ipAddress);
+            ipAddress = "127.0.0.1";
+        }
+
+        var twentyFourHoursAgo = DateTime.UtcNow.AddHours(-24);
+
+        // Check if this IP viewed this entity within the past 24 hours
+        var recentLogs = await _unitOfWork.Repository<ViewLog>().FindAsync(v =>
+            v.EntityType == entityType &&
+            v.EntityId == entityId &&
+            v.IpAddress == ipAddress &&
+            v.ViewedAt >= twentyFourHoursAgo, ct);
+
+        if (recentLogs.Any())
+        {
+            _logger.LogWarning("Duplicate view attempt within 24 hours for {EntityType} {EntityId} from IP {IpAddress}. View count not incremented.",
+                entityType, entityId, ipAddress);
             return Result<bool>.Success(false);
         }
 
-        // Add new ViewLog
+        // Record new ViewLog entry
         var viewLog = new ViewLog
         {
             EntityType = entityType,
@@ -47,14 +53,15 @@ public class ViewTrackerService : IViewTrackerService
             UserAgent = userAgent,
             ViewedAt = DateTime.UtcNow
         };
+
         await _unitOfWork.Repository<ViewLog>().AddAsync(viewLog, ct);
 
-        // Increment entity views count
+        // Increment the target entity's view counter
         switch (entityType)
         {
             case EntityType.Article:
                 var article = await _unitOfWork.Repository<Article>().GetByIdAsync(entityId, ct);
-                if (article != null)
+                if (article != null && !article.IsDeleted)
                 {
                     article.ViewsCount++;
                     _unitOfWork.Repository<Article>().Update(article);
@@ -63,7 +70,7 @@ public class ViewTrackerService : IViewTrackerService
 
             case EntityType.Book:
                 var book = await _unitOfWork.Repository<Book>().GetByIdAsync(entityId, ct);
-                if (book != null)
+                if (book != null && !book.IsDeleted)
                 {
                     book.ViewsCount++;
                     _unitOfWork.Repository<Book>().Update(book);
@@ -72,7 +79,7 @@ public class ViewTrackerService : IViewTrackerService
 
             case EntityType.Course:
                 var course = await _unitOfWork.Repository<Course>().GetByIdAsync(entityId, ct);
-                if (course != null)
+                if (course != null && !course.IsDeleted)
                 {
                     course.ViewsCount++;
                     _unitOfWork.Repository<Course>().Update(course);
@@ -81,34 +88,41 @@ public class ViewTrackerService : IViewTrackerService
         }
 
         await _unitOfWork.SaveChangesAsync(ct);
-        _logger.LogInformation("View successfully registered for {EntityType} {EntityId} from IP {IpAddress}", entityType, entityId, ipAddress);
 
+        _logger.LogInformation("Recorded new unique view for {EntityType} {EntityId} from IP {IpAddress}", entityType, entityId, ipAddress);
         return Result<bool>.Success(true);
     }
 
     public async Task<Result<ViewStatsDto>> GetViewStatsAsync(CancellationToken ct = default)
     {
-        var totalViews = await _unitOfWork.Repository<ViewLog>().CountAsync(null, ct);
+        _logger.LogInformation("Calculating platform view analytics and top content");
 
-        var allArticles = await _unitOfWork.Repository<Article>().FindAsync(a => !a.IsDeleted && a.IsPublished, ct);
-        var topArticle = allArticles.OrderByDescending(a => a.ViewsCount).FirstOrDefault();
+        var articles = await _unitOfWork.Repository<Article>().FindAsync(a => !a.IsDeleted, ct);
+        var books = await _unitOfWork.Repository<Book>().FindAsync(b => !b.IsDeleted, ct);
+        var courses = await _unitOfWork.Repository<Course>().FindAsync(c => !c.IsDeleted, ct);
+        var pendingCommentsCount = await _unitOfWork.Repository<Comment>().CountAsync(c => !c.IsDeleted && c.Status == CommentStatus.Pending, ct);
 
-        var allBooks = await _unitOfWork.Repository<Book>().FindAsync(b => !b.IsDeleted, ct);
-        var topBook = allBooks.OrderByDescending(b => b.ViewsCount).FirstOrDefault();
+        var totalArticleViews = articles.Sum(a => a.ViewsCount);
+        var totalBookViews = books.Sum(b => b.ViewsCount);
+        var totalCourseViews = courses.Sum(c => c.ViewsCount);
 
-        var allCourses = await _unitOfWork.Repository<Course>().FindAsync(c => !c.IsDeleted, ct);
-        var topCourse = allCourses.OrderByDescending(c => c.ViewsCount).FirstOrDefault();
-
-        var pendingComments = await _unitOfWork.Repository<Comment>()
-            .CountAsync(c => !c.IsDeleted && c.Status == CommentStatus.Pending, ct);
+        var topArticle = articles.OrderByDescending(a => a.ViewsCount).FirstOrDefault();
+        var topBook = books.OrderByDescending(b => b.ViewsCount).FirstOrDefault();
+        var topCourse = courses.OrderByDescending(c => c.ViewsCount).FirstOrDefault();
 
         var stats = new ViewStatsDto
         {
-            TotalViews = totalViews,
-            TopArticle = topArticle != null ? _mapper.Map<ArticleDto>(topArticle) : null,
-            TopBook = topBook != null ? _mapper.Map<BookDto>(topBook) : null,
-            TopCourse = topCourse != null ? _mapper.Map<CourseDto>(topCourse) : null,
-            PendingCommentsCount = pendingComments
+            TotalViews = totalArticleViews + totalBookViews + totalCourseViews,
+            TotalArticlesViews = totalArticleViews,
+            TotalBooksViews = totalBookViews,
+            TotalCoursesViews = totalCourseViews,
+            TopArticleTitle = topArticle?.Title ?? string.Empty,
+            TopArticleViews = topArticle?.ViewsCount ?? 0,
+            TopBookTitle = topBook?.Title ?? string.Empty,
+            TopBookViews = topBook?.ViewsCount ?? 0,
+            TopCourseTitle = topCourse?.Title ?? string.Empty,
+            TopCourseViews = topCourse?.ViewsCount ?? 0,
+            PendingCommentsCount = pendingCommentsCount
         };
 
         return Result<ViewStatsDto>.Success(stats);

@@ -1,0 +1,109 @@
+---
+interface Props {
+  currentPath: string;
+}
+
+const { currentPath } = Astro.props;
+
+const navLinks = [
+  { href: '/', label: 'صفحه اصلی' },
+  { href: '/articles', label: 'مقالات' },
+  { href: '/books', label: 'کتاب‌ها' },
+  { href: '/courses', label: 'دوره‌های آموزشی' },
+  { href: '/about', label: 'درباره من' },
+  { href: '/contact', label: 'تماس با من' },
+];
+---
+
+<!-- Mobile Hamburger Toggle Button -->
+<button
+  type="button"
+  id="mobile-menu-toggle"
+  aria-label="منوی ناوبری"
+  class="md:hidden relative inline-flex items-center justify-center w-10 h-10 rounded-full bg-black/5 dark:bg-white/10 text-neutral-800 dark:text-neutral-200 transition-colors focus:outline-none"
+>
+  <div class="w-5 h-4 flex flex-col justify-between items-center relative">
+    <span class="hamburger-line w-full h-[2px] bg-current rounded-full transition-all duration-300 transform origin-center"></span>
+    <span class="hamburger-line w-full h-[2px] bg-current rounded-full transition-all duration-300"></span>
+    <span class="hamburger-line w-full h-[2px] bg-current rounded-full transition-all duration-300 transform origin-center"></span>
+  </div>
+</button>
+
+<!-- Mobile Navigation Overlay & Drawer -->
+<div
+  id="mobile-menu-drawer"
+  class="fixed inset-0 top-[60px] z-40 bg-white/90 dark:bg-black/90 backdrop-blur-2xl opacity-0 pointer-events-none transition-all duration-400 ease-[cubic-bezier(0.16,1,0.3,1)] md:hidden flex flex-col justify-between p-6 overflow-y-auto"
+>
+  <nav class="flex flex-col space-y-3 pt-4">
+    {
+      navLinks.map((link) => {
+        const isActive = currentPath === link.href || (link.href !== '/' && currentPath.startsWith(link.href));
+        return (
+          <a
+            href={link.href}
+            class={`mobile-nav-link text-xl font-medium px-5 py-3.5 rounded-2xl transition-all duration-300 flex items-center justify-between ${
+              isActive
+                ? 'bg-apple-blue/10 text-apple-blue dark:bg-apple-blue-dark/20 dark:text-apple-blue-dark font-semibold'
+                : 'text-neutral-700 dark:text-neutral-300 hover:bg-black/5 dark:hover:bg-white/5'
+            }`}
+          >
+            <span>{link.label}</span>
+            <svg
+              class={`w-4 h-4 transition-transform duration-300 ${isActive ? 'rotate-180 text-apple-blue dark:text-apple-blue-dark' : 'text-neutral-400'}`}
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+          </a>
+        );
+      })
+    }
+  </nav>
+
+  <!-- Mobile Footer Info -->
+  <div class="pt-8 pb-4 border-t border-black/5 dark:border-white/10 text-center">
+    <p class="text-xs text-neutral-400 dark:text-neutral-500">
+      طراحی مینیمال و استاندارد با الهام از اپل
+    </p>
+  </div>
+</div>
+
+<script>
+  function initMobileMenu() {
+    const toggleBtn = document.getElementById('mobile-menu-toggle');
+    const drawer = document.getElementById('mobile-menu-drawer');
+    const links = document.querySelectorAll('.mobile-nav-link');
+
+    if (!toggleBtn || !drawer) return;
+
+    let isOpen = false;
+
+    const toggle = (force?: boolean) => {
+      isOpen = force !== undefined ? force : !isOpen;
+      
+      if (isOpen) {
+        drawer.classList.remove('opacity-0', 'pointer-events-none');
+        drawer.classList.add('opacity-100', 'pointer-events-auto');
+        document.body.style.overflow = 'hidden';
+      } else {
+        drawer.classList.add('opacity-0', 'pointer-events-none');
+        drawer.classList.remove('opacity-100', 'pointer-events-auto');
+        document.body.style.overflow = '';
+      }
+    };
+
+    toggleBtn.addEventListener('click', () => toggle());
+
+    links.forEach(link => {
+      link.addEventListener('click', () => toggle(false));
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initMobileMenu);
+  } else {
+    initMobileMenu();
+  }
+</script>

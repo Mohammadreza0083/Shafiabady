@@ -1,0 +1,73 @@
+---
+import ThemeToggle from './ThemeToggle.astro';
+import MobileMenu from './MobileMenu.astro';
+import ProgressBar from './ProgressBar.astro';
+
+interface Props {
+  currentPath?: string;
+}
+
+const { currentPath = '/' } = Astro.props;
+
+const navLinks = [
+  { href: '/', label: 'صفحه اصلی' },
+  { href: '/articles', label: 'مقالات' },
+  { href: '/books', label: 'کتاب‌ها' },
+  { href: '/courses', label: 'دوره‌ها' },
+  { href: '/about', label: 'درباره من' },
+  { href: '/contact', label: 'تماس' },
+];
+---
+
+<header class="sticky top-0 z-50 w-full transition-all duration-300 apple-glass border-b border-black/5 dark:border-white/10">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+    
+    <!-- Brand Logo -->
+    <a href="/" class="flex items-center gap-2 group focus:outline-none">
+      <div class="w-9 h-9 rounded-xl bg-apple-blue dark:bg-apple-blue-dark flex items-center justify-center text-white font-bold text-lg shadow-md shadow-apple-blue/20 transition-transform duration-300 group-hover:scale-105">
+        ش
+      </div>
+      <div class="flex flex-col">
+        <span class="font-bold text-base sm:text-lg tracking-tight text-neutral-900 dark:text-neutral-100 group-hover:text-apple-blue dark:group-hover:text-apple-blue-dark transition-colors">
+          محمدرضا شفیعی‌آبادی
+        </span>
+        <span class="text-[10px] text-neutral-500 dark:text-neutral-400 font-medium hidden sm:inline-block">
+          مهندس نرم‌افزار و پژوهشگر
+        </span>
+      </div>
+    </a>
+
+    <!-- Desktop Navigation Links -->
+    <nav class="hidden md:flex items-center gap-1 lg:gap-2">
+      {
+        navLinks.map((link) => {
+          const isActive = currentPath === link.href || (link.href !== '/' && currentPath.startsWith(link.href));
+          return (
+            <a
+              href={link.href}
+              class={`text-sm font-medium px-4 py-2 rounded-full transition-all duration-200 ${
+                isActive
+                  ? 'bg-black/5 dark:bg-white/10 text-apple-blue dark:text-apple-blue-dark font-semibold shadow-sm'
+                  : 'text-neutral-600 dark:text-neutral-300 hover:text-neutral-950 dark:hover:text-white hover:bg-black/[0.03] dark:hover:bg-white/[0.05]'
+              }`}
+            >
+              {link.label}
+            </a>
+          );
+        })
+      }
+    </nav>
+
+    <!-- Header Actions (Theme Switcher + Mobile Menu) -->
+    <div class="flex items-center gap-2 sm:gap-3">
+      <!-- Theme Switcher always visible on Desktop and Mobile -->
+      <ThemeToggle />
+
+      <!-- Mobile Hamburger Menu toggle -->
+      <MobileMenu currentPath={currentPath} />
+    </div>
+  </div>
+
+  <!-- Reading Progress Bar at absolute bottom of sticky header -->
+  <ProgressBar />
+</header>

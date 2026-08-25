@@ -1,0 +1,160 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { mockCourses } from '../../../data/mockData';
+---
+
+<AdminLayout title="مدیریت دوره‌های آموزشی" activeSection="courses">
+  <div class="max-w-7xl mx-auto space-y-6">
+    
+    <!-- Header with Action Button -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-black/5 dark:border-white/10">
+      <div>
+        <h1 class="text-2xl font-black text-neutral-950 dark:text-white">
+          دوره‌های آموزشی و وبینارها
+        </h1>
+        <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
+          مدیریت دوره‌های تخصصی، سرفصل‌ها، قیمت‌گذاری و وضعیت ثبت‌نام
+        </p>
+      </div>
+
+      <button
+        type="button"
+        id="btn-add-course"
+        class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-apple-blue hover:bg-blue-600 text-white text-xs font-bold shadow-md shadow-apple-blue/25 transition-all duration-200"
+      >
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        <span>تعریف دوره جدید</span>
+      </button>
+    </div>
+
+    <!-- Data Table Container -->
+    <div class="rounded-3xl bg-white dark:bg-neutral-900 border border-black/5 dark:border-white/10 shadow-sm overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-right text-xs">
+          <thead class="bg-neutral-50 dark:bg-neutral-800/50 text-neutral-500 dark:text-neutral-400 font-semibold border-b border-black/5 dark:border-white/10">
+            <tr>
+              <th class="py-4 px-6">عنوان دوره</th>
+              <th class="py-4 px-6">سطح و مدت زمان</th>
+              <th class="py-4 px-6">شهریه و تخفیف</th>
+              <th class="py-4 px-6">جلسات</th>
+              <th class="py-4 px-6">بازدید</th>
+              <th class="py-4 px-6 text-center">عملیات</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-black/5 dark:divide-white/5">
+            {
+              mockCourses.map((course) => (
+                <tr class="hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors">
+                  <td class="py-4 px-6">
+                    <div class="flex items-center gap-3">
+                      <div class="w-12 h-8 rounded-lg overflow-hidden bg-neutral-900 border border-white/10 flex-shrink-0 flex items-center justify-center text-white font-bold text-xs shadow-sm">
+                        {course.thumbnail ? (
+                          <img src={course.thumbnail} alt={course.title} class="w-full h-full object-cover" />
+                        ) : (
+                          'دوره'
+                        )}
+                      </div>
+                      <div class="flex flex-col">
+                        <span class="font-bold text-neutral-900 dark:text-white text-sm max-w-xs truncate">
+                          {course.title}
+                        </span>
+                        <span class="text-[10px] text-neutral-400 font-mono">
+                          /{course.slug}
+                        </span>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="py-4 px-6">
+                    <div class="flex flex-col">
+                      <span class="font-medium text-neutral-700 dark:text-neutral-300">
+                        {course.level}
+                      </span>
+                      <span class="text-[11px] text-neutral-400">
+                        {course.duration}
+                      </span>
+                    </div>
+                  </td>
+                  <td class="py-4 px-6">
+                    {course.isFree ? (
+                      <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400">رایگان</span>
+                    ) : (
+                      <div class="flex flex-col">
+                        <span class="font-bold text-neutral-900 dark:text-white">
+                          {course.price.toLocaleString('fa-IR')} تومان
+                        </span>
+                        {course.discountPercentage && (
+                          <span class="text-[10px] text-rose-500 font-bold">
+                            {course.discountPercentage}٪ تخفیف
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </td>
+                  <td class="py-4 px-6 text-neutral-500">
+                    {course.lessonsCount} جلسه
+                  </td>
+                  <td class="py-4 px-6 font-semibold text-neutral-700 dark:text-neutral-300">
+                    {course.viewsCount.toLocaleString('fa-IR')}
+                  </td>
+                  <td class="py-4 px-6">
+                    <div class="flex items-center justify-center gap-2">
+                      <a
+                        href={`/courses/${course.slug}`}
+                        target="_blank"
+                        class="p-2 rounded-xl text-neutral-400 hover:text-apple-blue hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+                        title="مشاهده در سایت"
+                      >
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                      </a>
+                      <button
+                        type="button"
+                        class="edit-btn p-2 rounded-xl text-neutral-400 hover:text-amber-500 hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+                        title="ویرایش"
+                        data-title={course.title}
+                      >
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </button>
+                      <button
+                        type="button"
+                        class="delete-btn p-2 rounded-xl text-neutral-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors"
+                        title="حذف"
+                        data-title={course.title}
+                      >
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</AdminLayout>
+
+<script>
+  document.getElementById('btn-add-course')?.addEventListener('click', () => {
+    alert('فرم تعریف دوره جدید در مودال یا صفحه ایجاد فعال خواهد شد.');
+  });
+
+  document.querySelectorAll('.delete-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const title = btn.getAttribute('data-title');
+      if (confirm(`آیا از حذف دوره «${title}» اطمینان دارید؟`)) {
+        alert('درخواست حذف ثبت شد.');
+      }
+    });
+  });
+</script>

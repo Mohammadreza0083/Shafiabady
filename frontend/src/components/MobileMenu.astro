@@ -6,12 +6,12 @@ interface Props {
 const { currentPath } = Astro.props;
 
 const navLinks = [
-  { href: '/', label: 'صفحه اصلی' },
-  { href: '/articles', label: 'مقالات' },
-  { href: '/books', label: 'کتاب‌ها' },
-  { href: '/courses', label: 'دوره‌های آموزشی' },
-  { href: '/about', label: 'درباره من' },
-  { href: '/contact', label: 'تماس با من' },
+  { href: '/', label: 'صفحه اصلی', subtitle: 'معرفی، مقالات برگزیده و تألیفات' },
+  { href: '/articles', label: 'مقالات تخصصی', subtitle: 'معماری تمیز، دات‌نت ۹، DDD و TDD' },
+  { href: '/books', label: 'کتاب‌ها و تألیفات', subtitle: 'مراجع جامع مهندسی نرم‌افزار' },
+  { href: '/courses', label: 'دوره‌های آموزشی', subtitle: 'آموزش‌های کاربردی و پیشرفته' },
+  { href: '/about', label: 'درباره من', subtitle: 'رزومه، افتخارات و سوابق علمی' },
+  { href: '/contact', label: 'تماس و مشاوره', subtitle: 'ارتباط مستقیم و درخواست همکاری' },
 ];
 ---
 
@@ -24,49 +24,91 @@ const navLinks = [
   class="md:hidden relative inline-flex items-center justify-center w-10 h-10 rounded-full bg-black/5 dark:bg-white/10 text-neutral-800 dark:text-neutral-200 transition-colors focus:outline-none"
 >
   <div class="w-5 h-4 flex flex-col justify-between items-center relative pointer-events-none">
-    <span id="h-line-1" class="w-full h-[2px] bg-current rounded-full transition-transform duration-300 transform origin-center"></span>
+    <span id="h-line-1" class="w-full h-[2px] bg-current rounded-full transition-all duration-300 transform origin-center"></span>
     <span id="h-line-2" class="w-full h-[2px] bg-current rounded-full transition-opacity duration-300"></span>
-    <span id="h-line-3" class="w-full h-[2px] bg-current rounded-full transition-transform duration-300 transform origin-center"></span>
+    <span id="h-line-3" class="w-full h-[2px] bg-current rounded-full transition-all duration-300 transform origin-center"></span>
   </div>
 </button>
 
-<!-- Mobile Navigation Overlay & Drawer -->
+<!-- Fullscreen Mobile Navigation Overlay & Drawer (Teleported to body on mount) -->
 <div
   id="mobile-menu-drawer"
-  class="fixed inset-x-0 top-16 bottom-0 z-50 bg-white/95 dark:bg-neutral-950/95 backdrop-blur-2xl opacity-0 pointer-events-none transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] md:hidden flex flex-col justify-between p-6 overflow-y-auto"
+  class="fixed inset-0 z-[9999] w-screen h-screen bg-white/95 dark:bg-neutral-950/95 backdrop-blur-2xl opacity-0 pointer-events-none transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] md:hidden flex flex-col justify-between p-6 sm:p-8 overflow-y-auto"
 >
-  <nav class="flex flex-col space-y-2 pt-2">
+  <!-- Drawer Header -->
+  <div class="flex items-center justify-between pb-6 border-b border-black/5 dark:border-white/10">
+    <a href="/" class="flex items-center gap-3 mobile-nav-link focus:outline-none">
+      <div class="w-10 h-10 rounded-2xl bg-apple-blue flex items-center justify-center text-white font-extrabold text-xl shadow-lg shadow-apple-blue/25">
+        ش
+      </div>
+      <div class="flex flex-col">
+        <span class="font-bold text-base text-neutral-900 dark:text-white">
+          دکتر محمد حسین شفیعآبادی
+        </span>
+        <span class="text-xs text-neutral-500 dark:text-neutral-400">
+          استاد دانشگاه و پژوهشگر مهندسی نرم‌افزار
+        </span>
+      </div>
+    </a>
+
+    <button
+      type="button"
+      id="mobile-menu-close"
+      aria-label="بستن منو"
+      class="w-10 h-10 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center text-neutral-700 dark:text-neutral-300 hover:bg-black/10 dark:hover:bg-white/20 transition-colors focus:outline-none"
+    >
+      <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </button>
+  </div>
+
+  <!-- Vertical Navigation Links List -->
+  <nav class="flex flex-col space-y-3 py-6 my-auto">
     {
       navLinks.map((link) => {
         const isActive = currentPath === link.href || (link.href !== '/' && currentPath.startsWith(link.href));
         return (
           <a
             href={link.href}
-            class={`mobile-nav-link text-lg font-medium px-5 py-3.5 rounded-2xl transition-all duration-200 flex items-center justify-between ${
+            class={`mobile-nav-link p-4 rounded-2xl transition-all duration-200 flex items-center justify-between group ${
               isActive
-                ? 'bg-apple-blue/10 text-apple-blue dark:bg-apple-blue-dark/20 dark:text-apple-blue-dark font-semibold'
-                : 'text-neutral-700 dark:text-neutral-300 hover:bg-black/5 dark:hover:bg-white/5'
+                ? 'bg-apple-blue/10 dark:bg-apple-blue-dark/20 text-apple-blue dark:text-apple-blue-dark border border-apple-blue/20'
+                : 'text-neutral-800 dark:text-neutral-200 hover:bg-black/5 dark:hover:bg-white/5 border border-transparent'
             }`}
           >
-            <span>{link.label}</span>
-            <svg
-              class={`w-4 h-4 transition-transform duration-200 ${isActive ? 'rotate-180 text-apple-blue dark:text-apple-blue-dark' : 'text-neutral-400'}`}
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-            </svg>
+            <div class="flex flex-col">
+              <span class="text-lg font-bold group-hover:text-apple-blue dark:group-hover:text-apple-blue-dark transition-colors">
+                {link.label}
+              </span>
+              <span class="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
+                {link.subtitle}
+              </span>
+            </div>
+            <div class={`w-8 h-8 rounded-full flex items-center justify-center transition-transform group-hover:translate-x-[-4px] ${isActive ? 'bg-apple-blue text-white' : 'bg-black/5 dark:bg-white/5 text-neutral-400'}`}>
+              <svg class="w-4 h-4 transform rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
           </a>
         );
       })
     }
   </nav>
 
-  <!-- Mobile Footer Info -->
-  <div class="pt-6 pb-2 border-t border-black/5 dark:border-white/10 text-center">
-    <p class="text-xs text-neutral-400 dark:text-neutral-500">
-      دکتر محمد حسین شفیعآبادی • پلتفرم تخصصی معماری نرم‌افزار
+  <!-- Mobile Footer / Quick Action -->
+  <div class="pt-6 border-t border-black/5 dark:border-white/10 flex flex-col gap-4">
+    <a
+      href="/contact"
+      class="mobile-nav-link w-full py-3.5 rounded-2xl bg-apple-blue dark:bg-apple-blue-dark text-white font-bold text-center shadow-lg shadow-apple-blue/30 flex items-center justify-center gap-2"
+    >
+      <span>درخواست مشاوره و همکاری</span>
+      <svg class="w-4 h-4 transform rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+      </svg>
+    </a>
+    <p class="text-[11px] text-center text-neutral-400 dark:text-neutral-500">
+      طراحی مینیمال و استاندارد با الهام از اپل • دکتر محمد حسین شفیعآبادی
     </p>
   </div>
 </div>
@@ -75,12 +117,18 @@ const navLinks = [
   function setupMobileMenu() {
     const toggleBtn = document.getElementById('mobile-menu-toggle');
     const drawer = document.getElementById('mobile-menu-drawer');
+    const closeBtn = document.getElementById('mobile-menu-close');
     const line1 = document.getElementById('h-line-1');
     const line2 = document.getElementById('h-line-2');
     const line3 = document.getElementById('h-line-3');
     const links = document.querySelectorAll('.mobile-nav-link');
 
     if (!toggleBtn || !drawer) return;
+
+    // Move drawer to document.body so it never gets clipped by parent container filters/heights
+    if (drawer.parentElement !== document.body) {
+      document.body.appendChild(drawer);
+    }
 
     let isOpen = false;
 
@@ -93,7 +141,6 @@ const navLinks = [
         drawer.classList.add('opacity-100', 'pointer-events-auto');
         document.body.style.overflow = 'hidden';
 
-        // Animate hamburger to X
         if (line1 && line2 && line3) {
           line1.style.transform = 'translateY(7px) rotate(45deg)';
           line2.style.opacity = '0';
@@ -104,7 +151,6 @@ const navLinks = [
         drawer.classList.remove('opacity-100', 'pointer-events-auto');
         document.body.style.overflow = '';
 
-        // Reset hamburger lines
         if (line1 && line2 && line3) {
           line1.style.transform = '';
           line2.style.opacity = '1';
@@ -113,7 +159,7 @@ const navLinks = [
       }
     };
 
-    // Remove any previous listener by cloning if re-rendered
+    // Cleanly replace button listeners to prevent duplicates
     const newToggleBtn = toggleBtn.cloneNode(true) as HTMLElement;
     toggleBtn.parentNode?.replaceChild(newToggleBtn, toggleBtn);
 
@@ -122,13 +168,14 @@ const navLinks = [
       setMenuState(!isOpen);
     });
 
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => setMenuState(false));
+    }
+
     links.forEach((link) => {
-      link.addEventListener('click', () => {
-        setMenuState(false);
-      });
+      link.addEventListener('click', () => setMenuState(false));
     });
 
-    // Close on escape key
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && isOpen) {
         setMenuState(false);

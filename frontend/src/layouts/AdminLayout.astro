@@ -1,0 +1,175 @@
+---
+import ThemeToggle from '../components/ThemeToggle.astro';
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+  activeSection?: 'dashboard' | 'articles' | 'books' | 'courses' | 'comments';
+}
+
+const { title = 'پیش‌خوان مدیریت', activeSection = 'dashboard' } = Astro.props;
+
+const currentPath = Astro.url.pathname;
+
+const sidebarLinks = [
+  {
+    id: 'dashboard',
+    href: '/admin',
+    label: 'داشبورد و آمار',
+    icon: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />`,
+  },
+  {
+    id: 'articles',
+    href: '/admin/articles',
+    label: 'مدیریت مقالات',
+    icon: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />`,
+  },
+  {
+    id: 'books',
+    href: '/admin/books',
+    label: 'مدیریت کتاب‌ها',
+    icon: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />`,
+  },
+  {
+    id: 'courses',
+    href: '/admin/courses',
+    label: 'مدیریت دوره‌ها',
+    icon: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0020 6.818V4.182a1 1 0 00-.553-.894L15 1m0 9v13m0-13L3.447 4.182A1 1 0 003 5.076v13.848a1 1 0 001.447.894L15 14.273" />`,
+  },
+  {
+    id: 'comments',
+    href: '/admin/comments',
+    label: 'مدیریت نظرات',
+    badge: '۳',
+    icon: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />`,
+  },
+];
+---
+
+<!doctype html>
+<html lang="fa" dir="rtl" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{title} | پنل مدیریت دکتر محمد حسین شفیعآبادی</title>
+    <meta name="robots" content="noindex, nofollow" />
+
+    <!-- Anti-FOUC Theme Initializer -->
+    <script is:inline>
+      (function () {
+        try {
+          const savedTheme = localStorage.getItem('theme');
+          if (savedTheme === 'dark') {
+            document.documentElement.classList.add('dark');
+          } else if (savedTheme === 'light') {
+            document.documentElement.classList.remove('dark');
+          } else {
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (prefersDark) document.documentElement.classList.add('dark');
+          }
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body class="bg-neutral-100 dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 font-sans antialiased min-h-screen flex flex-col md:flex-row">
+    
+    <!-- Sidebar -->
+    <aside class="w-full md:w-64 lg:w-72 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-2xl border-b md:border-b-0 md:border-l border-black/5 dark:border-white/10 flex-shrink-0 flex flex-col justify-between p-4 lg:p-6 sticky top-0 md:h-screen z-30">
+      <div>
+        <!-- Admin Brand Header -->
+        <div class="flex items-center justify-between pb-6 mb-6 border-b border-black/5 dark:border-white/10">
+          <a href="/admin" class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-apple-blue dark:bg-apple-blue-dark flex items-center justify-center text-white font-extrabold text-xl shadow-lg shadow-apple-blue/25">
+              ش
+            </div>
+            <div>
+              <span class="font-extrabold text-base text-neutral-950 dark:text-white block">
+                پنل مدیریت محتوا
+              </span>
+              <span class="text-[11px] text-neutral-400">
+                دکتر محمد حسین شفیعآبادی
+              </span>
+            </div>
+          </a>
+          <div class="md:hidden">
+            <ThemeToggle />
+          </div>
+        </div>
+
+        <!-- Navigation Links -->
+        <nav class="space-y-1.5">
+          {
+            sidebarLinks.map((link) => {
+              const isActive = activeSection === link.id || (link.id !== 'dashboard' && currentPath.startsWith(link.href));
+              return (
+                <a
+                  href={link.href}
+                  class={`flex items-center justify-between px-3.5 py-3 rounded-2xl text-sm font-medium transition-all duration-200 ${
+                    isActive
+                      ? 'bg-apple-blue text-white shadow-md shadow-apple-blue/25 font-semibold'
+                      : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-950 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5'
+                  }`}
+                >
+                  <div class="flex items-center gap-3">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" set:html={link.icon} />
+                    <span>{link.label}</span>
+                  </div>
+                  {
+                    link.badge && (
+                      <span class={`px-2 py-0.5 rounded-full text-xs font-bold ${isActive ? 'bg-white text-apple-blue' : 'bg-rose-500 text-white'}`}>
+                        {link.badge}
+                      </span>
+                    )
+                  }
+                </a>
+              );
+            })
+          }
+        </nav>
+      </div>
+
+      <!-- Sidebar Bottom Info -->
+      <div class="pt-6 mt-6 border-t border-black/5 dark:border-white/10 flex items-center justify-between">
+        <a
+          href="/"
+          target="_blank"
+          class="flex items-center gap-2 text-xs font-semibold text-neutral-500 hover:text-apple-blue dark:hover:text-apple-blue-dark transition-colors"
+        >
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+          </svg>
+          <span>مشاهده وب‌سایت</span>
+        </a>
+
+        <div class="hidden md:block">
+          <ThemeToggle />
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <div class="flex-grow flex flex-col min-h-screen overflow-x-hidden">
+      <!-- Top Bar -->
+      <header class="h-16 bg-white/60 dark:bg-neutral-900/60 backdrop-blur-xl border-b border-black/5 dark:border-white/10 px-6 lg:px-10 flex items-center justify-between sticky top-0 z-20">
+        <div class="flex items-center gap-2 text-xs text-neutral-400">
+          <a href="/admin" class="hover:text-neutral-700 dark:hover:text-neutral-300">مدیریت</a>
+          <span>/</span>
+          <span class="text-neutral-800 dark:text-neutral-200 font-semibold">{title}</span>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span>سیستم آنلاین</span>
+          </span>
+        </div>
+      </header>
+
+      <!-- Main Slot -->
+      <main class="p-6 lg:p-10 flex-grow">
+        <slot />
+      </main>
+    </div>
+  </body>
+</html>

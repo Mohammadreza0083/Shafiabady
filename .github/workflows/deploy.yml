@@ -84,85 +84,87 @@ jobs:
 
   # ----------------------------------------------------------------------------
   # Job 2: Enterprise Automated Deployment with Post-Deployment Rollback
+  # NOTE: Commented out until production server SSH secrets (SSH_HOST, SSH_USER,
+  # SSH_PRIVATE_KEY) are configured in GitHub Repository Secrets.
   # ----------------------------------------------------------------------------
-  deploy-with-rollback:
-    name: Deploy & Self-Healing Rollback
-    needs: test-and-build
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    steps:
-      - name: Deploy to Remote Production Host via SSH
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.SSH_PORT || 22 }}
-          timeout: 300s
-          script: |
-            set -e
-
-            APP_DIR="/opt/shafieiabadi"
-            echo "🚀 Navigating to application directory: ${APP_DIR}"
-            cd ${APP_DIR}
-
-            # 1. Capture current stable Git commit SHA for atomic rollback
-            PREV_COMMIT=$(git rev-parse HEAD)
-            echo "📌 Current Stable Release SHA: ${PREV_COMMIT}"
-
-            # 2. Pull latest code from production branch
-            echo "📥 Pulling latest code changes..."
-            git fetch origin main
-            git reset --hard origin/main
-            NEW_COMMIT=$(git rev-parse HEAD)
-            echo "🆕 Target Deployment SHA: ${NEW_COMMIT}"
-
-            # 3. Build and rollout new container stack
-            echo "🐳 Building and spinning up updated Docker containers..."
-            docker compose up -d --build --remove-orphans
-
-            # 4. Post-Deployment Health Check Verification Loop (90s window)
-            echo "⏳ Probing service health endpoints..."
-            HEALTHY=0
-            MAX_ATTEMPTS=15
-            ATTEMPT=1
-
-            while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
-              echo "🩺 Health Check Probe $ATTEMPT/$MAX_ATTEMPTS..."
-
-              BACKEND_OK=$(curl -s -o /dev/null -w "%{http_code}" http://localhost/health || true)
-              FRONTEND_OK=$(curl -s -o /dev/null -w "%{http_code}" http://localhost/ || true)
-              BOT_OK=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/health || true)
-
-              echo "   - .NET API Health Status: $BACKEND_OK"
-              echo "   - Astro Frontend Status: $FRONTEND_OK"
-              echo "   - Telegram Bot Status: $BOT_OK"
-
-              if [ "$BACKEND_OK" = "200" ] && [ "$FRONTEND_OK" = "200" ] && [ "$BOT_OK" = "200" ]; then
-                echo "✅ All service health checks passed successfully!"
-                HEALTHY=1
-                break
-              fi
-
-              sleep 6
-              ATTEMPT=$((ATTEMPT + 1))
-            done
-
-            # 5. Automated Rollback Trigger if Health Checks Fail
-            if [ $HEALTHY -ne 1 ]; then
-              echo "🚨 [FATAL] Deployment verification failed! Service endpoints did not become healthy."
-              echo "📋 Inspecting recent container logs before rollback:"
-              docker compose logs --tail=50
-
-              echo "⏪ Initiating automated rollback to previous stable commit: ${PREV_COMMIT}..."
-              git reset --hard ${PREV_COMMIT}
-              docker compose up -d --build --remove-orphans
-
-              echo "🛑 Rollback completed. System restored to stable state (${PREV_COMMIT})."
-              exit 1
-            fi
-
-            # 6. Housekeeping: Remove dangling images after successful release
-            echo "🧹 Cleaning up dangling build artifacts..."
-            docker image prune -f
-            echo "🎉 Deployment for SHA ${NEW_COMMIT} completed successfully!"
+  # deploy-with-rollback:
+  #   name: Deploy & Self-Healing Rollback
+  #   needs: test-and-build
+  #   runs-on: ubuntu-latest
+  #   if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && github.event_name == 'push'
+  #   steps:
+  #     - name: Deploy to Remote Production Host via SSH
+  #       uses: appleboy/ssh-action@v1.0.3
+  #       with:
+  #         host: ${{ secrets.SSH_HOST }}
+  #         username: ${{ secrets.SSH_USER }}
+  #         key: ${{ secrets.SSH_PRIVATE_KEY }}
+  #         port: ${{ secrets.SSH_PORT || 22 }}
+  #         timeout: 300s
+  #         script: |
+  #           set -e
+  #
+  #           APP_DIR="/opt/shafieiabadi"
+  #           echo "🚀 Navigating to application directory: ${APP_DIR}"
+  #           cd ${APP_DIR}
+  #
+  #           # 1. Capture current stable Git commit SHA for atomic rollback
+  #           PREV_COMMIT=$(git rev-parse HEAD)
+  #           echo "📌 Current Stable Release SHA: ${PREV_COMMIT}"
+  #
+  #           # 2. Pull latest code from production branch
+  #           echo "📥 Pulling latest code changes..."
+  #           git fetch origin main
+  #           git reset --hard origin/main
+  #           NEW_COMMIT=$(git rev-parse HEAD)
+  #           echo "🆕 Target Deployment SHA: ${NEW_COMMIT}"
+  #
+  #           # 3. Build and rollout new container stack
+  #           echo "🐳 Building and spinning up updated Docker containers..."
+  #           docker compose up -d --build --remove-orphans
+  #
+  #           # 4. Post-Deployment Health Check Verification Loop (90s window)
+  #           echo "⏳ Probing service health endpoints..."
+  #           HEALTHY=0
+  #           MAX_ATTEMPTS=15
+  #           ATTEMPT=1
+  #
+  #           while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
+  #             echo "🩺 Health Check Probe $ATTEMPT/$MAX_ATTEMPTS..."
+  #
+  #             BACKEND_OK=$(curl -s -o /dev/null -w "%{http_code}" http://localhost/health || true)
+  #             FRONTEND_OK=$(curl -s -o /dev/null -w "%{http_code}" http://localhost/ || true)
+  #             BOT_OK=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/health || true)
+  #
+  #             echo "   - .NET API Health Status: $BACKEND_OK"
+  #             echo "   - Astro Frontend Status: $FRONTEND_OK"
+  #             echo "   - Telegram Bot Status: $BOT_OK"
+  #
+  #             if [ "$BACKEND_OK" = "200" ] && [ "$FRONTEND_OK" = "200" ] && [ "$BOT_OK" = "200" ]; then
+  #               echo "✅ All service health checks passed successfully!"
+  #               HEALTHY=1
+  #               break
+  #             fi
+  #
+  #             sleep 6
+  #             ATTEMPT=$((ATTEMPT + 1))
+  #           done
+  #
+  #           # 5. Automated Rollback Trigger if Health Checks Fail
+  #           if [ $HEALTHY -ne 1 ]; then
+  #             echo "🚨 [FATAL] Deployment verification failed! Service endpoints did not become healthy."
+  #             echo "📋 Inspecting recent container logs before rollback:"
+  #             docker compose logs --tail=50
+  #
+  #             echo "⏪ Initiating automated rollback to previous stable commit: ${PREV_COMMIT}..."
+  #             git reset --hard ${PREV_COMMIT}
+  #             docker compose up -d --build --remove-orphans
+  #
+  #             echo "🛑 Rollback completed. System restored to stable state (${PREV_COMMIT})."
+  #             exit 1
+  #           fi
+  #
+  #           # 6. Housekeeping: Remove dangling images after successful release
+  #           echo "🧹 Cleaning up dangling build artifacts..."
+  #           docker image prune -f
+  #           echo "🎉 Deployment for SHA ${NEW_COMMIT} completed successfully!"

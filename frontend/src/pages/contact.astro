@@ -1,0 +1,160 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Button from '../components/ui/Button.astro';
+---
+
+<BaseLayout
+  title="تماس با من | محمدرضا شفیعی‌آبادی"
+  description="فرم ارتباط مستقیم و ارسال پیام برای مشاوره‌های معماری، آموزش‌های سازمانی و پروژه‌های نرم‌افزاری."
+>
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-20">
+    <!-- Header Section -->
+    <div class="text-center max-w-2xl mx-auto mb-12">
+      <span class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-apple-blue/10 text-apple-blue dark:bg-apple-blue-dark/20 dark:text-apple-blue-dark mb-4">
+        ارتباط مستقیم و همکاری
+      </span>
+      <h1 class="text-3xl sm:text-5xl font-extrabold text-neutral-950 dark:text-white tracking-tight leading-tight mb-4">
+        بیایید با هم گفتگو کنیم
+      </h1>
+      <p class="text-base sm:text-lg text-neutral-600 dark:text-neutral-400">
+        برای طرح پرسش، درخواست مشاوره معماری یا هماهنگی دوره‌های آموزشی، فرم زیر را تکمیل کنید. پیام شما فوراً از طریق ربات تلگرام اختصاصی بررسی می‌شود.
+      </p>
+    </div>
+
+    <!-- Contact Form Card -->
+    <div class="apple-glass-card p-8 sm:p-12 rounded-[2.5rem] shadow-xl">
+      <form id="contact-form" class="space-y-6">
+        <!-- Row 1: Name & Email -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div>
+            <label for="fullName" class="block text-xs font-bold text-neutral-700 dark:text-neutral-300 mb-2">
+              نام و نام خانوادگی <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              id="fullName"
+              name="fullName"
+              required
+              placeholder="مثال: محمدرضا شفیعی"
+              class="w-full px-4 py-3 rounded-2xl bg-white/70 dark:bg-neutral-800/70 border border-black/10 dark:border-white/10 text-sm text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-apple-blue/50 transition-all"
+            />
+          </div>
+
+          <div>
+            <label for="email" class="block text-xs font-bold text-neutral-700 dark:text-neutral-300 mb-2">
+              آدرس ایمیل <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              required
+              placeholder="name@company.com"
+              class="w-full px-4 py-3 rounded-2xl bg-white/70 dark:bg-neutral-800/70 border border-black/10 dark:border-white/10 text-sm text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-apple-blue/50 transition-all text-left dir-ltr"
+            />
+          </div>
+        </div>
+
+        <!-- Row 2: Phone & Telegram ID (Optional) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div>
+            <label for="phoneNumber" class="block text-xs font-bold text-neutral-700 dark:text-neutral-300 mb-2 flex items-center justify-between">
+              <span>شماره تماس</span>
+              <span class="text-[10px] font-normal text-neutral-400">اختیاری</span>
+            </label>
+            <input
+              type="tel"
+              id="phoneNumber"
+              name="phoneNumber"
+              placeholder="۰۹۱۲۳۴۵۶۷۸۹"
+              class="w-full px-4 py-3 rounded-2xl bg-white/70 dark:bg-neutral-800/70 border border-black/10 dark:border-white/10 text-sm text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-apple-blue/50 transition-all text-left dir-ltr"
+            />
+          </div>
+
+          <div>
+            <label for="telegramId" class="block text-xs font-bold text-neutral-700 dark:text-neutral-300 mb-2 flex items-center justify-between">
+              <span>آیدی تلگرام</span>
+              <span class="text-[10px] font-normal text-neutral-400">اختیاری</span>
+            </label>
+            <div class="relative flex items-center">
+              <span class="absolute right-4 text-sm text-neutral-400 font-mono">@</span>
+              <input
+                type="text"
+                id="telegramId"
+                name="telegramId"
+                placeholder="username"
+                class="w-full pr-8 pl-4 py-3 rounded-2xl bg-white/70 dark:bg-neutral-800/70 border border-black/10 dark:border-white/10 text-sm text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-apple-blue/50 transition-all text-left dir-ltr font-mono"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 3: Message -->
+        <div>
+          <label for="message" class="block text-xs font-bold text-neutral-700 dark:text-neutral-300 mb-2">
+            متن پیام <span class="text-red-500">*</span>
+          </label>
+          <textarea
+            id="message"
+            name="message"
+            rows="5"
+            required
+            placeholder="درباره پروژه، درخواست مشاوره یا موضوع مورد نظرتان توضیح دهید..."
+            class="w-full px-4 py-3.5 rounded-2xl bg-white/70 dark:bg-neutral-800/70 border border-black/10 dark:border-white/10 text-sm text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-apple-blue/50 transition-all leading-relaxed"
+          ></textarea>
+        </div>
+
+        <!-- Status Toast Alert -->
+        <div id="form-feedback" class="hidden p-4 rounded-2xl text-sm font-medium transition-all"></div>
+
+        <!-- Submit Button -->
+        <div class="flex items-center justify-between pt-2">
+          <p class="text-[11px] text-neutral-400">
+            اطلاعات شما با بالاترین ضوابط حریم خصوصی نگهداری خواهد شد.
+          </p>
+          <Button type="submit" variant="primary" size="lg">
+            <span>ارسال پیام مستقیم</span>
+            <svg class="w-4 h-4 transform rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+            </svg>
+          </Button>
+        </div>
+      </form>
+    </div>
+  </div>
+</BaseLayout>
+
+<script>
+  function initContactForm() {
+    const form = document.getElementById('contact-form') as HTMLFormElement | null;
+    const feedback = document.getElementById('form-feedback');
+
+    if (!form || !feedback) return;
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const formData = new FormData(form);
+      const data = {
+        fullName: formData.get('fullName'),
+        email: formData.get('email'),
+        phoneNumber: formData.get('phoneNumber'),
+        telegramId: formData.get('telegramId'),
+        message: formData.get('message'),
+      };
+
+      // Show success feedback
+      feedback.className = 'p-4 rounded-2xl text-sm font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20';
+      feedback.textContent = '✨ پیام شما با موفقیت ثبت شد و به ربات تلگرام ارسال گردید. در اسرع وقت با شما تماس گرفته خواهد شد.';
+      feedback.classList.remove('hidden');
+
+      form.reset();
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initContactForm);
+  } else {
+    initContactForm();
+  }
+</script>

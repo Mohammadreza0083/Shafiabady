@@ -1,0 +1,30 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import BookCard from '../../components/cards/BookCard.astro';
+import { mockBooks } from '../../data/mockData';
+---
+
+<BaseLayout
+  title="کتاب‌ها و تألیفات | محمدرضا شفیعی‌آبادی"
+  description="تألیفات و مراجع جامع معماری نرم‌افزار، طراحی سیستم‌های پرترافیک و توسعه آزمون‌محور."
+>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <!-- Header Section -->
+    <div class="text-center max-w-3xl mx-auto mb-16">
+      <span class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-apple-blue/10 text-apple-blue dark:bg-apple-blue-dark/20 dark:text-apple-blue-dark mb-4">
+        تألیفات و کتب تخصصی
+      </span>
+      <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-neutral-950 dark:text-white tracking-tight leading-tight mb-4">
+        کتاب‌های مرجع مهندسی نرم‌افزار
+      </h1>
+      <p class="text-base sm:text-lg text-neutral-600 dark:text-neutral-400">
+        منابع آموزشی مکتوب برای تعمیق دانش در معماری سیستم‌های توزیع‌شده و بهترین روش‌های کدنویسی حرفه‌ای.
+      </p>
+    </div>
+
+    <!-- Books Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      {mockBooks.map((book) => <BookCard book={book} />)}
+    </div>
+  </div>
+</BaseLayout>

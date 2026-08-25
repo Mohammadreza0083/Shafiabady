@@ -1,0 +1,80 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ArticleCard from '../../components/cards/ArticleCard.astro';
+import { mockArticles } from '../../data/mockData';
+
+const categories = ['همه', 'معماری نرم‌افزار', 'طراحی سیستم', 'کیفیت و تست', 'میکروسرویس', 'فرانت‌اند مدرن', 'پایگاه داده'];
+const initialArticles = mockArticles.slice(0, 3);
+---
+
+<BaseLayout
+  title="مقالات تخصصی مهندسی نرم‌افزار و معماری | محمدرضا شفیعی‌آبادی"
+  description="مجموعه مقالات تخصصی در حوزه Clean Architecture، Domain-Driven Design، میکروسرویس‌ها و تکنیک‌های پیشرفته دات‌نت."
+>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <!-- Header Section -->
+    <div class="text-center max-w-3xl mx-auto mb-12">
+      <span class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-apple-blue/10 text-apple-blue dark:bg-apple-blue-dark/20 dark:text-apple-blue-dark mb-4">
+        دانشنامه و تجربیات معماری
+      </span>
+      <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-neutral-950 dark:text-white tracking-tight leading-tight mb-4">
+        مقالات و تحلیل‌های تخصصی
+      </h1>
+      <p class="text-base sm:text-lg text-neutral-600 dark:text-neutral-400">
+        جستارها و راهنماهای گام‌به‌گام درباره سیستم‌های توزیع‌شده، اصول DDD، تست‌نویسی TDD و مدرن‌ترین راهکارهای دات‌نت.
+      </p>
+    </div>
+
+    <!-- Category Filters -->
+    <div class="flex items-center justify-start sm:justify-center gap-2 overflow-x-auto pb-4 mb-10 no-scrollbar">
+      {
+        categories.map((cat, index) => (
+          <button
+            type="button"
+            class={`px-4 py-2 rounded-full text-xs sm:text-sm font-medium whitespace-nowrap transition-all duration-200 ${
+              index === 0
+                ? 'bg-apple-blue text-white shadow-sm dark:bg-apple-blue-dark'
+                : 'bg-black/5 dark:bg-white/5 text-neutral-700 dark:text-neutral-300 hover:bg-black/10 dark:hover:bg-white/10'
+            }`}
+          >
+            {cat}
+          </button>
+        ))
+      }
+    </div>
+
+    <!-- Articles Grid (Populated initially & dynamically augmented by infinite scroll) -->
+    <div id="articles-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+      {
+        initialArticles.map((article) => (
+          <ArticleCard article={article} />
+        ))
+      }
+    </div>
+
+    <!-- Infinite Scroll Sentinel & Loading Spinner -->
+    <div id="scroll-sentinel" class="py-12 flex flex-col items-center justify-center">
+      <div id="scroll-loading" class="flex items-center gap-3 text-sm text-neutral-500 dark:text-neutral-400 hidden">
+        <svg class="animate-spin h-5 w-5 text-apple-blue dark:text-apple-blue-dark" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <span>در حال دریافت مقالات بیشتر...</span>
+      </div>
+
+      <div id="scroll-end" class="text-sm text-neutral-400 dark:text-neutral-600 hidden">
+        ✨ شما به انتهای فهرست مقالات رسیدید.
+      </div>
+    </div>
+  </div>
+</BaseLayout>
+
+<script>
+  import { setupInfiniteScroll } from '../../scripts/infinite-scroll';
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => setupInfiniteScroll());
+  } else {
+    setupInfiniteScroll();
+  }
+</script>

@@ -1,0 +1,163 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Button from '../components/ui/Button.astro';
+---
+
+<BaseLayout
+  title="درباره من | محمدرضا شفیعی‌آبادی"
+  description="درباره محمدرضا شفیعی‌آبادی، طراح و معمار ارشد سیستم‌های نرم‌افزاری، نویسنده و مدرس تخصصی دات‌نت."
+>
+  <!-- Full-Screen Scrollable Presentation Container -->
+  <div id="slides-container" class="snap-container h-[calc(100vh-4rem)] overflow-y-auto snap-y snap-mandatory scroll-smooth relative">
+    
+    <!-- Slide 1: Welcome / Identity -->
+    <section class="slide-section snap-start h-[calc(100vh-4rem)] flex items-center justify-center relative p-6 sm:p-12 overflow-hidden">
+      <div class="absolute inset-0 bg-radial-gradient from-blue-500/10 via-transparent to-transparent pointer-events-none"></div>
+      
+      <div class="max-w-4xl mx-auto text-center relative z-10 flex flex-col items-center">
+        <div class="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-apple-blue flex items-center justify-center text-white text-4xl sm:text-5xl font-black mb-8 shadow-2xl shadow-apple-blue/30 transform hover:scale-105 transition-transform">
+          ش
+        </div>
+        
+        <span class="inline-flex items-center px-4 py-1.5 rounded-full text-xs font-semibold bg-apple-blue/10 text-apple-blue dark:bg-apple-blue-dark/20 dark:text-apple-blue-dark mb-4 border border-apple-blue/20">
+          معمار نرم‌افزار و پژوهشگر مهندسی
+        </span>
+
+        <h1 class="text-3xl sm:text-5xl md:text-6xl font-black text-neutral-950 dark:text-white tracking-tight leading-tight mb-6">
+          محمدرضا شفیعی‌آبادی
+        </h1>
+
+        <p class="text-lg sm:text-2xl text-neutral-600 dark:text-neutral-300 max-w-2xl font-light leading-relaxed mb-8">
+          متعهد به ساخت سیستم‌های مقیاس‌پذیر، کدهای پایدار و بازآفرینی الگوهای معماری تمیز در دنیای واقعی.
+        </p>
+
+        <div class="animate-bounce mt-4 text-neutral-400">
+          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 2: Philosophy & Standards -->
+    <section class="slide-section snap-start h-[calc(100vh-4rem)] flex items-center justify-center relative p-6 sm:p-12 bg-neutral-50/50 dark:bg-neutral-900/30">
+      <div class="max-w-5xl mx-auto w-full">
+        <div class="text-center mb-10">
+          <span class="text-xs font-bold text-apple-blue dark:text-apple-blue-dark uppercase tracking-widest">
+            اصول و چارچوب فکری
+          </span>
+          <h2 class="text-2xl sm:text-4xl font-extrabold text-neutral-950 dark:text-white mt-2">
+            مهندسی با بالاترین استانداردهای کیفی
+          </h2>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <div class="apple-glass-card p-6 sm:p-8 rounded-3xl text-right">
+            <div class="w-12 h-12 rounded-2xl bg-blue-500/10 text-apple-blue flex items-center justify-center font-bold text-xl mb-4">
+              ۰۱
+            </div>
+            <h3 class="text-lg font-bold text-neutral-900 dark:text-white mb-2">Clean Architecture</h3>
+            <p class="text-xs sm:text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed">
+              تفکیک قاطع منطق کسب‌وکار از جزئیات پیاده‌سازی زیرساخت، تضمین‌کننده تست‌پذیری، انعطاف و توسعه‌پذیری درازمدت است.
+            </p>
+          </div>
+
+          <div class="apple-glass-card p-6 sm:p-8 rounded-3xl text-right">
+            <div class="w-12 h-12 rounded-2xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center font-bold text-xl mb-4">
+              ۰۲
+            </div>
+            <h3 class="text-lg font-bold text-neutral-900 dark:text-white mb-2">Domain-Driven Design</h3>
+            <p class="text-xs sm:text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed">
+              خلق زبان مشترک با کارشناسان دامنه و حفظ یکپارچگی قواعد تجاری در مرزهای Aggregates و Bounded Contexts.
+            </p>
+          </div>
+
+          <div class="apple-glass-card p-6 sm:p-8 rounded-3xl text-right">
+            <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-xl mb-4">
+              ۰۳
+            </div>
+            <h3 class="text-lg font-bold text-neutral-900 dark:text-white mb-2">Test-Driven Development</h3>
+            <p class="text-xs sm:text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed">
+              تست‌ها سنگ بنای معماری مطمئن هستند. با هدایت طراحی توسط تست‌ها، کدهایی تمیز، بدون باگ و قابل اطمینان خلق می‌شود.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 3: Milestones & Experience -->
+    <section class="slide-section snap-start h-[calc(100vh-4rem)] flex items-center justify-center relative p-6 sm:p-12">
+      <div class="max-w-4xl mx-auto w-full text-right">
+        <div class="text-center mb-10">
+          <span class="text-xs font-bold text-apple-blue dark:text-apple-blue-dark uppercase tracking-widest">
+            مسیر حرفه‌ای و سوابق
+          </span>
+          <h2 class="text-2xl sm:text-4xl font-extrabold text-neutral-950 dark:text-white mt-2">
+            تجربه در خط مقدم مهندسی نرم‌افزار
+          </h2>
+        </div>
+
+        <div class="space-y-4">
+          <div class="apple-card p-6 rounded-2xl flex items-center justify-between">
+            <div>
+              <span class="text-xs font-semibold text-apple-blue dark:text-apple-blue-dark">۱۴۰۲ - اکنون</span>
+              <h4 class="text-base font-bold text-neutral-900 dark:text-white">طراح و معمار ارشد سیستم‌های توزیع‌شده</h4>
+              <p class="text-xs text-neutral-500 dark:text-neutral-400">راهبری تیم‌های مهندسی، بازطراحی سیستم‌های لایه‌بندی Enterprise و استقرار در کوبرنتیز</p>
+            </div>
+          </div>
+
+          <div class="apple-card p-6 rounded-2xl flex items-center justify-between">
+            <div>
+              <span class="text-xs font-semibold text-apple-blue dark:text-apple-blue-dark">۱۳۹۹ - ۱۴۰۲</span>
+              <h4 class="text-base font-bold text-neutral-900 dark:text-white">توسعه‌دهنده ارشد Backend و متخصص دات‌نت</h4>
+              <p class="text-xs text-neutral-500 dark:text-neutral-400">طراحی میکروسرویس‌های پرترافیک با CQRS، MediatR و رویدادهای Kafka</p>
+            </div>
+          </div>
+
+          <div class="apple-card p-6 rounded-2xl flex items-center justify-between">
+            <div>
+              <span class="text-xs font-semibold text-apple-blue dark:text-apple-blue-dark">۱۳۹۸ - اکنون</span>
+              <h4 class="text-base font-bold text-neutral-900 dark:text-white">مدرس و نویسنده کتاب‌های مهندسی نرم‌افزار</h4>
+              <p class="text-xs text-neutral-500 dark:text-neutral-400">آموزش اصول معماری به بیش از ۵۰۰۰ دانشجو و انتشار کتب مرجع</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 4: Connect & Call to Action -->
+    <section class="slide-section snap-start h-[calc(100vh-4rem)] flex items-center justify-center relative p-6 sm:p-12 bg-gradient-to-br from-blue-600/5 via-neutral-900/5 to-transparent">
+      <div class="max-w-3xl mx-auto text-center flex flex-col items-center">
+        <h2 class="text-3xl sm:text-5xl font-extrabold text-neutral-950 dark:text-white tracking-tight mb-6">
+          همکاری در پروژه‌ها و مشاوره‌های تخصصی
+        </h2>
+        <p class="text-base sm:text-lg text-neutral-600 dark:text-neutral-300 leading-relaxed max-w-xl mb-10">
+          اگر به دنبال ارتقای معماری سیستم‌های خود، برگزاری دوره‌های سازمانی یا مشاوره تخصصی در حوزه دات‌نت هستید، خوشحال می‌شوم با شما گفتگو کنم.
+        </p>
+
+        <div class="flex flex-wrap items-center justify-center gap-4">
+          <Button href="/contact" variant="primary" size="lg">
+            <span>شروع گفتگو و تماس</span>
+            <svg class="w-4 h-4 transform rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+            </svg>
+          </Button>
+          <Button href="/articles" variant="secondary" size="lg">
+            <span>مطالعه مقالات</span>
+          </Button>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</BaseLayout>
+
+<style>
+  .snap-container {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .snap-container::-webkit-scrollbar {
+    display: none;
+  }
+</style>

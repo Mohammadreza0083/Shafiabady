@@ -1,7 +1,23 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import BookCard from '../../components/cards/BookCard.astro';
+import { booksApi } from '../../utils/api';
 import { mockBooks } from '../../data/mockData';
+import type { BookDto } from '../../types';
+
+const PAGE_SIZE = 10;
+let books: any[] = [];
+
+try {
+  const response = await booksApi.getPaged({ pageNumber: 1, pageSize: PAGE_SIZE });
+  if (response.isSuccess && response.data && response.data.items && response.data.items.length > 0) {
+    books = response.data.items;
+  } else {
+    books = mockBooks;
+  }
+} catch (error) {
+  books = mockBooks;
+}
 ---
 
 <BaseLayout
@@ -22,9 +38,9 @@ import { mockBooks } from '../../data/mockData';
       </p>
     </div>
 
-    <!-- Books Grid -->
+    <!-- Books Grid - Full array rendered with NO slicing -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-      {mockBooks.map((book) => <BookCard book={book} />)}
+      {books.map((book) => <BookCard book={book} />)}
     </div>
   </div>
 </BaseLayout>

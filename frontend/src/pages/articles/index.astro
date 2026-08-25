@@ -1,10 +1,33 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import ArticleCard from '../../components/cards/ArticleCard.astro';
+import { articlesApi } from '../../utils/api';
 import { mockArticles } from '../../data/mockData';
+import type { ArticleDto } from '../../types';
 
 const categories = ['همه', 'معماری نرم‌افزار', 'طراحی سیستم', 'کیفیت و تست', 'میکروسرویس', 'فرانت‌اند مدرن', 'پایگاه داده'];
-const initialArticles = mockArticles.slice(0, 3);
+
+const PAGE_SIZE = 10;
+let articles: any[] = [];
+let hasNextPage = false;
+let initialTotalCount = 0;
+
+try {
+  // Fetch initial articles with standard pageSize of 10 from .NET 9 Backend
+  const response = await articlesApi.getPaged({ pageNumber: 1, pageSize: PAGE_SIZE });
+  if (response.isSuccess && response.data && response.data.items && response.data.items.length > 0) {
+    articles = response.data.items;
+    hasNextPage = response.data.hasNextPage;
+    initialTotalCount = response.data.totalCount;
+  } else {
+    // Fallback to full mock dataset if API is not yet populated
+    articles = mockArticles;
+    hasNextPage = false;
+  }
+} catch (error) {
+  articles = mockArticles;
+  hasNextPage = false;
+}
 ---
 
 <BaseLayout
@@ -43,10 +66,15 @@ const initialArticles = mockArticles.slice(0, 3);
       }
     </div>
 
-    <!-- Articles Grid (Populated initially & dynamically augmented by infinite scroll) -->
-    <div id="articles-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+    <!-- Articles Grid (Populated initially with full page size & dynamically augmented by infinite scroll) -->
+    <div
+      id="articles-grid"
+      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8"
+      data-has-more={hasNextPage ? 'true' : 'false'}
+      data-page-size={PAGE_SIZE}
+    >
       {
-        initialArticles.map((article) => (
+        articles.map((article) => (
           <ArticleCard article={article} />
         ))
       }
@@ -62,7 +90,7 @@ const initialArticles = mockArticles.slice(0, 3);
         <span>در حال دریافت مقالات بیشتر...</span>
       </div>
 
-      <div id="scroll-end" class="text-sm text-neutral-400 dark:text-neutral-600 hidden">
+      <div id="scroll-end" class={`text-sm text-neutral-400 dark:text-neutral-600 ${hasNextPage ? 'hidden' : ''}`}>
         ✨ شما به انتهای فهرست مقالات رسیدید.
       </div>
     </div>

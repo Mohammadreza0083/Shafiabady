@@ -1,0 +1,247 @@
+name: shafieiabadi-platform
+
+services:
+  # ----------------------------------------------------------------------------
+  # 1. SQL Server Database (Persistent Relational Storage)
+  # ----------------------------------------------------------------------------
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: shafieiabadi-sqlserver
+    restart: unless-stopped
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "${SA_PASSWORD:-P@ssw0rd2026!DrShafiei}"
+      MSSQL_PID: "Express"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$${MSSQL_SA_PASSWORD}\" -Q \"SELECT 1\" -C -b -o /dev/null || /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P \"$${MSSQL_SA_PASSWORD}\" -Q \"SELECT 1\" -b -o /dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - shafieiabadi-net
+
+  # ----------------------------------------------------------------------------
+  # 2. .NET 9 Clean Architecture REST API
+  # ----------------------------------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: shafieiabadi-backend
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Production"
+      PORT: "5000"
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=ShafieiAbadiDb;User Id=sa;Password=${SA_PASSWORD:-P@ssw0rd2026!DrShafiei};TrustServerCertificate=True;MultipleActiveResultSets=true;"
+      Jwt__SecretKey: "${JWT_SECRET_KEY:-DrShafieiAbadi_SuperSecretKey_ProductionGrade_2026_DotNet9_CleanArch!}"
+      Jwt__Issuer: "ShafieiAbadi.Api"
+      Jwt__Audience: "ShafieiAbadi.Client"
+      Loki__Uri: "http://loki:3100"
+    ports:
+      - "5000:5000"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      loki:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:5000/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - shafieiabadi-net
+
+  # ----------------------------------------------------------------------------
+  # 3. Astro Frontend (Standalone SSR Node.js)
+  # ----------------------------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: shafieiabadi-frontend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: "production"
+      HOST: "0.0.0.0"
+      PORT: "4500"
+      PUBLIC_API_URL: "${PUBLIC_API_URL:-https://shafieiabadi.ir}"
+    ports:
+      - "4500:4500"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:4500/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - shafieiabadi-net
+
+  # ----------------------------------------------------------------------------
+  # 4. Python FastAPI Telegram Bot & Proactive Health Monitor Daemon
+  # ----------------------------------------------------------------------------
+  telegram-bot:
+    build:
+      context: ./telegram-bot
+      dockerfile: Dockerfile
+    container_name: shafieiabadi-telegram-bot
+    restart: unless-stopped
+    environment:
+      TELEGRAM_BOT_TOKEN: "${TELEGRAM_BOT_TOKEN}"
+      TELEGRAM_CHAT_ID: "${TELEGRAM_CHAT_ID:-269309616}"
+      TELEGRAM_ADMIN_CHAT_ID: "${TELEGRAM_ADMIN_CHAT_ID:-269309616}"
+      BACKEND_HEALTH_URL: "http://backend:5000/health"
+      FRONTEND_HEALTH_URL: "http://frontend:4500/"
+      HEALTH_CHECK_INTERVAL_SECONDS: "120"
+      ALLOWED_ORIGINS: "http://localhost:4500,https://shafieiabadi.ir"
+    ports:
+      - "8000:8000"
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\" || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - shafieiabadi-net
+
+  # ----------------------------------------------------------------------------
+  # 5. Cloudflare-Ready Nginx Reverse Proxy
+  # ----------------------------------------------------------------------------
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: shafieiabadi-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
+      telegram-bot:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - shafieiabadi-net
+
+  # ----------------------------------------------------------------------------
+  # 6. Prometheus (Metrics Scraper & Time-Series Engine)
+  # ----------------------------------------------------------------------------
+  prometheus:
+    image: prom/prometheus:v2.50.1
+    container_name: shafieiabadi-prometheus
+    restart: unless-stopped
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/usr/share/prometheus/console_libraries"
+      - "--web.console.templates=/usr/share/prometheus/consoles"
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    networks:
+      - shafieiabadi-net
+
+  # ----------------------------------------------------------------------------
+  # 7. Grafana Loki (Centralized Structured Log Aggregator)
+  # ----------------------------------------------------------------------------
+  loki:
+    image: grafana/loki:2.9.4
+    container_name: shafieiabadi-loki
+    restart: unless-stopped
+    command: -config.file=/etc/loki/local-config.yaml
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./observability/loki/loki-config.yml:/etc/loki/local-config.yaml:ro
+      - loki_data:/loki
+    networks:
+      - shafieiabadi-net
+
+  # ----------------------------------------------------------------------------
+  # 8. Promtail (Docker Container Log Collector for Loki)
+  # ----------------------------------------------------------------------------
+  promtail:
+    image: grafana/promtail:2.9.4
+    container_name: shafieiabadi-promtail
+    restart: unless-stopped
+    command: -config.file=/etc/promtail/config.yml
+    volumes:
+      - ./observability/promtail/promtail-config.yml:/etc/promtail/config.yml:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - loki
+    networks:
+      - shafieiabadi-net
+
+  # ----------------------------------------------------------------------------
+  # 9. Grafana (Unified Observability Dashboard)
+  # ----------------------------------------------------------------------------
+  grafana:
+    image: grafana/grafana:10.3.3
+    container_name: shafieiabadi-grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: "${GRAFANA_ADMIN_USER:-admin}"
+      GF_SECURITY_ADMIN_PASSWORD: "${GRAFANA_ADMIN_PASSWORD:-AdminSecure2026!}"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/etc/grafana/provisioning/dashboards/json:ro
+    depends_on:
+      - prometheus
+      - loki
+    networks:
+      - shafieiabadi-net
+
+# ------------------------------------------------------------------------------
+# Persistent Named Volumes
+# ------------------------------------------------------------------------------
+volumes:
+  sqlserver_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  loki_data:
+    driver: local
+  grafana_data:
+    driver: local
+
+# ------------------------------------------------------------------------------
+# Isolated Bridge Network
+# ------------------------------------------------------------------------------
+networks:
+  shafieiabadi-net:
+    driver: bridge

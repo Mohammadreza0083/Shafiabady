@@ -105,17 +105,21 @@ import Button from '../components/ui/Button.astro';
         </div>
 
         <!-- Status Toast Alert -->
-        <div id="form-feedback" class="hidden p-4 rounded-2xl text-sm font-medium transition-all"></div>
+        <div id="form-feedback" class="hidden p-4 rounded-2xl text-sm font-medium transition-all" role="alert"></div>
 
         <!-- Submit Button -->
         <div class="flex items-center justify-between pt-2">
           <p class="text-[11px] text-neutral-400">
             اطلاعات شما با بالاترین ضوابط حریم خصوصی نگهداری خواهد شد.
           </p>
-          <Button type="submit" variant="primary" size="lg">
-            <span>ارسال پیام مستقیم</span>
-            <svg class="w-4 h-4 transform rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <Button id="submit-btn" type="submit" variant="primary" size="lg" className="relative">
+            <span id="btn-text">ارسال پیام مستقیم</span>
+            <svg id="btn-icon" class="w-4 h-4 transform rotate-180 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+            </svg>
+            <svg id="btn-spinner" class="hidden w-4 h-4 animate-spin text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
           </Button>
         </div>
@@ -128,28 +132,91 @@ import Button from '../components/ui/Button.astro';
   function initContactForm() {
     const form = document.getElementById('contact-form') as HTMLFormElement | null;
     const feedback = document.getElementById('form-feedback');
+    const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement | null;
+    const btnText = document.getElementById('btn-text');
+    const btnIcon = document.getElementById('btn-icon');
+    const btnSpinner = document.getElementById('btn-spinner');
 
     if (!form || !feedback) return;
 
+    const WEBHOOK_URL = import.meta.env.PUBLIC_CONTACT_WEBHOOK_URL || 'http://localhost:8000/contact-webhook';
+
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      
+
       const formData = new FormData(form);
-      const data = {
-        fullName: formData.get('fullName'),
-        email: formData.get('email'),
-        phoneNumber: formData.get('phoneNumber'),
-        telegramId: formData.get('telegramId'),
-        message: formData.get('message'),
+      const payload = {
+        name: (formData.get('fullName') as string || '').trim(),
+        email: (formData.get('email') as string || '').trim(),
+        phone: (formData.get('phoneNumber') as string || '').trim() || null,
+        telegram_id: (formData.get('telegramId') as string || '').trim() || null,
+        message: (formData.get('message') as string || '').trim(),
       };
 
-      // Show success feedback
-      feedback.className = 'p-4 rounded-2xl text-sm font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20';
-      feedback.textContent = '✨ پیام شما با موفقیت ثبت شد و به ربات تلگرام ارسال گردید. در اسرع وقت با شما تماس گرفته خواهد شد.';
-      feedback.classList.remove('hidden');
+      if (!payload.name || !payload.email || !payload.message) {
+        showToast('error', 'لطفاً تمامی فیلدهای اجباری (نام، ایمیل و متن پیام) را تکمیل کنید.');
+        return;
+      }
 
-      form.reset();
+      setLoading(true);
+      feedback.classList.add('hidden');
+
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 12000);
+
+        const response = await fetch(WEBHOOK_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        const result = await response.json().catch(() => ({}));
+
+        if (response.ok && result.success !== false) {
+          showToast('success', '✨ پیام شما با موفقیت به ربات تلگرام ارسال شد. در اسرع وقت با شما تماس گرفته خواهد شد.');
+          form.reset();
+        } else {
+          const errMsg = result.detail || result.message || 'خطا در پردازش درخواست.';
+          showToast('error', `⚠️ متأسفانه پیام ارسال نشد: ${errMsg}`);
+        }
+      } catch (err: any) {
+        if (err.name === 'AbortError') {
+          showToast('error', '⚠️ مهلت زمان ارتباط با سرور به پایان رسید. لطفاً مجدداً تلاش کنید.');
+        } else {
+          showToast('error', '⚠️ امکان اتصال به میکروسرویس ارسال پیام وجود ندارد. لطفاً از روشن بودن سرور مطمئن شوید.');
+        }
+      } finally {
+        setLoading(false);
+      }
     });
+
+    function setLoading(isLoading: boolean) {
+      if (submitBtn) submitBtn.disabled = isLoading;
+      if (btnText) btnText.textContent = isLoading ? 'در حال ارسال پیام...' : 'ارسال پیام مستقیم';
+      if (btnIcon) btnIcon.classList.toggle('hidden', isLoading);
+      if (btnSpinner) btnSpinner.classList.toggle('hidden', !isLoading);
+    }
+
+    function showToast(type: 'success' | 'error', message: string) {
+      if (!feedback) return;
+      feedback.className = type === 'success'
+        ? 'p-4 rounded-2xl text-sm font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 flex items-center gap-3 transition-all'
+        : 'p-4 rounded-2xl text-sm font-medium bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/30 flex items-center gap-3 transition-all';
+
+      const iconSvg = type === 'success'
+        ? '<svg class="w-5 h-5 flex-shrink-0 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>'
+        : '<svg class="w-5 h-5 flex-shrink-0 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>';
+
+      feedback.innerHTML = `${iconSvg}<span>${message}</span>`;
+      feedback.classList.remove('hidden');
+      feedback.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
   }
 
   if (document.readyState === 'loading') {

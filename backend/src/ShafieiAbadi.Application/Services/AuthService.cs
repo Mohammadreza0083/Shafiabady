@@ -100,6 +100,40 @@ public class AuthService : IAuthService
         });
     }
 
+    public async Task<Result<LoginResultDto>> RefreshTokenAsync(string username, CancellationToken ct = default)
+    {
+        var users = await _unitOfWork.Repository<AdminUser>()
+            .FindAsync(u => u.Username == username && !u.IsDeleted && u.IsActive, ct);
+
+        var user = users.FirstOrDefault();
+        if (user == null)
+        {
+            _logger.LogWarning("Refresh token failed for non-existing or inactive user '{Username}'", username);
+            return Result<LoginResultDto>.Unauthorized("User session not found or user is inactive.");
+        }
+
+        // Generate a fresh signed JWT with 5-minute lifespan
+        var (token, expiresAt) = _jwtTokenGenerator.GenerateToken(user);
+
+        var userDto = new AdminUserDto
+        {
+            Username = user.Username,
+            FullName = user.FullName,
+            Email = user.Email,
+            LastLoginAt = user.LastLoginAt
+        };
+
+        var response = new LoginResultDto
+        {
+            User = userDto,
+            Token = token,
+            ExpiresAt = expiresAt
+        };
+
+        _logger.LogInformation("Admin session refreshed successfully for user '{Username}'", user.Username);
+        return Result<LoginResultDto>.Success(response);
+    }
+
     private static string HashPassword(string password)
     {
         var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(password));

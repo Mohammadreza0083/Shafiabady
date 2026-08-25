@@ -1,3 +1,11 @@
+/**
+ * View Counter Engine with Client & Server Rate Limiting
+ * Connects to .NET 9 Backend POST /api/Views/record endpoint.
+ */
+
+import { viewsApi } from '../utils/api';
+import { EntityType } from '../types';
+
 export interface ViewRecord {
   timestamp: number;
 }
@@ -5,11 +13,28 @@ export interface ViewRecord {
 const STORAGE_KEY = 'entity_views_cache';
 const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
 
+function resolveEntityType(type: 'article' | 'book' | 'course' | EntityType | number): EntityType {
+  if (typeof type === 'number') return type as EntityType;
+  switch (type) {
+    case 'article':
+      return EntityType.Article;
+    case 'book':
+      return EntityType.Book;
+    case 'course':
+      return EntityType.Course;
+    default:
+      return EntityType.Article;
+  }
+}
+
 /**
- * Tracks a view for an entity (Article, Book, Course) with a client-side and server-side
- * 24-hour rate limit to ensure 1 view per 24 hours per user.
+ * Tracks a view for an entity (Article, Book, Course) with client-side localStorage
+ * and backend IP-based 24-hour rate limiting.
  */
-export async function trackView(entityId: string, entityType: 'article' | 'book' | 'course'): Promise<{ viewsCount: number; isNew: boolean }> {
+export async function trackView(
+  entityId: string,
+  entityType: 'article' | 'book' | 'course' | EntityType | number
+): Promise<{ viewsCount: number; isNew: boolean }> {
   if (typeof window === 'undefined' || !entityId) {
     return { viewsCount: 0, isNew: false };
   }
@@ -27,31 +52,30 @@ export async function trackView(entityId: string, entityType: 'article' | 'book'
   }
 
   const lastViewTime = cache[entityId] || 0;
-  const isEligibleForNewView = (now - lastViewTime) >= TWENTY_FOUR_HOURS_MS;
+  const isEligibleForNewView = now - lastViewTime >= TWENTY_FOUR_HOURS_MS;
 
   try {
-    const response = await fetch('/api/views', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        entityId,
-        entityType,
-        increment: isEligibleForNewView,
-      }),
-    });
+    const typeEnum = resolveEntityType(entityType);
 
-    if (response.ok) {
-      const data = await response.json();
-      if (isEligibleForNewView && data.isNewView) {
+    // Call .NET 9 Backend POST /api/Views/record
+    const result = await viewsApi.record(typeEnum, entityId);
+
+    if (result.isSuccess) {
+      const isRecorded = result.data === true;
+      if (isRecorded || isEligibleForNewView) {
         cache[entityId] = now;
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(cache));
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(cache));
+        } catch {}
       }
-      return { viewsCount: data.viewsCount, isNew: data.isNewView };
+
+      return {
+        viewsCount: 0,
+        isNew: isRecorded,
+      };
     }
   } catch (error) {
-    console.error('Failed to update view counter:', error);
+    console.warn('Failed to record view on backend:', error);
   }
 
   return { viewsCount: 0, isNew: false };

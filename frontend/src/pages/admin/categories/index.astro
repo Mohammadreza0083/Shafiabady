@@ -1,0 +1,385 @@
+---
+export const prerender = false;
+
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { categoriesApi } from '../../../utils/api';
+import type { CategoryDto } from '../../../types';
+
+const token = Astro.cookies.get('AdminAuthToken')?.value;
+if (!token) {
+  return Astro.redirect('/admin/login');
+}
+
+let categories: CategoryDto[] = [];
+let errorMsg: string | null = null;
+
+try {
+  const res = await categoriesApi.getAll();
+  if (res.isSuccess && res.data) {
+    categories = res.data;
+  } else {
+    errorMsg = res.errorMessage || 'خطا در دریافت لیست دسته‌بندی‌ها';
+  }
+} catch (e: any) {
+  errorMsg = 'امکان برقراری ارتباط با سرور وجود ندارد.';
+}
+---
+
+<AdminLayout title="مدیریت دسته‌بندی‌ها" activeSection="categories">
+  <div class="space-y-6 max-w-7xl mx-auto">
+    
+    <!-- Page Header & Actions -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-black/5 dark:border-white/10">
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-black text-neutral-950 dark:text-white tracking-tight">
+          مدیریت دسته‌بندی‌ها
+        </h1>
+        <p class="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 mt-1">
+          تعریف، ویرایش و سازمان‌دهی دسته‌بندی‌های موضوعی مقالات، کتاب‌ها و دوره‌ها
+        </p>
+      </div>
+
+      <button
+        type="button"
+        id="btn-open-create-modal"
+        class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-apple-blue hover:bg-blue-600 text-white text-xs font-bold shadow-md shadow-apple-blue/25 transition-all duration-200"
+      >
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        <span>افزودن دسته‌بندی جدید</span>
+      </button>
+    </div>
+
+    {errorMsg && (
+      <div class="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs">
+        {errorMsg}
+      </div>
+    )}
+
+    <!-- Categories Data Table Card -->
+    <div class="bg-white dark:bg-neutral-900 rounded-3xl border border-black/5 dark:border-white/10 shadow-sm overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-right text-xs">
+          <thead class="bg-neutral-50 dark:bg-neutral-800/60 text-neutral-500 dark:text-neutral-400 font-semibold border-b border-black/5 dark:border-white/10">
+            <tr>
+              <th class="py-4 px-6">عنوان دسته‌بندی</th>
+              <th class="py-4 px-6">نامک (Slug)</th>
+              <th class="py-4 px-6">توضیحات مختصر</th>
+              <th class="py-4 px-6">محتواها</th>
+              <th class="py-4 px-6">ترتیب</th>
+              <th class="py-4 px-6 text-center">عملیات</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-black/5 dark:divide-white/10">
+            {
+              categories.length === 0 ? (
+                <tr>
+                  <td colspan="6" class="py-12 text-center text-neutral-400">
+                    هیچ دسته‌بندی فعالی یافت نشد. برای شروع، روی «افزودن دسته‌بندی جدید» کلیک کنید.
+                  </td>
+                </tr>
+              ) : (
+                categories.map((cat) => (
+                  <tr class="hover:bg-neutral-50/50 dark:hover:bg-neutral-800/40 transition-colors">
+                    <td class="py-4 px-6">
+                      <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-xl bg-apple-blue/10 dark:bg-apple-blue/20 text-apple-blue dark:text-apple-blue-dark flex items-center justify-center font-bold text-xs">
+                          {cat.title.slice(0, 1)}
+                        </div>
+                        <span class="font-bold text-neutral-900 dark:text-white text-sm">
+                          {cat.title}
+                        </span>
+                      </div>
+                    </td>
+                    <td class="py-4 px-6 font-mono text-neutral-500 text-[11px]" dir="ltr">
+                      {cat.slug}
+                    </td>
+                    <td class="py-4 px-6 text-neutral-500 max-w-xs truncate">
+                      {cat.description || '—'}
+                    </td>
+                    <td class="py-4 px-6">
+                      <div class="flex items-center gap-2">
+                        <span class="px-2 py-0.5 rounded-md bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 text-[10px]" title="مقالات">
+                          {cat.articlesCount || 0} مقاله
+                        </span>
+                        <span class="px-2 py-0.5 rounded-md bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 text-[10px]" title="کتاب‌ها">
+                          {cat.booksCount || 0} کتاب
+                        </span>
+                        <span class="px-2 py-0.5 rounded-md bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 text-[10px]" title="دوره‌ها">
+                          {cat.coursesCount || 0} دوره
+                        </span>
+                      </div>
+                    </td>
+                    <td class="py-4 px-6 font-mono text-neutral-600 dark:text-neutral-400">
+                      {cat.displayOrder || 0}
+                    </td>
+                    <td class="py-4 px-6">
+                      <div class="flex items-center justify-center gap-2">
+                        <button
+                          type="button"
+                          class="edit-btn p-2 rounded-xl text-neutral-400 hover:text-amber-500 hover:bg-amber-500/10 transition-colors"
+                          title="ویرایش دسته‌بندی"
+                          data-id={cat.id}
+                          data-title={cat.title}
+                          data-slug={cat.slug}
+                          data-description={cat.description || ''}
+                          data-order={cat.displayOrder || 0}
+                        >
+                          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                        </button>
+                        <button
+                          type="button"
+                          class="delete-btn p-2 rounded-xl text-neutral-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors"
+                          title="حذف دسته‌بندی"
+                          data-id={cat.id}
+                          data-title={cat.title}
+                        >
+                          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Category Modal (Create / Edit) -->
+  <div id="category-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+    <div class="w-full max-w-lg bg-white dark:bg-neutral-900 rounded-3xl border border-black/10 dark:border-white/10 shadow-2xl p-6 sm:p-8 space-y-6">
+      <div class="flex items-center justify-between pb-3 border-b border-black/5 dark:border-white/10">
+        <h3 id="modal-title" class="text-base font-bold text-neutral-900 dark:text-white">
+          افزودن دسته‌بندی جدید
+        </h3>
+        <button type="button" id="btn-close-modal" class="p-1 rounded-xl text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <form id="category-form" class="space-y-4">
+        <input type="hidden" id="cat-id" value="" />
+
+        <div>
+          <label for="cat-title" class="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1.5">
+            عنوان دسته‌بندی <span class="text-rose-500">*</span>
+          </label>
+          <input
+            type="text"
+            id="cat-title"
+            required
+            placeholder="مثال: معماری نرم‌افزار و DDD"
+            class="w-full px-4 py-2.5 rounded-2xl bg-neutral-50 dark:bg-neutral-800 border border-black/5 dark:border-white/10 text-xs focus:outline-none focus:ring-2 focus:ring-apple-blue transition-all"
+          />
+        </div>
+
+        <div>
+          <label for="cat-slug" class="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1.5">
+            نامک آدرس (Slug) <span class="text-rose-500">*</span>
+          </label>
+          <input
+            type="text"
+            id="cat-slug"
+            required
+            dir="ltr"
+            placeholder="software-architecture"
+            class="w-full px-4 py-2.5 rounded-2xl bg-neutral-50 dark:bg-neutral-800 border border-black/5 dark:border-white/10 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-apple-blue transition-all"
+          />
+        </div>
+
+        <div>
+          <label for="cat-order" class="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1.5">
+            ترتیب نمایش
+          </label>
+          <input
+            type="number"
+            id="cat-order"
+            value="1"
+            class="w-full px-4 py-2.5 rounded-2xl bg-neutral-50 dark:bg-neutral-800 border border-black/5 dark:border-white/10 text-xs focus:outline-none focus:ring-2 focus:ring-apple-blue transition-all"
+          />
+        </div>
+
+        <div>
+          <label for="cat-description" class="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1.5">
+            توضیحات دسته‌بندی
+          </label>
+          <textarea
+            id="cat-description"
+            rows="3"
+            placeholder="توضیح کوتاه درباره محتوای این بخش..."
+            class="w-full px-4 py-2.5 rounded-2xl bg-neutral-50 dark:bg-neutral-800 border border-black/5 dark:border-white/10 text-xs focus:outline-none focus:ring-2 focus:ring-apple-blue transition-all resize-none"
+          ></textarea>
+        </div>
+
+        <div class="flex items-center justify-end gap-3 pt-4 border-t border-black/5 dark:border-white/10">
+          <button
+            type="button"
+            id="btn-cancel-modal"
+            class="px-4 py-2 rounded-full border border-black/10 dark:border-white/10 text-xs font-semibold text-neutral-700 dark:text-neutral-300 hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+          >
+            انصراف
+          </button>
+          <button
+            type="submit"
+            id="btn-submit-cat"
+            class="px-5 py-2 rounded-full bg-apple-blue hover:bg-blue-600 text-white text-xs font-bold shadow-md shadow-apple-blue/25 transition-all duration-200"
+          >
+            ثبت اطلاعات
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</AdminLayout>
+
+<script>
+  import { categoriesApi } from '../../../utils/api';
+  import { showConfirm, showToast, showAlert } from '../../../utils/ui-dialog';
+
+  const modal = document.getElementById('category-modal');
+  const modalTitle = document.getElementById('modal-title');
+  const catForm = document.getElementById('category-form') as HTMLFormElement;
+  const catIdInput = document.getElementById('cat-id') as HTMLInputElement;
+  const titleInput = document.getElementById('cat-title') as HTMLInputElement;
+  const slugInput = document.getElementById('cat-slug') as HTMLInputElement;
+  const orderInput = document.getElementById('cat-order') as HTMLInputElement;
+  const descInput = document.getElementById('cat-description') as HTMLTextAreaElement;
+  const submitBtn = document.getElementById('btn-submit-cat');
+
+  function openModal(isEdit = false, data?: any) {
+    if (modalTitle) {
+      modalTitle.textContent = isEdit ? `ویرایش دسته‌بندی: ${data.title}` : 'افزودن دسته‌بندی جدید';
+    }
+    if (isEdit && data) {
+      catIdInput.value = data.id || '';
+      titleInput.value = data.title || '';
+      slugInput.value = data.slug || '';
+      orderInput.value = data.order || '1';
+      descInput.value = data.description || '';
+    } else {
+      catIdInput.value = '';
+      titleInput.value = '';
+      slugInput.value = '';
+      orderInput.value = '1';
+      descInput.value = '';
+    }
+    modal?.classList.remove('hidden');
+  }
+
+  function closeModal() {
+    modal?.classList.add('hidden');
+  }
+
+  document.getElementById('btn-open-create-modal')?.addEventListener('click', () => openModal(false));
+  document.getElementById('btn-close-modal')?.addEventListener('click', closeModal);
+  document.getElementById('btn-cancel-modal')?.addEventListener('click', closeModal);
+
+  // Edit triggers
+  document.querySelectorAll('.edit-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-id');
+      const title = btn.getAttribute('data-title');
+      const slug = btn.getAttribute('data-slug');
+      const description = btn.getAttribute('data-description');
+      const order = btn.getAttribute('data-order');
+      openModal(true, { id, title, slug, description, order });
+    });
+  });
+
+  // Delete triggers
+  document.querySelectorAll('.delete-btn').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const id = btn.getAttribute('data-id');
+      const title = btn.getAttribute('data-title');
+      if (!id) return;
+
+      const confirmed = await showConfirm({
+        title: 'حذف دسته‌بندی',
+        message: `آیا از حذف دسته‌بندی «${title}» اطمینان دارید؟`,
+        confirmText: 'بله، حذف شود',
+        cancelText: 'انصراف',
+        isDestructive: true,
+      });
+
+      if (confirmed) {
+        try {
+          const res = await categoriesApi.delete(id);
+          if (res.isSuccess) {
+            showToast('دسته‌بندی با موفقیت حذف گردید.', 'success');
+            setTimeout(() => window.location.reload(), 400);
+          } else {
+            showAlert({
+              title: 'خطا در حذف دسته‌بندی',
+              message: res.errorMessage || 'خطا در حذف دسته‌بندی',
+              type: 'error',
+            });
+          }
+        } catch (e) {
+          showToast('خطا در برقراری ارتباط با سرور.', 'error');
+        }
+      }
+    });
+  });
+
+  // Submit form
+  catForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = catIdInput.value.trim();
+    const title = titleInput.value.trim();
+    const slug = slugInput.value.trim();
+    const displayOrder = parseInt(orderInput.value || '1', 10);
+    const description = descInput.value.trim();
+
+    if (!title || !slug) {
+      showToast('لطفاً عنوان و نامک دسته‌بندی را وارد نمایید.', 'warning');
+      return;
+    }
+
+    try {
+      if (submitBtn) submitBtn.textContent = 'در حال پردازش...';
+
+      let result;
+      if (id) {
+        result = await categoriesApi.update(id, {
+          title,
+          slug,
+          displayOrder,
+          description: description || null,
+        });
+      } else {
+        result = await categoriesApi.create({
+          title,
+          slug,
+          displayOrder,
+          description: description || null,
+        });
+      }
+
+      if (result.isSuccess) {
+        showToast(id ? 'دسته‌بندی با موفقیت بروزرسانی شد.' : 'دسته‌بندی جدید با موفقیت ایجاد گردید.', 'success');
+        setTimeout(() => window.location.reload(), 400);
+      } else {
+        showAlert({
+          title: 'خطا در ذخیره‌سازی',
+          message: result.errorMessage || 'خطا در ذخیره‌سازی دسته‌بندی',
+          type: 'error',
+        });
+        if (submitBtn) submitBtn.textContent = 'ثبت اطلاعات';
+      }
+    } catch (e: any) {
+      showToast('خطا در برقراری ارتباط با سرور.', 'error');
+      if (submitBtn) submitBtn.textContent = 'ثبت اطلاعات';
+    }
+  });
+</script>

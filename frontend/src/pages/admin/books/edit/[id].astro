@@ -1,0 +1,341 @@
+---
+export const prerender = false;
+
+import AdminLayout from '../../../../layouts/AdminLayout.astro';
+import { booksApi, categoriesApi } from '../../../../utils/api';
+import type { BookDto, CategoryDto } from '../../../../types';
+
+const token = Astro.cookies.get('AdminAuthToken')?.value;
+if (!token) {
+  return Astro.redirect('/admin/login');
+}
+
+const { id } = Astro.params;
+if (!id) {
+  return Astro.redirect('/admin/books');
+}
+
+let book: BookDto | null = null;
+let categories: CategoryDto[] = [];
+let fetchError: string | null = null;
+
+try {
+  const [bookRes, catRes] = await Promise.all([
+    booksApi.getById(id, token),
+    categoriesApi.getAll(),
+  ]);
+
+  if (bookRes.isSuccess && bookRes.data) {
+    book = bookRes.data;
+  } else if (bookRes.statusCode === 401) {
+    return Astro.redirect('/admin/login');
+  } else {
+    fetchError = bookRes.errorMessage || 'کتاب مورد نظر یافت نشد.';
+  }
+
+  if (catRes.isSuccess && catRes.data) {
+    categories = catRes.data;
+  }
+} catch (e: any) {
+  fetchError = e?.message || 'خطا در واکشی اطلاعات کتاب از سرور';
+}
+
+if (!book) {
+  return Astro.redirect('/admin/books');
+}
+---
+
+<AdminLayout title={`ویرایش کتاب: ${book.title}`} activeSection="books">
+  <div class="max-w-5xl mx-auto space-y-6">
+    
+    <!-- Page Header -->
+    <div class="flex items-center justify-between pb-4 border-b border-black/5 dark:border-white/10">
+      <div>
+        <h1 class="text-2xl font-black text-neutral-950 dark:text-white">
+          ویرایش کتاب و اثر تألیفی
+        </h1>
+        <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
+          ویرایش مشخصات، پیوندها و اطلاعات کتاب «{book.title}»
+        </p>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <a
+          href="/admin/books"
+          class="px-4 py-2 rounded-full border border-black/10 dark:border-white/10 text-xs font-semibold text-neutral-700 dark:text-neutral-300 hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+        >
+          انصراف
+        </a>
+        <button
+          type="button"
+          id="btn-save-book"
+          data-book-id={book.id}
+          class="px-5 py-2 rounded-full bg-apple-blue hover:bg-blue-600 text-white text-xs font-bold shadow-md shadow-apple-blue/25 transition-all duration-200"
+        >
+          ذخیره تغییرات
+        </button>
+      </div>
+    </div>
+
+    {fetchError && (
+      <div class="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs">
+        {fetchError}
+      </div>
+    )}
+
+    <!-- Book Form -->
+    <form id="book-edit-form" class="space-y-6">
+      
+      <!-- General Metadata Card -->
+      <div class="p-6 sm:p-8 rounded-3xl bg-white dark:bg-neutral-900 border border-black/5 dark:border-white/10 shadow-sm space-y-5">
+        <h2 class="text-sm font-bold text-neutral-900 dark:text-white border-b border-black/5 dark:border-white/10 pb-3">
+          مشخصات اصلی و شناسنامه کتاب
+        </h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div>
+            <label for="title" class="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-2">
+              عنوان کتاب <span class="text-rose-500">*</span>
+            </label>
+            <input
+              type="text"
+              id="title"
+              name="title"
+              required
+              value={book.title}
+              class="w-full px-4 py-3 rounded-2xl bg-neutral-50 dark:bg-neutral-800 border border-black/5 dark:border-white/10 text-sm focus:outline-none focus:ring-2 focus:ring-apple-blue transition-all"
+            />
+          </div>
+
+          <div>
+            <label for="slug" class="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-2">
+              نامک آدرس (Slug) <span class="text-rose-500">*</span>
+            </label>
+            <input
+              type="text"
+              id="slug"
+              name="slug"
+              required
+              dir="ltr"
+              value={book.slug}
+              class="w-full px-4 py-3 rounded-2xl bg-neutral-50 dark:bg-neutral-800 border border-black/5 dark:border-white/10 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-apple-blue transition-all"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label for="subtitle" class="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-2">
+            عنوان فرعی یا توضیحات تکمیلی
+          </label>
+          <input
+            type="text"
+            id="subtitle"
+            name="subtitle"
+            value={book.subtitle || ''}
+            class="w-full px-4 py-3 rounded-2xl bg-neutral-50 dark:bg-neutral-800 border border-black/5 dark:border-white/10 text-sm focus:outline-none focus:ring-2 focus:ring-apple-blue transition-all"
+          />
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div>
+            <label for="category" class="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-2">
+              دسته‌بندی موضوعی
+            </label>
+            <select
+              id="category"
+              name="category"
+              class="w-full px-4 py-3 rounded-2xl bg-neutral-50 dark:bg-neutral-800 border border-black/5 dark:border-white/10 text-sm focus:outline-none focus:ring-2 focus:ring-apple-blue transition-all"
+            >
+              <option value="">بدون دسته‌بندی</option>
+              {
+                categories.map((cat) => (
+                  <option value={cat.id} selected={cat.id === book?.categoryId}>
+                    {cat.title}
+                  </option>
+                ))
+              }
+            </select>
+          </div>
+
+          <div>
+            <label for="publisher" class="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-2">
+              نام انتشارات / ناشر <span class="text-rose-500">*</span>
+            </label>
+            <input
+              type="text"
+              id="publisher"
+              name="publisher"
+              required
+              value={book.publisher}
+              class="w-full px-4 py-3 rounded-2xl bg-neutral-50 dark:bg-neutral-800 border border-black/5 dark:border-white/10 text-sm focus:outline-none focus:ring-2 focus:ring-apple-blue transition-all"
+            />
+          </div>
+
+          <div>
+            <label for="publishedYear" class="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-2">
+              سال چاپ / نوبت ویرایش
+            </label>
+            <input
+              type="text"
+              id="publishedYear"
+              name="publishedYear"
+              value={book.publishYear || '۱۴۰۳'}
+              class="w-full px-4 py-3 rounded-2xl bg-neutral-50 dark:bg-neutral-800 border border-black/5 dark:border-white/10 text-sm focus:outline-none focus:ring-2 focus:ring-apple-blue transition-all"
+            />
+          </div>
+
+          <div>
+            <label for="pagesCount" class="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-2">
+              تعداد صفحات
+            </label>
+            <input
+              type="number"
+              id="pagesCount"
+              name="pagesCount"
+              value={book.pagesCount || 300}
+              class="w-full px-4 py-3 rounded-2xl bg-neutral-50 dark:bg-neutral-800 border border-black/5 dark:border-white/10 text-sm focus:outline-none focus:ring-2 focus:ring-apple-blue transition-all"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label for="thumbnailUrl" class="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-2">
+            تصویر شاخص و طرح جلد (Thumbnail / Cover URL)
+          </label>
+          <input
+            type="url"
+            id="thumbnailUrl"
+            name="thumbnailUrl"
+            dir="ltr"
+            value={book.thumbnailUrl || ''}
+            class="w-full px-4 py-3 rounded-2xl bg-neutral-50 dark:bg-neutral-800 border border-black/5 dark:border-white/10 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-apple-blue transition-all"
+          />
+        </div>
+      </div>
+
+      <!-- Book Links -->
+      <div class="p-6 sm:p-8 rounded-3xl bg-white dark:bg-neutral-900 border border-black/5 dark:border-white/10 shadow-sm space-y-5">
+        <h2 class="text-sm font-bold text-neutral-900 dark:text-white border-b border-black/5 dark:border-white/10 pb-3">
+          پیوندهای تهیه کتاب
+        </h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div>
+            <label for="buyLink" class="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-2">
+              لینک خرید نسخه چاپی
+            </label>
+            <input
+              type="url"
+              id="buyLink"
+              name="buyLink"
+              dir="ltr"
+              value={book.externalBuyLink || ''}
+              class="w-full px-4 py-3 rounded-2xl bg-neutral-50 dark:bg-neutral-800 border border-black/5 dark:border-white/10 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-apple-blue transition-all"
+            />
+          </div>
+
+          <div>
+            <label for="downloadLink" class="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-2">
+              لینک دانلود نسخه الکترونیک
+            </label>
+            <input
+              type="url"
+              id="downloadLink"
+              name="downloadLink"
+              dir="ltr"
+              value={book.digitalDownloadLink || ''}
+              class="w-full px-4 py-3 rounded-2xl bg-neutral-50 dark:bg-neutral-800 border border-black/5 dark:border-white/10 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-apple-blue transition-all"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div class="p-6 sm:p-8 rounded-3xl bg-white dark:bg-neutral-900 border border-black/5 dark:border-white/10 shadow-sm space-y-4">
+        <h2 class="text-sm font-bold text-neutral-900 dark:text-white border-b border-black/5 dark:border-white/10 pb-3">
+          معرفی و سرفصل‌های کتاب
+        </h2>
+
+        <div>
+          <label for="description" class="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-2">
+            شرح کامل و مقدمه کتاب <span class="text-rose-500">*</span>
+          </label>
+          <textarea
+            id="description"
+            name="description"
+            rows="5"
+            required
+            class="w-full px-4 py-3 rounded-2xl bg-neutral-50 dark:bg-neutral-800 border border-black/5 dark:border-white/10 text-sm focus:outline-none focus:ring-2 focus:ring-apple-blue transition-all"
+          >{book.description}</textarea>
+        </div>
+      </div>
+
+    </form>
+  </div>
+</AdminLayout>
+
+<script>
+  import { booksApi } from '../../../../utils/api';
+  import { showToast, showAlert } from '../../../../utils/ui-dialog';
+
+  const saveBtn = document.getElementById('btn-save-book');
+  const bookId = saveBtn?.getAttribute('data-book-id');
+
+  saveBtn?.addEventListener('click', async () => {
+    if (!bookId) return;
+
+    const title = (document.getElementById('title') as HTMLInputElement)?.value.trim();
+    const slug = (document.getElementById('slug') as HTMLInputElement)?.value.trim();
+    const subtitle = (document.getElementById('subtitle') as HTMLInputElement)?.value.trim();
+    const publisher = (document.getElementById('publisher') as HTMLInputElement)?.value.trim();
+    const publishedYear = (document.getElementById('publishedYear') as HTMLInputElement)?.value.trim() || '۱۴۰۳';
+    const pagesCount = parseInt((document.getElementById('pagesCount') as HTMLInputElement)?.value || '300', 10);
+    const thumbnailUrl = (document.getElementById('thumbnailUrl') as HTMLInputElement)?.value.trim() || 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=600&q=80';
+    const buyLink = (document.getElementById('buyLink') as HTMLInputElement)?.value.trim();
+    const downloadLink = (document.getElementById('downloadLink') as HTMLInputElement)?.value.trim();
+    const description = (document.getElementById('description') as HTMLTextAreaElement)?.value.trim();
+    const categorySelect = document.getElementById('category') as HTMLSelectElement;
+
+    if (!title || !slug || !publisher || !description) {
+      showToast('لطفاً فیلدهای ستاره‌دار (عنوان، نامک، ناشر و شرح کتاب) را تکمیل فرمایید.', 'warning');
+      return;
+    }
+
+    try {
+      if (saveBtn) saveBtn.textContent = 'در حال ذخیره تغییرات...';
+      const result = await booksApi.update(bookId, {
+        title,
+        slug,
+        subtitle: subtitle || null,
+        publisher,
+        publishYear: publishedYear,
+        pagesCount,
+        isbn: '',
+        thumbnailUrl,
+        externalBuyLink: buyLink || null,
+        digitalDownloadLink: downloadLink || null,
+        description,
+        categoryId: categorySelect?.value ? categorySelect.value : null,
+      });
+
+      if (result.isSuccess) {
+        await showAlert({
+          title: 'بروزرسانی موفقیت‌آمیز',
+          message: 'اطلاعات کتاب با موفقیت در سیستم ذخیره و بروزرسانی گردید.',
+          type: 'success',
+        });
+        window.location.href = '/admin/books';
+      } else {
+        showAlert({
+          title: 'خطا در ویرایش کتاب',
+          message: result.errorMessage || 'خطا در ویرایش کتاب',
+          type: 'error',
+        });
+        if (saveBtn) saveBtn.textContent = 'ذخیره تغییرات';
+      }
+    } catch (e: any) {
+      showToast('خطا در ارتباط با سرور', 'error');
+      if (saveBtn) saveBtn.textContent = 'ذخیره تغییرات';
+    }
+  });
+</script>

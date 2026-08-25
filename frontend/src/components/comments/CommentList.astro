@@ -6,9 +6,10 @@ import Button from '../ui/Button.astro';
 interface Props {
   comments: Comment[];
   entityId: string;
+  entityType?: 'article' | 'book' | 'course';
 }
 
-const { comments, entityId } = Astro.props;
+const { comments, entityId, entityType = 'article' } = Astro.props;
 
 // Count total comments recursively
 function countTotalComments(list: Comment[]): number {
@@ -50,7 +51,7 @@ const totalComments = countTotalComments(comments);
     <h4 class="text-base font-bold text-neutral-900 dark:text-white mb-4">
       ارسال دیدگاه جدید
     </h4>
-    <form id="new-comment-form" class="space-y-4" data-entity-id={entityId}>
+    <form id="new-comment-form" class="space-y-4" data-entity-id={entityId} data-entity-type={entityType}>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label class="block text-xs font-semibold text-neutral-600 dark:text-neutral-400 mb-1.5">
@@ -58,6 +59,7 @@ const totalComments = countTotalComments(comments);
           </label>
           <input
             type="text"
+            id="comment-author-name"
             required
             placeholder="مثال: علی محمدی"
             class="w-full px-4 py-2.5 text-sm rounded-xl bg-white dark:bg-neutral-800 border border-black/10 dark:border-white/10 focus:ring-2 focus:ring-apple-blue/50 focus:outline-none transition-all"
@@ -69,6 +71,7 @@ const totalComments = countTotalComments(comments);
           </label>
           <input
             type="email"
+            id="comment-author-email"
             required
             placeholder="name@domain.com"
             class="w-full px-4 py-2.5 text-sm rounded-xl bg-white dark:bg-neutral-800 border border-black/10 dark:border-white/10 focus:ring-2 focus:ring-apple-blue/50 focus:outline-none transition-all"
@@ -80,6 +83,7 @@ const totalComments = countTotalComments(comments);
           متن نظر شما <span class="text-red-500">*</span>
         </label>
         <textarea
+          id="comment-author-text"
           rows="4"
           required
           placeholder="دیدگاه، پرسش یا تجربیات خود را در مورد این موضوع بنویسید..."
@@ -87,7 +91,7 @@ const totalComments = countTotalComments(comments);
         ></textarea>
       </div>
       <div class="flex justify-end">
-        <Button type="submit" variant="primary" size="md">
+        <Button type="submit" variant="primary" size="md" id="btn-submit-comment">
           <span>ثبت و انتشار نظر</span>
           <svg class="w-4 h-4 transform rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
@@ -101,7 +105,7 @@ const totalComments = countTotalComments(comments);
   <div class="space-y-4">
     {
       comments.length > 0 ? (
-        comments.map((c) => <CommentItem comment={c} depth={0} />)
+        comments.map((c) => <CommentItem comment={c} depth={0} entityId={entityId} entityType={entityType} />)
       ) : (
         <div class="text-center py-12 text-sm text-neutral-500 dark:text-neutral-400">
           هنوز دیدگاهی برای این مطلب ثبت نشده است. اولین نفری باشید که دیدگاه خود را می‌نویسد!
@@ -112,8 +116,11 @@ const totalComments = countTotalComments(comments);
 </section>
 
 <script>
+  import { commentsApi } from '../../utils/api';
+  import { showAlert, showToast } from '../../utils/ui-dialog';
+
   function initCommentsInteractivity() {
-    // Handle reply buttons
+    // Handle reply toggles
     document.querySelectorAll('.reply-toggle-btn').forEach((btn) => {
       btn.addEventListener('click', () => {
         const commentId = btn.getAttribute('data-comment-id');
@@ -124,7 +131,7 @@ const totalComments = countTotalComments(comments);
       });
     });
 
-    // Handle cancel buttons
+    // Handle cancel reply buttons
     document.querySelectorAll('.cancel-reply-btn').forEach((btn) => {
       btn.addEventListener('click', () => {
         const commentId = btn.getAttribute('data-comment-id');
@@ -136,14 +143,120 @@ const totalComments = countTotalComments(comments);
     });
 
     // Main comment form submission
-    const mainForm = document.getElementById('new-comment-form');
+    const mainForm = document.getElementById('new-comment-form') as HTMLFormElement;
     if (mainForm) {
-      mainForm.addEventListener('submit', (e) => {
+      mainForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        alert('نظر ارزشمند شما با موفقیت دریافت شد و پس از تایید مدیر سایت به نمایش درخواهد آمد.');
-        (mainForm as HTMLFormElement).reset();
+        const entityId = mainForm.getAttribute('data-entity-id') || null;
+        const entityType = mainForm.getAttribute('data-entity-type') || 'article';
+        const nameInput = document.getElementById('comment-author-name') as HTMLInputElement;
+        const emailInput = document.getElementById('comment-author-email') as HTMLInputElement;
+        const textInput = document.getElementById('comment-author-text') as HTMLTextAreaElement;
+        const submitBtn = document.getElementById('btn-submit-comment');
+
+        const guestName = nameInput?.value.trim();
+        const email = emailInput?.value.trim();
+        const text = textInput?.value.trim();
+
+        if (!guestName || !text) {
+          showToast('لطفاً نام و متن نظر خود را وارد نمایید.', 'warning');
+          return;
+        }
+
+        try {
+          if (submitBtn) submitBtn.setAttribute('disabled', 'true');
+          const payload = {
+            guestName,
+            email: email || 'guest@example.com',
+            text,
+            parentCommentId: null,
+            articleId: entityType === 'article' ? entityId : null,
+            bookId: entityType === 'book' ? entityId : null,
+            courseId: entityType === 'course' ? entityId : null,
+          };
+
+          const res = await commentsApi.create(payload);
+          if (res.isSuccess) {
+            await showAlert({
+              title: 'دیدگاه شما دریافت گردید',
+              message: 'دیدگاه شما با موفقیت ثبت شد و پس از بررسی و تایید مدیر، در سایت به نمایش درخواهد آمد.',
+              type: 'success',
+            });
+            mainForm.reset();
+          } else {
+            await showAlert({
+              title: 'خطا در ثبت نظر',
+              message: res.errorMessage || 'متأسفانه در ثبت نظر خطایی رخ داد.',
+              type: 'error',
+            });
+          }
+        } catch (err) {
+          showToast('خطا در برقراری ارتباط با سرور.', 'error');
+        } finally {
+          if (submitBtn) submitBtn.removeAttribute('disabled');
+        }
       });
     }
+
+    // Inline reply form submission
+    document.querySelectorAll('.comment-reply-form').forEach((replyForm) => {
+      replyForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formEl = replyForm as HTMLFormElement;
+        const parentId = formEl.getAttribute('data-parent-id') || null;
+        const entityId = formEl.getAttribute('data-entity-id') || null;
+        const entityType = formEl.getAttribute('data-entity-type') || 'article';
+
+        const nameInput = formEl.querySelector('.reply-name') as HTMLInputElement;
+        const emailInput = formEl.querySelector('.reply-email') as HTMLInputElement;
+        const textInput = formEl.querySelector('.reply-text') as HTMLTextAreaElement;
+        const submitBtn = formEl.querySelector('.reply-submit-btn') as HTMLButtonElement;
+
+        const guestName = nameInput?.value.trim();
+        const email = emailInput?.value.trim();
+        const text = textInput?.value.trim();
+
+        if (!guestName || !text) {
+          showToast('لطفاً نام و متن پاسخ را وارد نمایید.', 'warning');
+          return;
+        }
+
+        try {
+          if (submitBtn) submitBtn.setAttribute('disabled', 'true');
+          const payload = {
+            guestName,
+            email: email || 'guest@example.com',
+            text,
+            parentCommentId: parentId,
+            articleId: entityType === 'article' ? entityId : null,
+            bookId: entityType === 'book' ? entityId : null,
+            courseId: entityType === 'course' ? entityId : null,
+          };
+
+          const res = await commentsApi.create(payload);
+          if (res.isSuccess) {
+            await showAlert({
+              title: 'پاسخ شما دریافت گردید',
+              message: 'پاسخ شما با موفقیت ثبت شد و پس از تأیید در زنجیره دیدگاه‌ها نمایش داده خواهد شد.',
+              type: 'success',
+            });
+            formEl.reset();
+            const container = document.getElementById(`reply-form-${parentId}`);
+            if (container) container.classList.add('hidden');
+          } else {
+            await showAlert({
+              title: 'خطا در ثبت پاسخ',
+              message: res.errorMessage || 'متأسفانه در ثبت پاسخ خطایی رخ داد.',
+              type: 'error',
+            });
+          }
+        } catch (err) {
+          showToast('خطا در برقراری ارتباط با سرور.', 'error');
+        } finally {
+          if (submitBtn) submitBtn.removeAttribute('disabled');
+        }
+      });
+    });
   }
 
   if (document.readyState === 'loading') {

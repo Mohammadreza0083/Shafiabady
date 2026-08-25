@@ -1,5 +1,22 @@
 ---
+export const prerender = false;
+
 import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { categoriesApi } from '../../../utils/api';
+import type { CategoryDto } from '../../../types';
+
+const token = Astro.cookies.get('AdminAuthToken')?.value;
+if (!token) {
+  return Astro.redirect('/admin/login');
+}
+
+let categories: CategoryDto[] = [];
+try {
+  const catRes = await categoriesApi.getAll();
+  if (catRes.isSuccess && catRes.data) {
+    categories = catRes.data;
+  }
+} catch (e) {}
 ---
 
 <AdminLayout title="تعریف و ویرایش دوره آموزشی" activeSection="courses">
@@ -73,22 +90,27 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
           </div>
         </div>
 
-        <!-- Universal Fields: Thumbnail & Category -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           <div>
             <label for="category" class="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-2">
-              دسته‌بندی موضوعی <span class="text-rose-500">*</span>
+              دسته‌بندی موضوعی
             </label>
             <select
               id="category"
               name="category"
               class="w-full px-4 py-3 rounded-2xl bg-neutral-50 dark:bg-neutral-800 border border-black/5 dark:border-white/10 text-sm focus:outline-none focus:ring-2 focus:ring-apple-blue transition-all"
             >
-              <option value="معماری نرم‌افزار">معماری نرم‌افزار</option>
-              <option value="میکروسرویس و سیستم‌های توزیع‌شده">میکروسرویس و توزیع‌شده</option>
-              <option value="برنامه‌نویسی پیشرفته C#">برنامه‌نویسی پیشرفته C#</option>
-              <option value="طراحی وب و فرانت‌اند مدرن">طراحی وب و فرانت‌اند</option>
-              <option value="کیفیت کد و تست">کیفیت کد و تست</option>
+              {
+                categories.map((cat) => (
+                  <option value={cat.id}>{cat.title}</option>
+                ))
+              }
+              {categories.length === 0 && (
+                <>
+                  <option value="">معماری نرم‌افزار</option>
+                  <option value="">طراحی سیستم</option>
+                </>
+              )}
             </select>
           </div>
 
@@ -116,7 +138,8 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
               type="text"
               id="duration"
               name="duration"
-              placeholder="۴۲ ساعت و ۳۰ دقیقه"
+              placeholder="۴۲ ساعت"
+              value="۴۰ ساعت"
               class="w-full px-4 py-3 rounded-2xl bg-neutral-50 dark:bg-neutral-800 border border-black/5 dark:border-white/10 text-sm focus:outline-none focus:ring-2 focus:ring-apple-blue transition-all"
             />
           </div>
@@ -129,6 +152,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
               type="number"
               id="lessonsCount"
               name="lessonsCount"
+              value="30"
               placeholder="مثال: ۳۸"
               class="w-full px-4 py-3 rounded-2xl bg-neutral-50 dark:bg-neutral-800 border border-black/5 dark:border-white/10 text-sm focus:outline-none focus:ring-2 focus:ring-apple-blue transition-all"
             />
@@ -136,13 +160,13 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
         </div>
 
         <div>
-          <label for="thumbnail" class="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-2">
-            تصویر شاخص دوره (Thumbnail Image URL) <span class="text-rose-500">*</span>
+          <label for="thumbnailUrl" class="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-2">
+            تصویر شاخص دوره (Thumbnail URL)
           </label>
           <input
             type="url"
-            id="thumbnail"
-            name="thumbnail"
+            id="thumbnailUrl"
+            name="thumbnailUrl"
             dir="ltr"
             placeholder="https://images.unsplash.com/photo-..."
             class="w-full px-4 py-3 rounded-2xl bg-neutral-50 dark:bg-neutral-800 border border-black/5 dark:border-white/10 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-apple-blue transition-all"
@@ -150,36 +174,28 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
         </div>
       </div>
 
-      <!-- Course-Specific Field: Aparat Video Embed URL -->
+      <!-- Aparat Video Embed URL -->
       <div class="p-6 sm:p-8 rounded-3xl bg-white dark:bg-neutral-900 border border-black/5 dark:border-white/10 shadow-sm space-y-5">
-        <div class="flex items-center gap-2 border-b border-black/5 dark:border-white/10 pb-3">
-          <div class="w-7 h-7 rounded-lg bg-rose-500/10 text-rose-500 flex items-center justify-center font-bold text-xs">
-            ▶
-          </div>
-          <h2 class="text-sm font-bold text-neutral-900 dark:text-white">
-            ویدیوی معرفی دوره در آپارات (Aparat Video Embed URL)
-          </h2>
-        </div>
+        <h2 class="text-sm font-bold text-neutral-900 dark:text-white border-b border-black/5 dark:border-white/10 pb-3">
+          ویدیوی معرفی دوره در آپارات (Aparat Video Embed URL)
+        </h2>
 
         <div>
           <label for="aparatVideoUrl" class="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-2">
-            لینک ویدیو یا کد امبد آپارات (Aparat Video Embed URL)
+            لینک ویدیو یا کد امبد آپارات
           </label>
           <input
             type="url"
             id="aparatVideoUrl"
             name="aparatVideoUrl"
             dir="ltr"
-            placeholder="https://www.aparat.com/video/video/embed/videohash/..."
+            placeholder="https://www.aparat.com/v/example"
             class="w-full px-4 py-3 rounded-2xl bg-neutral-50 dark:bg-neutral-800 border border-black/5 dark:border-white/10 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-apple-blue transition-all"
           />
-          <span class="text-[11px] text-neutral-400 mt-1.5 block leading-relaxed">
-            لینک آی‌فریم یا شناسه ویدیوی معرفی رایگان آپارات جهت نمایش تیزر و جلسه اول دوره در صفحه اختصاصی
-          </span>
         </div>
       </div>
 
-      <!-- Pricing & Discounts -->
+      <!-- Pricing -->
       <div class="p-6 sm:p-8 rounded-3xl bg-white dark:bg-neutral-900 border border-black/5 dark:border-white/10 shadow-sm space-y-5">
         <h2 class="text-sm font-bold text-neutral-900 dark:text-white border-b border-black/5 dark:border-white/10 pb-3">
           شهریه و تخفیف‌های دوره
@@ -187,47 +203,48 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
 
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
           <div>
-            <label for="price" class="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-2">
-              مبلغ پرداختی نهایی (تومان)
-            </label>
-            <input
-              type="number"
-              id="price"
-              name="price"
-              placeholder="مثال: ۳۵۰۰۰۰۰"
-              class="w-full px-4 py-3 rounded-2xl bg-neutral-50 dark:bg-neutral-800 border border-black/5 dark:border-white/10 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-apple-blue transition-all"
-            />
-          </div>
-
-          <div>
             <label for="originalPrice" class="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-2">
-              قیمت اصلی قبل از تخفیف (تومان)
+              قیمت اصلی (تومان) <span class="text-rose-500">*</span>
             </label>
             <input
               type="number"
               id="originalPrice"
               name="originalPrice"
-              placeholder="مثال: ۵۰۰۰۰۰۰"
+              value="3000000"
+              placeholder="مثال: ۳۰۰۰۰۰۰"
+              class="w-full px-4 py-3 rounded-2xl bg-neutral-50 dark:bg-neutral-800 border border-black/5 dark:border-white/10 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-apple-blue transition-all"
+            />
+          </div>
+
+          <div>
+            <label for="discountedPrice" class="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-2">
+              قیمت پس از تخفیف (تومان)
+            </label>
+            <input
+              type="number"
+              id="discountedPrice"
+              name="discountedPrice"
+              placeholder="مثال: ۲۵۰۰۰۰۰"
               class="w-full px-4 py-3 rounded-2xl bg-neutral-50 dark:bg-neutral-800 border border-black/5 dark:border-white/10 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-apple-blue transition-all"
             />
           </div>
 
           <div>
             <label for="discountPercentage" class="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-2">
-              درصد تخفیف ویژه (Badge)
+              درصد تخفیف (اختیاری)
             </label>
             <input
               type="number"
               id="discountPercentage"
               name="discountPercentage"
-              placeholder="مثال: ۳۰"
+              placeholder="مثال: ۲۰"
               class="w-full px-4 py-3 rounded-2xl bg-neutral-50 dark:bg-neutral-800 border border-black/5 dark:border-white/10 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-apple-blue transition-all"
             />
           </div>
         </div>
       </div>
 
-      <!-- Description & Syllabus -->
+      <!-- Description -->
       <div class="p-6 sm:p-8 rounded-3xl bg-white dark:bg-neutral-900 border border-black/5 dark:border-white/10 shadow-sm space-y-4">
         <h2 class="text-sm font-bold text-neutral-900 dark:text-white border-b border-black/5 dark:border-white/10 pb-3">
           توضیحات و سرفصل‌های دوره
@@ -253,15 +270,67 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
 </AdminLayout>
 
 <script>
-  document.getElementById('btn-save-course')?.addEventListener('click', () => {
-    const titleInput = document.getElementById('title') as HTMLInputElement;
-    if (!titleInput?.value.trim()) {
-      alert('لطفاً عنوان دوره را وارد نمایید.');
-      titleInput?.focus();
+  import { coursesApi } from '../../../utils/api';
+  import { showToast, showAlert } from '../../../utils/ui-dialog';
+
+  const saveBtn = document.getElementById('btn-save-course');
+
+  saveBtn?.addEventListener('click', async () => {
+    const title = (document.getElementById('title') as HTMLInputElement)?.value.trim();
+    const slug = (document.getElementById('slug') as HTMLInputElement)?.value.trim();
+    const level = (document.getElementById('level') as HTMLSelectElement)?.value || 'پیشرفته';
+    const duration = (document.getElementById('duration') as HTMLInputElement)?.value.trim() || '۴۰ ساعت';
+    const lessonsCount = parseInt((document.getElementById('lessonsCount') as HTMLInputElement)?.value || '30', 10);
+    const thumbnailUrl = (document.getElementById('thumbnailUrl') as HTMLInputElement)?.value.trim() || 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=800&q=80';
+    const aparatVideoUrl = (document.getElementById('aparatVideoUrl') as HTMLInputElement)?.value.trim();
+    const originalPrice = parseFloat((document.getElementById('originalPrice') as HTMLInputElement)?.value || '0');
+    const discountedPriceVal = (document.getElementById('discountedPrice') as HTMLInputElement)?.value;
+    const discountedPrice = discountedPriceVal ? parseFloat(discountedPriceVal) : null;
+    const discountPercentageVal = (document.getElementById('discountPercentage') as HTMLInputElement)?.value;
+    const discountPercentage = discountPercentageVal ? parseInt(discountPercentageVal, 10) : null;
+    const description = (document.getElementById('description') as HTMLTextAreaElement)?.value.trim();
+    const categorySelect = document.getElementById('category') as HTMLSelectElement;
+
+    if (!title || !slug || !description) {
+      showToast('لطفاً عنوان، نامک و توضیحات دوره را وارد فرمایید.', 'warning');
       return;
     }
 
-    alert('اطلاعات دوره آموزشی (شامل لینک ویدیوی آپارات و تخفیف‌ها) با موفقیت ثبت شد.');
-    window.location.href = '/admin/courses';
+    try {
+      if (saveBtn) saveBtn.textContent = 'در حال ثبت دوره...';
+      const result = await coursesApi.create({
+        title,
+        slug,
+        level,
+        duration,
+        lessonsCount,
+        thumbnailUrl,
+        aparatVideoUrl: aparatVideoUrl || null,
+        originalPrice,
+        discountedPrice,
+        discountPercentage,
+        description,
+        categoryId: categorySelect?.value ? categorySelect.value : null,
+      });
+
+      if (result.isSuccess) {
+        await showAlert({
+          title: 'ثبت موفقیت‌آمیز',
+          message: 'دوره آموزشی با موفقیت در سیستم ثبت گردید.',
+          type: 'success',
+        });
+        window.location.href = '/admin/courses';
+      } else {
+        showAlert({
+          title: 'خطا در ثبت دوره',
+          message: result.errorMessage || 'خطا در ثبت دوره',
+          type: 'error',
+        });
+        if (saveBtn) saveBtn.textContent = 'ثبت و انتشار دوره';
+      }
+    } catch (e: any) {
+      showToast('خطا در ارتباط با سرور', 'error');
+      if (saveBtn) saveBtn.textContent = 'ثبت و انتشار دوره';
+    }
   });
 </script>

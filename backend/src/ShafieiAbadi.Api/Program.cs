@@ -1,8 +1,10 @@
 using System.Reflection;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Prometheus;
 using Serilog;
 using Serilog.Events;
 using Serilog.Sinks.Grafana.Loki;
@@ -32,7 +34,18 @@ Log.Logger = new LoggerConfiguration()
 
 builder.Host.UseSerilog();
 
-// 2. Add Layer Services (Application & Infrastructure)
+// 2. Add Forwarded Headers for Cloudflare & Reverse Proxy real IP resolution
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
+// 3. Add Health Checks & Metrics
+builder.Services.AddHealthChecks();
+
+// 4. Add Layer Services (Application & Infrastructure)
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
 
@@ -164,13 +177,18 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
-// 7. Global Exception Handling Middleware
+// 7. Process Forwarded Headers (Cloudflare real IP & TLS termination)
+app.UseForwardedHeaders();
+
+// 8. Global Exception Handling Middleware
 app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 
-// 8. Serilog HTTP Request Logging
+// 9. Serilog HTTP Request Logging & Prometheus Metrics
 app.UseSerilogRequestLogging();
+app.UseRouting();
+app.UseHttpMetrics();
 
-// 9. Swagger & Swagger UI Setup
+// 10. Swagger & Swagger UI Setup
 if (app.Environment.IsDevelopment() || true)
 {
     app.UseSwagger();
@@ -182,19 +200,22 @@ if (app.Environment.IsDevelopment() || true)
     });
 }
 
-// 10. CORS, Authentication, and Authorization Middleware Pipeline
+// 11. CORS, Authentication, and Authorization Middleware Pipeline
 app.UseCors("DefaultCorsPolicy");
 
 app.UseAuthentication();
 app.UseAuthorization();
 
+// 12. Health Check, Prometheus Metrics, and API Controllers Endpoints
+app.MapHealthChecks("/health");
+app.MapMetrics("/metrics");
 app.MapControllers();
 
 // 11. Seed Initial Database Records (Admin user, categories, sample articles, books, and courses)
 using (var scope = app.Services.CreateScope())
 {
-    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await DataSeeder.SeedAsync(context);
+    var seeder = scope.ServiceProvider.GetRequiredService<DatabaseSeeder>();
+    await seeder.SeedAsync();
 }
 
 try

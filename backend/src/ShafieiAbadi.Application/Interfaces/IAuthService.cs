@@ -23,4 +23,12 @@ public interface IAuthService
     /// <param name="ct">Cancellation token.</param>
     /// <returns>Administrator profile DTO.</returns>
     Task<Result<AdminUserDto>> GetUserByUsernameAsync(string username, CancellationToken ct = default);
+
+    /// <summary>
+    /// Refreshes administrator session and generates a fresh JWT token for an active user.
+    /// </summary>
+    /// <param name="username">Administrator username.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>Standardized result containing updated administrator profile and fresh JWT token.</returns>
+    Task<Result<LoginResultDto>> RefreshTokenAsync(string username, CancellationToken ct = default);
 }

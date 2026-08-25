@@ -1,6 +1,30 @@
 ---
+export const prerender = false;
+
 import AdminLayout from '../../../layouts/AdminLayout.astro';
-import { mockArticles } from '../../../data/mockData';
+import { articlesApi } from '../../../utils/api';
+import type { ArticleDto } from '../../../types';
+
+const token = Astro.cookies.get('AdminAuthToken')?.value;
+if (!token) {
+  return Astro.redirect('/admin/login');
+}
+
+let articles: ArticleDto[] = [];
+let fetchError: string | null = null;
+
+try {
+  const result = await articlesApi.getPaged({ pageNumber: 1, pageSize: 50 }, token);
+  if (result.isSuccess && result.data) {
+    articles = result.data.items || [];
+  } else if (result.statusCode === 401) {
+    return Astro.redirect('/admin/login');
+  } else {
+    fetchError = result.errorMessage;
+  }
+} catch (e: any) {
+  fetchError = e?.message || 'خطا در واکشی اطلاعات از سرور';
+}
 ---
 
 <AdminLayout title="مدیریت مقالات تخصصی" activeSection="articles">
@@ -13,7 +37,7 @@ import { mockArticles } from '../../../data/mockData';
           مقالات تخصصی
         </h1>
         <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
-          لیست تمام مقالات منتشر شده و پیش‌نویس‌های پلتفرم
+          لیست تمام مقالات منتشر شده و پیش‌نویس‌های پلتفرم ({articles.length.toLocaleString('fa-IR')} مقاله)
         </p>
       </div>
 
@@ -27,6 +51,12 @@ import { mockArticles } from '../../../data/mockData';
         <span>افزودن مقاله جدید</span>
       </a>
     </div>
+
+    {fetchError && (
+      <div class="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs">
+        {fetchError}
+      </div>
+    )}
 
     <!-- Data Table Container -->
     <div class="rounded-3xl bg-white dark:bg-neutral-900 border border-black/5 dark:border-white/10 shadow-sm overflow-hidden">
@@ -42,84 +72,93 @@ import { mockArticles } from '../../../data/mockData';
               <th class="py-4 px-6 text-center">عملیات</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-black/5 dark:divide-white/5">
+          <tbody class="divide-y divide-black/5 dark:divide-white/5" id="articles-table-body">
             {
-              mockArticles.map((article) => (
-                <tr class="hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors">
-                  <td class="py-4 px-6">
-                    <div class="flex items-center gap-3">
-                      <div class="w-10 h-10 rounded-xl overflow-hidden bg-neutral-100 dark:bg-neutral-800 flex-shrink-0">
-                        {article.coverImage ? (
-                          <img src={article.coverImage} alt={article.title} class="w-full h-full object-cover" />
-                        ) : (
-                          <div class="w-full h-full flex items-center justify-center bg-apple-blue/10 text-apple-blue font-bold text-xs">
-                            مقاله
-                          </div>
-                        )}
-                      </div>
-                      <div class="flex flex-col">
-                        <span class="font-bold text-neutral-900 dark:text-white text-sm max-w-xs truncate">
-                          {article.title}
-                        </span>
-                        <span class="text-[10px] text-neutral-400 font-mono">
-                          /{article.slug}
-                        </span>
-                      </div>
-                    </div>
-                  </td>
-                  <td class="py-4 px-6">
-                    <span class="inline-block px-2.5 py-1 rounded-full text-[11px] font-medium bg-apple-blue/10 text-apple-blue dark:bg-apple-blue-dark/20 dark:text-apple-blue-dark">
-                      {article.category}
-                    </span>
-                  </td>
-                  <td class="py-4 px-6 font-semibold text-neutral-700 dark:text-neutral-300">
-                    {article.viewsCount.toLocaleString('fa-IR')}
-                  </td>
-                  <td class="py-4 px-6 text-neutral-500">
-                    {article.readTime}
-                  </td>
-                  <td class="py-4 px-6">
-                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                      <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                      <span>منتشر شده</span>
-                    </span>
-                  </td>
-                  <td class="py-4 px-6">
-                    <div class="flex items-center justify-center gap-2">
-                      <a
-                        href={`/articles/${article.slug}`}
-                        target="_blank"
-                        class="p-2 rounded-xl text-neutral-400 hover:text-apple-blue hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
-                        title="مشاهده در سایت"
-                      >
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        </svg>
-                      </a>
-                      <a
-                        href="/admin/articles/new"
-                        class="p-2 rounded-xl text-neutral-400 hover:text-amber-500 hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
-                        title="ویرایش"
-                      >
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                      </a>
-                      <button
-                        type="button"
-                        class="delete-btn p-2 rounded-xl text-neutral-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors"
-                        title="حذف"
-                        data-title={article.title}
-                      >
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
-                    </div>
+              articles.length === 0 ? (
+                <tr>
+                  <td colspan="6" class="py-12 text-center text-neutral-400 dark:text-neutral-500 text-xs font-medium">
+                    مقاله‌ای برای نمایش یافت نشد.
                   </td>
                 </tr>
-              ))
+              ) : (
+                articles.map((article) => (
+                  <tr id={`article-row-${article.id}`} class="hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors">
+                    <td class="py-4 px-6">
+                      <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl overflow-hidden bg-neutral-100 dark:bg-neutral-800 flex-shrink-0">
+                          {article.thumbnailUrl ? (
+                            <img src={article.thumbnailUrl} alt={article.title} class="w-full h-full object-cover" />
+                          ) : (
+                            <div class="w-full h-full flex items-center justify-center bg-apple-blue/10 text-apple-blue font-bold text-xs">
+                              مقاله
+                            </div>
+                          )}
+                        </div>
+                        <div class="flex flex-col">
+                          <span class="font-bold text-neutral-900 dark:text-white text-sm max-w-xs truncate">
+                            {article.title}
+                          </span>
+                          <span class="text-[10px] text-neutral-400 font-mono">
+                            /{article.slug}
+                          </span>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="py-4 px-6">
+                      <span class="inline-block px-2.5 py-1 rounded-full text-[11px] font-medium bg-apple-blue/10 text-apple-blue dark:bg-apple-blue-dark/20 dark:text-apple-blue-dark">
+                        {article.categoryTitle || 'عمومی'}
+                      </span>
+                    </td>
+                    <td class="py-4 px-6 font-semibold text-neutral-700 dark:text-neutral-300">
+                      {article.viewsCount.toLocaleString('fa-IR')}
+                    </td>
+                    <td class="py-4 px-6 text-neutral-500">
+                      {article.readingTimeMinutes ? `${article.readingTimeMinutes} دقیقه` : '۵ دقیقه'}
+                    </td>
+                    <td class="py-4 px-6">
+                      <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                        <span>منتشر شده</span>
+                      </span>
+                    </td>
+                    <td class="py-4 px-6">
+                      <div class="flex items-center justify-center gap-2">
+                        <a
+                          href={`/articles/${article.slug}`}
+                          target="_blank"
+                          class="p-2 rounded-xl text-neutral-400 hover:text-apple-blue hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+                          title="مشاهده در سایت"
+                        >
+                          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                        </a>
+                        <a
+                          href={`/admin/articles/edit/${article.id}`}
+                          class="p-2 rounded-xl text-neutral-400 hover:text-amber-500 hover:bg-amber-500/10 transition-colors"
+                          title="ویرایش مقاله"
+                        >
+                          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                        </a>
+                        <button
+                          type="button"
+                          class="delete-btn p-2 rounded-xl text-neutral-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors"
+                          title="حذف"
+                          data-id={article.id}
+                          data-title={article.title}
+                        >
+                          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )
             }
           </tbody>
         </table>
@@ -130,11 +169,40 @@ import { mockArticles } from '../../../data/mockData';
 </AdminLayout>
 
 <script>
+  import { articlesApi } from '../../../utils/api';
+  import { showConfirm, showToast, showAlert } from '../../../utils/ui-dialog';
+
   document.querySelectorAll('.delete-btn').forEach((btn) => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
+      const id = btn.getAttribute('data-id');
       const title = btn.getAttribute('data-title');
-      if (confirm(`آیا از حذف مقاله «${title}» اطمینان دارید؟ (در فاز بک‌اند این عملیات با EF Core متصل خواهد شد)`)) {
-        alert('درخواست حذف ثبت شد.');
+      if (!id) return;
+
+      const confirmed = await showConfirm({
+        title: 'حذف مقاله',
+        message: `آیا از حذف مقاله «${title}» اطمینان دارید؟ این عملیات غیرقابل بازگشت است.`,
+        confirmText: 'بله، حذف شود',
+        cancelText: 'انصراف',
+        isDestructive: true,
+      });
+
+      if (confirmed) {
+        try {
+          const res = await articlesApi.delete(id);
+          if (res.isSuccess) {
+            const row = document.getElementById(`article-row-${id}`);
+            row?.remove();
+            showToast(`مقاله «${title}» با موفقیت حذف شد.`, 'success');
+          } else {
+            showAlert({
+              title: 'خطا در حذف مقاله',
+              message: res.errorMessage || 'خطا در حذف مقاله',
+              type: 'error',
+            });
+          }
+        } catch (e: any) {
+          showToast('خطا در برقراری ارتباط با سرور', 'error');
+        }
       }
     });
   });

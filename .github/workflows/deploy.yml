@@ -1,0 +1,168 @@
+# ==============================================================================
+# Production CI/CD Pipeline with Automated Testing, Build, and Rollback
+# Dr. Mohammad Hossein Shafiei Abadi Platform
+# ==============================================================================
+
+name: Production CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: production-deployment
+  cancel-in-progress: false
+
+jobs:
+  # ----------------------------------------------------------------------------
+  # Job 1: Automated Unit Testing, Linting, and Multi-Stage Image Compilation
+  # ----------------------------------------------------------------------------
+  test-and-build:
+    name: Build & Test Suite
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # --- 1. .NET 9 API Verification ---
+      - name: Setup .NET 9 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Restore .NET Dependencies
+        run: dotnet restore backend/ShafieiAbadi.slnx
+
+      - name: Build .NET Solution (Release)
+        run: dotnet build backend/ShafieiAbadi.slnx --configuration Release --no-restore
+
+      - name: Run xUnit Unit Test Suite
+        run: dotnet test backend/tests/ShafieiAbadi.UnitTests/ShafieiAbadi.UnitTests.csproj --configuration Release --no-build --verbosity normal --collect:"XPlat Code Coverage"
+
+      # --- 2. Astro Frontend Verification ---
+      - name: Setup Node.js 20 LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Frontend Dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Compile Astro Frontend (SSR Bundle)
+        working-directory: frontend
+        run: npm run build
+
+      # --- 3. Python Telegram Bot & Health Daemon Verification ---
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: telegram-bot/requirements.txt
+
+      - name: Install Python Dependencies & Verify Syntax
+        working-directory: telegram-bot
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          python -m py_compile main.py
+
+      # --- 4. Multi-Stage Docker Builds Verification ---
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Validate Docker Compose Configuration & Image Compilation
+        run: |
+          docker compose build --parallel
+
+  # ----------------------------------------------------------------------------
+  # Job 2: Enterprise Automated Deployment with Post-Deployment Rollback
+  # ----------------------------------------------------------------------------
+  deploy-with-rollback:
+    name: Deploy & Self-Healing Rollback
+    needs: test-and-build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - name: Deploy to Remote Production Host via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          timeout: 300s
+          script: |
+            set -e
+
+            APP_DIR="/opt/shafieiabadi"
+            echo "🚀 Navigating to application directory: ${APP_DIR}"
+            cd ${APP_DIR}
+
+            # 1. Capture current stable Git commit SHA for atomic rollback
+            PREV_COMMIT=$(git rev-parse HEAD)
+            echo "📌 Current Stable Release SHA: ${PREV_COMMIT}"
+
+            # 2. Pull latest code from production branch
+            echo "📥 Pulling latest code changes..."
+            git fetch origin main
+            git reset --hard origin/main
+            NEW_COMMIT=$(git rev-parse HEAD)
+            echo "🆕 Target Deployment SHA: ${NEW_COMMIT}"
+
+            # 3. Build and rollout new container stack
+            echo "🐳 Building and spinning up updated Docker containers..."
+            docker compose up -d --build --remove-orphans
+
+            # 4. Post-Deployment Health Check Verification Loop (90s window)
+            echo "⏳ Probing service health endpoints..."
+            HEALTHY=0
+            MAX_ATTEMPTS=15
+            ATTEMPT=1
+
+            while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
+              echo "🩺 Health Check Probe $ATTEMPT/$MAX_ATTEMPTS..."
+
+              BACKEND_OK=$(curl -s -o /dev/null -w "%{http_code}" http://localhost/health || true)
+              FRONTEND_OK=$(curl -s -o /dev/null -w "%{http_code}" http://localhost/ || true)
+              BOT_OK=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/health || true)
+
+              echo "   - .NET API Health Status: $BACKEND_OK"
+              echo "   - Astro Frontend Status: $FRONTEND_OK"
+              echo "   - Telegram Bot Status: $BOT_OK"
+
+              if [ "$BACKEND_OK" = "200" ] && [ "$FRONTEND_OK" = "200" ] && [ "$BOT_OK" = "200" ]; then
+                echo "✅ All service health checks passed successfully!"
+                HEALTHY=1
+                break
+              fi
+
+              sleep 6
+              ATTEMPT=$((ATTEMPT + 1))
+            done
+
+            # 5. Automated Rollback Trigger if Health Checks Fail
+            if [ $HEALTHY -ne 1 ]; then
+              echo "🚨 [FATAL] Deployment verification failed! Service endpoints did not become healthy."
+              echo "📋 Inspecting recent container logs before rollback:"
+              docker compose logs --tail=50
+
+              echo "⏪ Initiating automated rollback to previous stable commit: ${PREV_COMMIT}..."
+              git reset --hard ${PREV_COMMIT}
+              docker compose up -d --build --remove-orphans
+
+              echo "🛑 Rollback completed. System restored to stable state (${PREV_COMMIT})."
+              exit 1
+            fi
+
+            # 6. Housekeeping: Remove dangling images after successful release
+            echo "🧹 Cleaning up dangling build artifacts..."
+            docker image prune -f
+            echo "🎉 Deployment for SHA ${NEW_COMMIT} completed successfully!"

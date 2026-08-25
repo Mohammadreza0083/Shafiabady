@@ -39,6 +39,26 @@ public class CategoriesController : BaseApiController
     }
 
     /// <summary>
+    /// Retrieves a category by its unique GUID.
+    /// </summary>
+    /// <param name="id">Unique category GUID.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>Category details.</returns>
+    [HttpGet("{id:guid}")]
+    [ProducesResponseType(typeof(Result<CategoryDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(Result<CategoryDto>), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetById(Guid id, CancellationToken ct)
+    {
+        var category = await _unitOfWork.Repository<Category>().GetByIdAsync(id, ct);
+        if (category == null || category.IsDeleted)
+        {
+            return HandleResult(Result<CategoryDto>.NotFound("دسته‌بندی مورد نظر یافت نشد."));
+        }
+
+        return HandleResult(Result<CategoryDto>.Success(_mapper.Map<CategoryDto>(category)));
+    }
+
+    /// <summary>
     /// Creates a new category classification (Admin only).
     /// </summary>
     /// <param name="dto">Category creation payload.</param>
@@ -55,5 +75,65 @@ public class CategoriesController : BaseApiController
         await _unitOfWork.SaveChangesAsync(ct);
 
         return HandleResult(Result<CategoryDto>.Success(_mapper.Map<CategoryDto>(category), 201));
+    }
+
+    /// <summary>
+    /// Updates an existing category (Admin only).
+    /// </summary>
+    /// <param name="id">Unique category GUID.</param>
+    /// <param name="dto">Updated category data.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>Updated category details.</returns>
+    [HttpPut("{id:guid}")]
+    [Authorize]
+    [ProducesResponseType(typeof(Result<CategoryDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(Result<CategoryDto>), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(Result<CategoryDto>), StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> Update(Guid id, [FromBody] CreateCategoryDto dto, CancellationToken ct)
+    {
+        var category = await _unitOfWork.Repository<Category>().GetByIdAsync(id, ct);
+        if (category == null || category.IsDeleted)
+        {
+            return HandleResult(Result<CategoryDto>.NotFound("دسته‌بندی مورد نظر یافت نشد."));
+        }
+
+        category.Title = dto.Title;
+        category.Slug = dto.Slug;
+        category.Description = dto.Description;
+        category.DisplayOrder = dto.DisplayOrder;
+        category.UpdatedAt = DateTime.UtcNow;
+
+        _unitOfWork.Repository<Category>().Update(category);
+        await _unitOfWork.SaveChangesAsync(ct);
+
+        return HandleResult(Result<CategoryDto>.Success(_mapper.Map<CategoryDto>(category)));
+    }
+
+    /// <summary>
+    /// Soft deletes a category (Admin only).
+    /// </summary>
+    /// <param name="id">Unique category GUID.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>Standard success result.</returns>
+    [HttpDelete("{id:guid}")]
+    [Authorize]
+    [ProducesResponseType(typeof(Result), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(Result), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(Result), StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
+    {
+        var category = await _unitOfWork.Repository<Category>().GetByIdAsync(id, ct);
+        if (category == null || category.IsDeleted)
+        {
+            return HandleResult(Result.NotFound("دسته‌بندی مورد نظر یافت نشد."));
+        }
+
+        category.IsDeleted = true;
+        category.UpdatedAt = DateTime.UtcNow;
+
+        _unitOfWork.Repository<Category>().Update(category);
+        await _unitOfWork.SaveChangesAsync(ct);
+
+        return HandleResult(Result.Success());
     }
 }

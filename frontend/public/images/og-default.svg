@@ -11,7 +11,7 @@
   
   <!-- Content -->
   <text x="120" y="270" fill="#0071E3" font-family="system-ui, -apple-system, sans-serif" font-size="22" font-weight="700" letter-spacing="2">پلتفرم تخصصی مهندسی نرم‌افزار و معماری</text>
-  <text x="120" y="340" fill="white" font-family="system-ui, -apple-system, sans-serif" font-size="52" font-weight="900">دکتر محمد حسین شفیعآبادی</text>
+  <text x="120" y="340" fill="white" font-family="system-ui, -apple-system, sans-serif" font-size="52" font-weight="900">دکتر محمد حسین شفیع‌آبادی</text>
   <text x="120" y="410" fill="#A1A1AA" font-family="system-ui, -apple-system, sans-serif" font-size="24">Clean Architecture • Domain-Driven Design (DDD) • .NET 9 • TDD</text>
   
   <!-- Footer URL -->

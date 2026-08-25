@@ -1,7 +1,23 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import CourseCard from '../../components/cards/CourseCard.astro';
+import { coursesApi } from '../../utils/api';
 import { mockCourses } from '../../data/mockData';
+import type { CourseDto } from '../../types';
+
+const PAGE_SIZE = 10;
+let courses: any[] = [];
+
+try {
+  const response = await coursesApi.getPaged({ pageNumber: 1, pageSize: PAGE_SIZE });
+  if (response.isSuccess && response.data && response.data.items && response.data.items.length > 0) {
+    courses = response.data.items;
+  } else {
+    courses = mockCourses;
+  }
+} catch (error) {
+  courses = mockCourses;
+}
 ---
 
 <BaseLayout
@@ -22,9 +38,9 @@ import { mockCourses } from '../../data/mockData';
       </p>
     </div>
 
-    <!-- Courses Grid -->
+    <!-- Courses Grid - Full array rendered with NO slicing -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-      {mockCourses.map((course) => <CourseCard course={course} />)}
+      {courses.map((course) => <CourseCard course={course} />)}
     </div>
   </div>
 </BaseLayout>

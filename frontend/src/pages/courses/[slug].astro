@@ -1,16 +1,61 @@
 ---
+export const prerender = false;
+
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Button from '../../components/ui/Button.astro';
+import { coursesApi } from '../../utils/api';
 import { mockCourses } from '../../data/mockData';
 
-export function getStaticPaths() {
-  return mockCourses.map((course) => ({
-    params: { slug: course.slug },
-    props: { course },
-  }));
+const { slug } = Astro.params;
+if (!slug) {
+  return Astro.redirect('/404');
 }
 
-const { course } = Astro.props;
+let cleanSlug = slug;
+try {
+  cleanSlug = decodeURIComponent(slug);
+} catch {}
+
+let courseData: any = null;
+
+try {
+  let res = await coursesApi.getBySlug(cleanSlug);
+  if ((!res.isSuccess || !res.data) && slug !== cleanSlug) {
+    res = await coursesApi.getBySlug(slug);
+  }
+  if (res.isSuccess && res.data) {
+    const raw = res.data;
+    courseData = {
+      id: raw.id,
+      title: raw.title || 'بدون عنوان',
+      slug: raw.slug || cleanSlug,
+      description: raw.description || '',
+      level: raw.level || 'پیشرفته',
+      duration: raw.duration || '۴۰ ساعت',
+      lessonsCount: raw.lessonsCount || 40,
+      price: raw.price || 0,
+      originalPrice: raw.originalPrice,
+      discountPercentage: raw.discountPercentage,
+      isFree: raw.isFree ?? (raw.price === 0),
+      thumbnail: raw.thumbnailUrl || '',
+      aparatVideoUrl: raw.aparatVideoUrl,
+      viewsCount: raw.viewsCount || 0,
+    };
+  }
+} catch (e) {
+  // Fallback to mock data if backend is offline
+}
+
+if (!courseData) {
+  const fallback = mockCourses.find((c) => c.slug === slug || c.slug === cleanSlug);
+  if (fallback) {
+    courseData = fallback;
+  } else {
+    return Astro.redirect('/404');
+  }
+}
+
+const course = courseData;
 
 const courseJsonLd = {
   '@context': 'https://schema.org',
@@ -19,7 +64,7 @@ const courseJsonLd = {
   'description': course.description,
   'provider': {
     '@type': 'Person',
-    'name': 'دکتر محمد حسین شفیعآبادی',
+    'name': 'دکتر محمد حسین شفیع‌آبادی',
     'url': 'https://shafieiabadi.ir/about',
   },
   'educationalLevel': course.level,

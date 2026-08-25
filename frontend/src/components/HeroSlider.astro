@@ -1,0 +1,10 @@
+---
+import HeroSlider, { type SlideItem } from './ui/HeroSlider.astro';
+
+export type { SlideItem };
+export type Props = {
+  slides?: SlideItem[];
+};
+---
+
+<HeroSlider {...Astro.props} />

@@ -1,0 +1,22 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  scrape_timeout: 10s
+
+scrape_configs:
+  # Scrape .NET 9 API metrics
+  - job_name: 'shafieiabadi-api'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['backend:5000']
+        labels:
+          application: 'ShafieiAbadi.Api'
+          environment: 'production'
+
+  # Scrape Prometheus internal metrics
+  - job_name: 'prometheus'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          application: 'Prometheus'

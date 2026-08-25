@@ -1,16 +1,57 @@
 ---
+export const prerender = false;
+
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Button from '../../components/ui/Button.astro';
+import { booksApi } from '../../utils/api';
 import { mockBooks } from '../../data/mockData';
 
-export function getStaticPaths() {
-  return mockBooks.map((book) => ({
-    params: { slug: book.slug },
-    props: { book },
-  }));
+const { slug } = Astro.params;
+if (!slug) {
+  return Astro.redirect('/404');
 }
 
-const { book } = Astro.props;
+let cleanSlug = slug;
+try {
+  cleanSlug = decodeURIComponent(slug);
+} catch {}
+
+let bookData: any = null;
+
+try {
+  let res = await booksApi.getBySlug(cleanSlug);
+  if ((!res.isSuccess || !res.data) && slug !== cleanSlug) {
+    res = await booksApi.getBySlug(slug);
+  }
+  if (res.isSuccess && res.data) {
+    const raw = res.data;
+    bookData = {
+      id: raw.id,
+      title: raw.title || 'بدون عنوان',
+      slug: raw.slug || cleanSlug,
+      subtitle: raw.subtitle || 'کتاب تخصصی در حوزه مهندسی نرم‌افزار',
+      description: raw.description || '',
+      publisher: raw.publisher || 'انتشارات دانش و فناوری',
+      publishYear: raw.publishedYear || raw.publishYear || '۱۴۰۲',
+      pagesCount: raw.pagesCount || 300,
+      coverImage: raw.thumbnailUrl || '',
+      viewsCount: raw.viewsCount || 0,
+    };
+  }
+} catch (e) {
+  // Fallback to mock data if backend is offline
+}
+
+if (!bookData) {
+  const fallback = mockBooks.find((b) => b.slug === slug || b.slug === cleanSlug);
+  if (fallback) {
+    bookData = fallback;
+  } else {
+    return Astro.redirect('/404');
+  }
+}
+
+const book = bookData;
 
 const bookJsonLd = {
   '@context': 'https://schema.org',
@@ -20,7 +61,7 @@ const bookJsonLd = {
   'description': book.description,
   'author': {
     '@type': 'Person',
-    'name': 'دکتر محمد حسین شفیعآبادی',
+    'name': 'دکتر محمد حسین شفیع‌آبادی',
     'url': 'https://shafieiabadi.ir/about',
   },
   'publisher': {

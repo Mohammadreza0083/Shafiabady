@@ -1,5 +1,22 @@
 ---
+export const prerender = false;
+
 import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { categoriesApi } from '../../../utils/api';
+import type { CategoryDto } from '../../../types';
+
+const token = Astro.cookies.get('AdminAuthToken')?.value;
+if (!token) {
+  return Astro.redirect('/admin/login');
+}
+
+let categories: CategoryDto[] = [];
+try {
+  const catRes = await categoriesApi.getAll();
+  if (catRes.isSuccess && catRes.data) {
+    categories = catRes.data;
+  }
+} catch (e) {}
 ---
 
 <AdminLayout title="نگارش و انتشار مقاله جدید" activeSection="articles">
@@ -23,13 +40,6 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
         >
           انصراف
         </a>
-        <button
-          type="button"
-          id="btn-save-draft"
-          class="px-4 py-2 rounded-full bg-black/5 dark:bg-white/10 text-xs font-semibold text-neutral-800 dark:text-neutral-200 hover:bg-black/10 dark:hover:bg-white/20 transition-colors"
-        >
-          ذخیره پیش‌نویس
-        </button>
         <button
           type="button"
           id="btn-publish"
@@ -89,7 +99,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
               type="text"
               id="authorName"
               name="authorName"
-              value="دکتر محمد حسین شفیعآبادی"
+              value="دکتر محمد حسین شفیع‌آبادی"
               required
               class="w-full px-4 py-3 rounded-2xl bg-neutral-50 dark:bg-neutral-800 border border-black/5 dark:border-white/10 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-apple-blue transition-all"
             />
@@ -104,24 +114,31 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
               name="category"
               class="w-full px-4 py-3 rounded-2xl bg-neutral-50 dark:bg-neutral-800 border border-black/5 dark:border-white/10 text-sm focus:outline-none focus:ring-2 focus:ring-apple-blue transition-all"
             >
-              <option value="معماری نرم‌افزار">معماری نرم‌افزار</option>
-              <option value="طراحی سیستم">طراحی سیستم</option>
-              <option value="کیفیت و تست">کیفیت و تست</option>
-              <option value="میکروسرویس">میکروسرویس</option>
-              <option value="فرانت‌اند مدرن">فرانت‌اند مدرن</option>
-              <option value="پایگاه داده">پایگاه داده</option>
+              {
+                categories.map((cat) => (
+                  <option value={cat.id}>{cat.title}</option>
+                ))
+              }
+              {categories.length === 0 && (
+                <>
+                  <option value="">عمومی</option>
+                  <option value="">معماری نرم‌افزار</option>
+                  <option value="">طراحی سیستم</option>
+                </>
+              )}
             </select>
           </div>
 
           <div>
-            <label for="readTime" class="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-2">
-              مدت زمان مطالعه
+            <label for="readingTimeMinutes" class="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-2">
+              مدت زمان مطالعه (دقیقه)
             </label>
             <input
-              type="text"
-              id="readTime"
-              name="readTime"
-              placeholder="مثال: ۱۰ دقیقه"
+              type="number"
+              id="readingTimeMinutes"
+              name="readingTimeMinutes"
+              value="10"
+              min="1"
               class="w-full px-4 py-3 rounded-2xl bg-neutral-50 dark:bg-neutral-800 border border-black/5 dark:border-white/10 text-sm focus:outline-none focus:ring-2 focus:ring-apple-blue transition-all"
             />
           </div>
@@ -141,13 +158,13 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
         </div>
 
         <div>
-          <label for="coverImage" class="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-2">
-            آدرس تصویر کاور (Cover Image URL)
+          <label for="thumbnailUrl" class="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-2">
+            آدرس تصویر کاور (Thumbnail URL)
           </label>
           <input
             type="url"
-            id="coverImage"
-            name="coverImage"
+            id="thumbnailUrl"
+            name="thumbnailUrl"
             dir="ltr"
             placeholder="https://images.unsplash.com/photo-..."
             class="w-full px-4 py-3 rounded-2xl bg-neutral-50 dark:bg-neutral-800 border border-black/5 dark:border-white/10 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-apple-blue transition-all"
@@ -174,7 +191,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
         <div class="flex items-center justify-between border-b border-black/5 dark:border-white/10 pb-3">
           <div class="flex items-center gap-2">
             <h2 class="text-sm font-bold text-neutral-900 dark:text-white">
-              محتوای اصلی مقاله (Rich Text Editor - TinyMCE / WYSIWYG)
+              محتوای اصلی مقاله (Rich Text Editor / Markdown)
             </h2>
           </div>
           <span class="text-[11px] text-neutral-400">
@@ -206,12 +223,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
         >
           <h2>مقدمه و اهداف این مقاله</h2>
           <p>در این بخش متن تخصصی خود را بنویسید. تمامی استایل‌ها، عناوین و بلوک‌های کد به صورت استاندارد ذخیره خواهند شد.</p>
-          <blockquote>
-            معماری تمیز به سیستم اجازه می‌دهد در طول زمان بدون افت کیفیت و افزایش پیچیدگی نگهداری رشد کند.
-          </blockquote>
         </div>
-
-        <textarea id="hidden-content" name="content" class="hidden"></textarea>
       </div>
 
     </form>
@@ -219,11 +231,11 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
 </AdminLayout>
 
 <script>
-  // Simple Rich Text Editor Controls & Submission Mock
+  import { articlesApi } from '../../../utils/api';
+  import { showToast, showAlert } from '../../../utils/ui-dialog';
+
   const editor = document.getElementById('editor-content');
-  const hiddenContent = document.getElementById('hidden-content') as HTMLTextAreaElement;
   const publishBtn = document.getElementById('btn-publish');
-  const draftBtn = document.getElementById('btn-save-draft');
 
   document.querySelectorAll('.toolbar-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -243,25 +255,54 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
     }
   });
 
-  const handleSave = (isDraft: boolean) => {
+  publishBtn?.addEventListener('click', async () => {
     const titleInput = document.getElementById('title') as HTMLInputElement;
-    if (!titleInput?.value.trim()) {
-      alert('لطفاً عنوان مقاله را وارد نمایید.');
-      titleInput?.focus();
+    const slugInput = document.getElementById('slug') as HTMLInputElement;
+    const authorNameInput = document.getElementById('authorName') as HTMLInputElement;
+    const categorySelect = document.getElementById('category') as HTMLSelectElement;
+    const readingTimeInput = document.getElementById('readingTimeMinutes') as HTMLInputElement;
+    const tagsInput = document.getElementById('tags') as HTMLInputElement;
+    const thumbnailInput = document.getElementById('thumbnailUrl') as HTMLInputElement;
+    const summaryInput = document.getElementById('summary') as HTMLTextAreaElement;
+
+    if (!titleInput?.value.trim() || !slugInput?.value.trim() || !summaryInput?.value.trim()) {
+      showToast('لطفاً عنوان، نامک آدرس و خلاصه مقاله را وارد نمایید.', 'warning');
       return;
     }
 
-    if (hiddenContent && editor) {
-      hiddenContent.value = editor.innerHTML;
+    const contentHtml = editor?.innerHTML || '';
+
+    try {
+      if (publishBtn) publishBtn.textContent = 'در حال ذخیره...';
+      const result = await articlesApi.create({
+        title: titleInput.value.trim(),
+        slug: slugInput.value.trim(),
+        authorName: authorNameInput.value.trim(),
+        content: contentHtml,
+        summary: summaryInput.value.trim(),
+        thumbnailUrl: thumbnailInput?.value?.trim() || 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=800&q=80',
+        readingTimeMinutes: parseInt(readingTimeInput?.value || '10', 10),
+        categoryId: categorySelect?.value ? categorySelect.value : null,
+      });
+
+      if (result.isSuccess) {
+        await showAlert({
+          title: 'انتشار موفقیت‌آمیز',
+          message: 'مقاله جدید با موفقیت ایجاد و منتشر گردید.',
+          type: 'success',
+        });
+        window.location.href = '/admin/articles';
+      } else {
+        showAlert({
+          title: 'خطا در ثبت مقاله',
+          message: result.errorMessage || 'خطا در ثبت مقاله',
+          type: 'error',
+        });
+        if (publishBtn) publishBtn.textContent = 'انتشار مقاله';
+      }
+    } catch (e: any) {
+      showToast('خطا در برقراری ارتباط با سرور.', 'error');
+      if (publishBtn) publishBtn.textContent = 'انتشار مقاله';
     }
-
-    alert(
-      isDraft
-        ? 'پیش‌نویس مقاله با موفقیت ذخیره شد.'
-        : 'مقاله با موفقیت ذخیره شد. در فاز اتصال بک‌اند، این فرم به API متصل خواهد شد.'
-    );
-  };
-
-  publishBtn?.addEventListener('click', () => handleSave(false));
-  draftBtn?.addEventListener('click', () => handleSave(true));
+  });
 </script>

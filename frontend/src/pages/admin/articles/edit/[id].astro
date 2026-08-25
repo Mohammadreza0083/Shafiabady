@@ -1,0 +1,338 @@
+---
+export const prerender = false;
+
+import AdminLayout from '../../../../layouts/AdminLayout.astro';
+import { articlesApi, categoriesApi } from '../../../../utils/api';
+import type { ArticleDto, CategoryDto } from '../../../../types';
+
+const token = Astro.cookies.get('AdminAuthToken')?.value;
+if (!token) {
+  return Astro.redirect('/admin/login');
+}
+
+const { id } = Astro.params;
+if (!id) {
+  return Astro.redirect('/admin/articles');
+}
+
+let article: ArticleDto | null = null;
+let categories: CategoryDto[] = [];
+let fetchError: string | null = null;
+
+try {
+  const [artRes, catRes] = await Promise.all([
+    articlesApi.getById(id, token),
+    categoriesApi.getAll(),
+  ]);
+
+  if (artRes.isSuccess && artRes.data) {
+    article = artRes.data;
+  } else if (artRes.statusCode === 401) {
+    return Astro.redirect('/admin/login');
+  } else {
+    fetchError = artRes.errorMessage || 'مقاله مورد نظر یافت نشد.';
+  }
+
+  if (catRes.isSuccess && catRes.data) {
+    categories = catRes.data;
+  }
+} catch (e: any) {
+  fetchError = e?.message || 'خطا در واکشی اطلاعات مقاله از سرور';
+}
+
+if (!article) {
+  return Astro.redirect('/admin/articles');
+}
+---
+
+<AdminLayout title={`ویرایش مقاله: ${article.title}`} activeSection="articles">
+  <div class="max-w-5xl mx-auto space-y-6">
+    
+    <!-- Page Header -->
+    <div class="flex items-center justify-between pb-4 border-b border-black/5 dark:border-white/10">
+      <div>
+        <h1 class="text-2xl font-black text-neutral-950 dark:text-white">
+          ویرایش مقاله تخصصی
+        </h1>
+        <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
+          ویرایش مشخصات، محتوا و تنظیمات سئو مقاله «{article.title}»
+        </p>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <a
+          href="/admin/articles"
+          class="px-4 py-2 rounded-full border border-black/10 dark:border-white/10 text-xs font-semibold text-neutral-700 dark:text-neutral-300 hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+        >
+          انصراف
+        </a>
+        <button
+          type="button"
+          id="btn-save"
+          data-article-id={article.id}
+          class="px-5 py-2 rounded-full bg-apple-blue hover:bg-blue-600 text-white text-xs font-bold shadow-md shadow-apple-blue/25 transition-all duration-200"
+        >
+          ذخیره تغییرات
+        </button>
+      </div>
+    </div>
+
+    {fetchError && (
+      <div class="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs">
+        {fetchError}
+      </div>
+    )}
+
+    <!-- Article Editor Form -->
+    <form id="article-edit-form" class="space-y-6">
+      
+      <!-- General Metadata Card -->
+      <div class="p-6 sm:p-8 rounded-3xl bg-white dark:bg-neutral-900 border border-black/5 dark:border-white/10 shadow-sm space-y-5">
+        <h2 class="text-sm font-bold text-neutral-900 dark:text-white border-b border-black/5 dark:border-white/10 pb-3">
+          مشخصات اصلی و سئو
+        </h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div>
+            <label for="title" class="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-2">
+              عنوان مقاله <span class="text-rose-500">*</span>
+            </label>
+            <input
+              type="text"
+              id="title"
+              name="title"
+              required
+              value={article.title}
+              class="w-full px-4 py-3 rounded-2xl bg-neutral-50 dark:bg-neutral-800 border border-black/5 dark:border-white/10 text-sm focus:outline-none focus:ring-2 focus:ring-apple-blue transition-all"
+            />
+          </div>
+
+          <div>
+            <label for="slug" class="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-2">
+              نامک آدرس (Slug) <span class="text-rose-500">*</span>
+            </label>
+            <input
+              type="text"
+              id="slug"
+              name="slug"
+              required
+              dir="ltr"
+              value={article.slug}
+              class="w-full px-4 py-3 rounded-2xl bg-neutral-50 dark:bg-neutral-800 border border-black/5 dark:border-white/10 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-apple-blue transition-all"
+            />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div>
+            <label for="authorName" class="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-2">
+              نام نویسنده <span class="text-rose-500">*</span>
+            </label>
+            <input
+              type="text"
+              id="authorName"
+              name="authorName"
+              value={article.authorName || 'دکتر محمد حسین شفیع‌آبادی'}
+              required
+              class="w-full px-4 py-3 rounded-2xl bg-neutral-50 dark:bg-neutral-800 border border-black/5 dark:border-white/10 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-apple-blue transition-all"
+            />
+          </div>
+
+          <div>
+            <label for="category" class="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-2">
+              دسته‌بندی <span class="text-rose-500">*</span>
+            </label>
+            <select
+              id="category"
+              name="category"
+              class="w-full px-4 py-3 rounded-2xl bg-neutral-50 dark:bg-neutral-800 border border-black/5 dark:border-white/10 text-sm focus:outline-none focus:ring-2 focus:ring-apple-blue transition-all"
+            >
+              <option value="">بدون دسته‌بندی</option>
+              {
+                categories.map((cat) => (
+                  <option value={cat.id} selected={cat.id === article?.categoryId}>
+                    {cat.title}
+                  </option>
+                ))
+              }
+            </select>
+          </div>
+
+          <div>
+            <label for="readingTimeMinutes" class="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-2">
+              مدت زمان مطالعه (دقیقه)
+            </label>
+            <input
+              type="number"
+              id="readingTimeMinutes"
+              name="readingTimeMinutes"
+              value={article.readTimeMinutes || 10}
+              min="1"
+              class="w-full px-4 py-3 rounded-2xl bg-neutral-50 dark:bg-neutral-800 border border-black/5 dark:border-white/10 text-sm focus:outline-none focus:ring-2 focus:ring-apple-blue transition-all"
+            />
+          </div>
+
+          <div>
+            <label for="tags" class="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-2">
+              برچسب‌ها (با کاما)
+            </label>
+            <input
+              type="text"
+              id="tags"
+              name="tags"
+              value={article.tags || ''}
+              class="w-full px-4 py-3 rounded-2xl bg-neutral-50 dark:bg-neutral-800 border border-black/5 dark:border-white/10 text-sm focus:outline-none focus:ring-2 focus:ring-apple-blue transition-all"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label for="thumbnailUrl" class="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-2">
+            آدرس تصویر کاور (Thumbnail URL)
+          </label>
+          <input
+            type="url"
+            id="thumbnailUrl"
+            name="thumbnailUrl"
+            dir="ltr"
+            value={article.thumbnailUrl || ''}
+            class="w-full px-4 py-3 rounded-2xl bg-neutral-50 dark:bg-neutral-800 border border-black/5 dark:border-white/10 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-apple-blue transition-all"
+          />
+        </div>
+
+        <div>
+          <label for="summary" class="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-2">
+            چکیده و خلاصه مقاله (توضیحات سئو) <span class="text-rose-500">*</span>
+          </label>
+          <textarea
+            id="summary"
+            name="summary"
+            rows="2"
+            required
+            class="w-full px-4 py-3 rounded-2xl bg-neutral-50 dark:bg-neutral-800 border border-black/5 dark:border-white/10 text-sm focus:outline-none focus:ring-2 focus:ring-apple-blue transition-all resize-none"
+          >{article.summary}</textarea>
+        </div>
+      </div>
+
+      <!-- Rich Text Editor (WYSIWYG) Card -->
+      <div class="p-6 sm:p-8 rounded-3xl bg-white dark:bg-neutral-900 border border-black/5 dark:border-white/10 shadow-sm space-y-4">
+        <div class="flex items-center justify-between border-b border-black/5 dark:border-white/10 pb-3">
+          <div class="flex items-center gap-2">
+            <h2 class="text-sm font-bold text-neutral-900 dark:text-white">
+              محتوای اصلی مقاله (Rich Text Editor / HTML)
+            </h2>
+          </div>
+          <span class="text-[11px] text-neutral-400">
+            پشتیبانی از فرمت‌های غنی، کد، جداول و تصاویر
+          </span>
+        </div>
+
+        <!-- Custom Quick Action Toolbar -->
+        <div class="flex flex-wrap items-center gap-1.5 p-2 bg-neutral-50 dark:bg-neutral-800 rounded-2xl border border-black/5 dark:border-white/10 text-neutral-700 dark:text-neutral-300 text-xs">
+          <button type="button" class="toolbar-btn px-2.5 py-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 font-bold" data-command="bold">B</button>
+          <button type="button" class="toolbar-btn px-2.5 py-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 italic" data-command="italic">I</button>
+          <button type="button" class="toolbar-btn px-2.5 py-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 underline" data-command="underline">U</button>
+          <div class="w-[1px] h-4 bg-neutral-300 dark:bg-neutral-700 mx-1"></div>
+          <button type="button" class="toolbar-btn px-2.5 py-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/10" data-command="formatBlock" data-val="H2">H2</button>
+          <button type="button" class="toolbar-btn px-2.5 py-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/10" data-command="formatBlock" data-val="H3">H3</button>
+          <div class="w-[1px] h-4 bg-neutral-300 dark:bg-neutral-700 mx-1"></div>
+          <button type="button" class="toolbar-btn px-2.5 py-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/10" data-command="insertUnorderedList">• لیست</button>
+          <button type="button" class="toolbar-btn px-2.5 py-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/10" data-command="insertOrderedList">۱. شماره‌دار</button>
+          <div class="w-[1px] h-4 bg-neutral-300 dark:bg-neutral-700 mx-1"></div>
+          <button type="button" class="toolbar-btn px-2.5 py-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 font-mono" data-command="formatBlock" data-val="PRE">&lt;/&gt; کد</button>
+          <button type="button" class="toolbar-btn px-2.5 py-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/10" id="btn-insert-link">🔗 درج لینک</button>
+        </div>
+
+        <!-- Editable WYSIWYG Content Area -->
+        <div
+          id="editor-content"
+          contenteditable="true"
+          class="min-h-[350px] p-5 rounded-2xl bg-neutral-50 dark:bg-neutral-800 border border-black/5 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-apple-blue prose dark:prose-invert max-w-none text-sm leading-relaxed"
+          set:html={article.content}
+        />
+      </div>
+
+    </form>
+  </div>
+</AdminLayout>
+
+<script>
+  import { articlesApi } from '../../../../utils/api';
+  import { showToast, showAlert } from '../../../../utils/ui-dialog';
+
+  const editor = document.getElementById('editor-content');
+  const saveBtn = document.getElementById('btn-save');
+  const articleId = saveBtn?.getAttribute('data-article-id');
+
+  document.querySelectorAll('.toolbar-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const command = btn.getAttribute('data-command');
+      const val = btn.getAttribute('data-val') || '';
+      if (command) {
+        document.execCommand(command, false, val);
+        editor?.focus();
+      }
+    });
+  });
+
+  document.getElementById('btn-insert-link')?.addEventListener('click', () => {
+    const url = prompt('آدرس اینترنتی لینک را وارد کنید (https://...):');
+    if (url) {
+      document.execCommand('createLink', false, url);
+    }
+  });
+
+  saveBtn?.addEventListener('click', async () => {
+    if (!articleId) return;
+
+    const titleInput = document.getElementById('title') as HTMLInputElement;
+    const slugInput = document.getElementById('slug') as HTMLInputElement;
+    const authorNameInput = document.getElementById('authorName') as HTMLInputElement;
+    const categorySelect = document.getElementById('category') as HTMLSelectElement;
+    const readingTimeInput = document.getElementById('readingTimeMinutes') as HTMLInputElement;
+    const tagsInput = document.getElementById('tags') as HTMLInputElement;
+    const thumbnailInput = document.getElementById('thumbnailUrl') as HTMLInputElement;
+    const summaryInput = document.getElementById('summary') as HTMLTextAreaElement;
+
+    if (!titleInput?.value.trim() || !slugInput?.value.trim() || !summaryInput?.value.trim()) {
+      showToast('لطفاً عنوان، نامک آدرس و خلاصه مقاله را وارد نمایید.', 'warning');
+      return;
+    }
+
+    const contentHtml = editor?.innerHTML || '';
+
+    try {
+      if (saveBtn) saveBtn.textContent = 'در حال ذخیره...';
+      const result = await articlesApi.update(articleId, {
+        title: titleInput.value.trim(),
+        slug: slugInput.value.trim(),
+        authorName: authorNameInput.value.trim(),
+        content: contentHtml,
+        summary: summaryInput.value.trim(),
+        thumbnailUrl: thumbnailInput?.value?.trim() || 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=800&q=80',
+        readTimeMinutes: parseInt(readingTimeInput?.value || '10', 10),
+        tags: tagsInput?.value?.trim() || '',
+        categoryId: categorySelect?.value ? categorySelect.value : null,
+      });
+
+      if (result.isSuccess) {
+        await showAlert({
+          title: 'ذخیره موفقیت‌آمیز',
+          message: 'تغییرات مقاله با موفقیت در پایگاه داده ذخیره گردید.',
+          type: 'success',
+        });
+        window.location.href = '/admin/articles';
+      } else {
+        showAlert({
+          title: 'خطا در بروزرسانی مقاله',
+          message: result.errorMessage || 'خطا در بروزرسانی مقاله',
+          type: 'error',
+        });
+        if (saveBtn) saveBtn.textContent = 'ذخیره تغییرات';
+      }
+    } catch (e: any) {
+      showToast('خطا در برقراری ارتباط با سرور.', 'error');
+      if (saveBtn) saveBtn.textContent = 'ذخیره تغییرات';
+    }
+  });
+</script>

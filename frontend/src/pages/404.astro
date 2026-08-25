@@ -1,0 +1,63 @@
+---
+export const prerender = false;
+
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Button from '../components/ui/Button.astro';
+---
+
+<BaseLayout
+  title="صفحه مورد نظر یافت نشد | خطای ۴۰۴"
+  description="متأسفانه صفحه مورد نظر شما در وب‌سایت دکتر محمد حسین شفیع‌آبادی یافت نشد یا ممکن است جابه‌جا شده باشد."
+>
+  <div class="min-h-[70vh] flex items-center justify-center px-4 sm:px-6 lg:px-8 py-16">
+    <div class="max-w-xl w-full text-center space-y-8">
+      
+      <!-- 404 Visual Indicator -->
+      <div class="relative flex items-center justify-center">
+        <div class="absolute w-48 h-48 sm:w-64 sm:h-64 bg-apple-blue/15 dark:bg-apple-blue/20 rounded-full blur-3xl pointer-events-none"></div>
+        <span class="text-8xl sm:text-9xl font-black text-transparent bg-clip-text bg-gradient-to-b from-neutral-800 to-neutral-400 dark:from-white dark:to-neutral-600 tracking-tighter select-none">
+          ۴۰۴
+        </span>
+      </div>
+
+      <!-- Error Content Card -->
+      <div class="rounded-3xl p-8 sm:p-10 bg-white/70 dark:bg-neutral-900/70 backdrop-blur-2xl border border-black/5 dark:border-white/10 shadow-xl space-y-4">
+        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-bold">
+          <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
+          <span>صفحه مورد نظر یافت نشد</span>
+        </div>
+
+        <h1 class="text-xl sm:text-2xl font-black text-neutral-950 dark:text-white">
+          به نظر می‌رسد این مسیر وجود ندارد!
+        </h1>
+
+        <p class="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed max-w-md mx-auto">
+          صفحه‌ای که به دنبال آن هستید ممکن است حذف شده باشد، نام آن تغییر کرده باشد، یا به نشانی دیگری منتقل شده باشد.
+        </p>
+
+        <div class="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
+          <Button href="/" variant="primary" size="md">
+            <svg class="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+            <span>بازگشت به صفحه اصلی</span>
+          </Button>
+
+          <Button href="/articles" variant="outline" size="md">
+            <span>مشاهده مقالات تخصصی</span>
+          </Button>
+        </div>
+      </div>
+
+      <!-- Quick Helpful Links -->
+      <div class="flex items-center justify-center gap-6 text-xs text-neutral-500 dark:text-neutral-400">
+        <a href="/books" class="hover:text-apple-blue transition-colors">کتاب‌های تخصصی</a>
+        <span>•</span>
+        <a href="/courses" class="hover:text-apple-blue transition-colors">دوره‌های آموزشی</a>
+        <span>•</span>
+        <a href="/contact" class="hover:text-apple-blue transition-colors">تماس با استاد</a>
+      </div>
+
+    </div>
+  </div>
+</BaseLayout>

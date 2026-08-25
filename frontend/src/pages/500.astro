@@ -1,0 +1,61 @@
+---
+export const prerender = false;
+
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Button from '../components/ui/Button.astro';
+---
+
+<BaseLayout
+  title="خطای داخلی سرور | خطای ۵۰۰"
+  description="متأسفانه در پردازش درخواست شما خطایی در سرور رخ داده است. لطفاً لحظاتی بعد مجدداً تلاش فرمایید."
+>
+  <div class="min-h-[70vh] flex items-center justify-center px-4 sm:px-6 lg:px-8 py-16">
+    <div class="max-w-xl w-full text-center space-y-8">
+      
+      <!-- 500 Visual Indicator -->
+      <div class="relative flex items-center justify-center">
+        <div class="absolute w-48 h-48 sm:w-64 sm:h-64 bg-rose-500/15 dark:bg-rose-500/20 rounded-full blur-3xl pointer-events-none"></div>
+        <span class="text-8xl sm:text-9xl font-black text-transparent bg-clip-text bg-gradient-to-b from-rose-700 to-rose-400 dark:from-rose-400 dark:to-rose-800 tracking-tighter select-none">
+          ۵۰۰
+        </span>
+      </div>
+
+      <!-- Error Content Card -->
+      <div class="rounded-3xl p-8 sm:p-10 bg-white/70 dark:bg-neutral-900/70 backdrop-blur-2xl border border-black/5 dark:border-white/10 shadow-xl space-y-4">
+        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-bold">
+          <span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
+          <span>خطای پردازش در سرور</span>
+        </div>
+
+        <h1 class="text-xl sm:text-2xl font-black text-neutral-950 dark:text-white">
+          متأسفانه مشکلی در سرور رخ داده است!
+        </h1>
+
+        <p class="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed max-w-md mx-auto">
+          تیم فنی در جریان این اختلال قرار گرفته است. لطفاً چند لحظه دیگر صفحه را تازه‌سازی کنید یا به صفحه اصلی بازگردید.
+        </p>
+
+        <div class="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
+          <Button href="/" variant="primary" size="md">
+            <svg class="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+            <span>بازگشت به صفحه اصلی</span>
+          </Button>
+
+          <button
+            type="button"
+            onclick="window.location.reload()"
+            class="px-5 py-2.5 rounded-full border border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5 text-xs font-bold transition-all text-neutral-700 dark:text-neutral-300 inline-flex items-center gap-2"
+          >
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <span>تلاش مجدد</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</BaseLayout>

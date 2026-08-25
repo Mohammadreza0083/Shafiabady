@@ -1,11 +1,20 @@
 ---
-import type { Book } from '../../types';
+import type { Book, BookDto } from '../../types';
 
 interface Props {
-  book: Book;
+  book: Book | BookDto | any;
 }
 
 const { book } = Astro.props;
+
+const title = book.title || '';
+const slug = book.slug || '';
+const description = book.description || '';
+const coverImage = book.coverImage || book.thumbnailUrl || '';
+const publisher = book.publisher || 'انتشارات دانشگاهی';
+const pagesCount = book.pagesCount ?? 0;
+const viewsCount = book.viewsCount ?? 0;
+const publishYear = book.publishYear || '۱۴۰۳';
 ---
 
 <div class="group apple-card p-6 flex flex-col justify-between reveal-on-scroll">
@@ -13,10 +22,10 @@ const { book } = Astro.props;
     <!-- Book 3D Mockup Cover -->
     <div class="relative w-44 h-60 mb-6 rounded-xl overflow-hidden shadow-xl group-hover:shadow-2xl group-hover:-translate-y-2 transition-all duration-300 bg-neutral-900 border border-white/10 flex items-center justify-center">
       {
-        book.coverImage ? (
+        coverImage ? (
           <img
-            src={book.coverImage}
-            alt={`طرح جلد کتاب ${book.title}`}
+            src={coverImage}
+            alt={`طرح جلد کتاب ${title}`}
             width="176"
             height="240"
             loading="lazy"
@@ -28,8 +37,8 @@ const { book } = Astro.props;
             <div class="w-10 h-10 rounded-lg bg-apple-blue flex items-center justify-center text-white font-bold mb-3 shadow-md">
               ک
             </div>
-            <span class="text-xs font-bold leading-tight line-clamp-3 mb-2">{book.title}</span>
-            <span class="text-[10px] text-neutral-400">{book.publishYear}</span>
+            <span class="text-xs font-bold leading-tight line-clamp-3 mb-2">{title}</span>
+            <span class="text-[10px] text-neutral-400">{publishYear}</span>
           </div>
         )
       }
@@ -37,28 +46,28 @@ const { book } = Astro.props;
 
     <!-- Metadata -->
     <div class="flex items-center gap-2 text-xs text-neutral-400 dark:text-neutral-500 mb-2">
-      <span>{book.publisher}</span>
+      <span>{publisher}</span>
       <span>•</span>
-      <span>{book.pagesCount} صفحه</span>
+      <span>{pagesCount} صفحه</span>
     </div>
 
     <h3 class="text-lg font-bold text-neutral-900 dark:text-white group-hover:text-apple-blue dark:group-hover:text-apple-blue-dark transition-colors mb-2">
-      <a href={`/books/${book.slug}`}>
-        {book.title}
+      <a href={`/books/${slug}`}>
+        {title}
       </a>
     </h3>
 
     <p class="text-xs text-neutral-600 dark:text-neutral-400 line-clamp-2 leading-relaxed mb-4">
-      {book.description}
+      {description}
     </p>
   </div>
 
   <div class="pt-4 border-t border-black/5 dark:border-white/5 flex items-center justify-between">
     <span class="text-xs text-neutral-400 dark:text-neutral-500">
-      {book.viewsCount} بازدید
+      {viewsCount} بازدید
     </span>
     <a
-      href={`/books/${book.slug}`}
+      href={`/books/${slug}`}
       class="text-xs font-semibold text-apple-blue dark:text-apple-blue-dark hover:underline flex items-center gap-1"
     >
       <span>مشاهده جزئیات</span>

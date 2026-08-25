@@ -1,16 +1,112 @@
 ---
+export const prerender = false;
+
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import CommentList from '../../components/comments/CommentList.astro';
+import { articlesApi, commentsApi } from '../../utils/api';
+import { EntityType } from '../../types';
 import { mockArticles, mockCommentsTree } from '../../data/mockData';
 
-export function getStaticPaths() {
-  return mockArticles.map((article) => ({
-    params: { slug: article.slug },
-    props: { article },
-  }));
+const { slug } = Astro.params;
+if (!slug) {
+  return Astro.redirect('/404');
 }
 
-const { article } = Astro.props;
+let cleanSlug = slug;
+try {
+  cleanSlug = decodeURIComponent(slug);
+} catch {}
+
+let articleData: any = null;
+
+try {
+  let res = await articlesApi.getBySlug(cleanSlug);
+  if ((!res.isSuccess || !res.data) && slug !== cleanSlug) {
+    res = await articlesApi.getBySlug(slug);
+  }
+
+  if (res.isSuccess && res.data) {
+    const raw = res.data;
+    let tagsList: string[] = [];
+    if (Array.isArray(raw.tags)) {
+      tagsList = raw.tags;
+    } else if (typeof raw.tags === 'string' && raw.tags.trim()) {
+      tagsList = raw.tags.split(',').map((t: string) => t.trim()).filter(Boolean);
+    }
+
+    articleData = {
+      id: raw.id,
+      title: raw.title || 'بدون عنوان',
+      slug: raw.slug || cleanSlug,
+      summary: raw.summary || '',
+      content: raw.content || '',
+      coverImage: raw.thumbnailUrl || 'https://shafieiabadi.ir/images/og-default.png',
+      readTime: raw.readTimeMinutes ? `${raw.readTimeMinutes} دقیقه` : '۵ دقیقه',
+      category: raw.categoryTitle || 'معماری نرم‌افزار',
+      tags: tagsList,
+      viewsCount: raw.viewsCount || 0,
+      createdAt: raw.createdAt || new Date().toISOString(),
+      author: {
+        name: raw.authorName || 'دکتر محمد حسین شفیع‌آبادی',
+        role: 'استاد دانشگاه و پژوهشگر ارشد مهندسی نرم‌افزار',
+      },
+    };
+  }
+} catch (e) {
+  // Fallback to mock data if backend is offline
+}
+
+if (!articleData) {
+  const fallback = mockArticles.find((a) => a.slug === slug || a.slug === cleanSlug);
+  if (fallback) {
+    let fallbackTags: string[] = [];
+    if (Array.isArray(fallback.tags)) {
+      fallbackTags = fallback.tags;
+    } else if (typeof (fallback as any).tags === 'string' && (fallback as any).tags.trim()) {
+      fallbackTags = (fallback as any).tags.split(',').map((t: string) => t.trim()).filter(Boolean);
+    }
+    articleData = {
+      ...fallback,
+      tags: fallbackTags,
+      author: typeof fallback.author === 'object' && fallback.author !== null ? fallback.author : {
+        name: 'دکتر محمد حسین شفیع‌آبادی',
+        role: 'استاد دانشگاه و پژوهشگر ارشد مهندسی نرم‌افزار',
+      },
+    };
+  } else {
+    return Astro.redirect('/404');
+  }
+}
+
+const article = articleData;
+const authorName = article.author?.name || article.authorName || 'دکتر محمد حسین شفیع‌آبادی';
+const authorRole = article.author?.role || 'استاد دانشگاه و پژوهشگر ارشد مهندسی نرم‌افزار';
+const articleTags: string[] = Array.isArray(article.tags) ? article.tags : [];
+
+let commentsTree: any[] = [];
+let backendFetched = false;
+
+try {
+  if (article && article.id) {
+    const commentsRes = await commentsApi.getTree(EntityType.Article, article.id);
+    if (commentsRes.isSuccess && Array.isArray(commentsRes.data)) {
+      backendFetched = true;
+      const mapDto = (dto: any): any => ({
+        id: dto.id,
+        authorName: dto.guestName || dto.authorName || 'کاربر مهمان',
+        authorEmail: dto.email || dto.authorEmail || '',
+        content: dto.text || dto.content || '',
+        createdAt: dto.createdAt || new Date().toISOString(),
+        replies: (dto.replies || []).map(mapDto),
+      });
+      commentsTree = commentsRes.data.map(mapDto);
+    }
+  }
+} catch (e) {}
+
+if (!backendFetched) {
+  commentsTree = mockCommentsTree;
+}
 
 const articleJsonLd = {
   '@context': 'https://schema.org',
@@ -24,18 +120,18 @@ const articleJsonLd = {
   'image': article.coverImage || 'https://shafieiabadi.ir/images/og-default.png',
   'author': {
     '@type': 'Person',
-    'name': article.author.name || 'دکتر محمد حسین شفیعآبادی',
+    'name': authorName,
     'url': 'https://shafieiabadi.ir/about',
   },
   'publisher': {
     '@type': 'Person',
-    'name': 'دکتر محمد حسین شفیعآبادی',
+    'name': 'دکتر محمد حسین شفیع‌آبادی',
     'url': 'https://shafieiabadi.ir',
   },
   'datePublished': article.createdAt,
   'dateModified': article.createdAt,
-  'keywords': article.tags.join(', '),
-  'articleSection': article.category,
+  'keywords': articleTags.join(', '),
+  'articleSection': article.category || 'عمومی',
 };
 ---
 
@@ -47,8 +143,8 @@ const articleJsonLd = {
   jsonLd={articleJsonLd}
   articleData={{
     publishedTime: article.createdAt,
-    author: article.author.name,
-    tags: article.tags,
+    author: authorName,
+    tags: articleTags,
   }}
 >
   <article class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16" data-entity-id={article.id}>
@@ -70,7 +166,7 @@ const articleJsonLd = {
           {article.category}
         </span>
         <span class="text-xs text-neutral-400 dark:text-neutral-500">
-          {new Date(article.createdAt).toLocaleDateString('fa-IR', { year: 'numeric', month: 'long', day: 'numeric' })}
+          {article.createdAt ? new Date(article.createdAt).toLocaleDateString('fa-IR', { year: 'numeric', month: 'long', day: 'numeric' }) : ''}
         </span>
         <span class="text-neutral-300 dark:text-neutral-700">•</span>
         <span class="text-xs text-neutral-500 dark:text-neutral-400 flex items-center gap-1">
@@ -106,16 +202,20 @@ const articleJsonLd = {
     </div>
 
     <!-- Tags -->
-    <div class="mt-12 pt-8 border-t border-black/10 dark:border-white/10 flex flex-wrap items-center gap-2">
-      <span class="text-xs font-semibold text-neutral-400 dark:text-neutral-500 ml-2">برچسب‌ها:</span>
-      {
-        article.tags.map((tag) => (
-          <span class="px-3 py-1 rounded-full text-xs font-medium bg-black/5 dark:bg-white/5 text-neutral-700 dark:text-neutral-300 hover:bg-black/10 dark:hover:bg-white/10 transition-colors">
-            #{tag}
-          </span>
-        ))
-      }
-    </div>
+    {
+      articleTags.length > 0 && (
+        <div class="mt-12 pt-8 border-t border-black/10 dark:border-white/10 flex flex-wrap items-center gap-2">
+          <span class="text-xs font-semibold text-neutral-400 dark:text-neutral-500 ml-2">برچسب‌ها:</span>
+          {
+            articleTags.map((tag) => (
+              <span class="px-3 py-1 rounded-full text-xs font-medium bg-black/5 dark:bg-white/5 text-neutral-700 dark:text-neutral-300 hover:bg-black/10 dark:hover:bg-white/10 transition-colors">
+                #{tag}
+              </span>
+            ))
+          }
+        </div>
+      )
+    }
 
     <!-- Author Box -->
     <div class="mt-10 p-6 sm:p-8 rounded-3xl apple-card bg-gradient-to-r from-blue-50/50 via-sky-50/30 to-transparent dark:from-neutral-900 dark:via-neutral-900/80 dark:to-neutral-950 flex flex-col sm:flex-row items-center sm:items-start gap-6 text-center sm:text-right">
@@ -124,10 +224,10 @@ const articleJsonLd = {
       </div>
       <div>
         <h4 class="text-lg font-bold text-neutral-900 dark:text-white mb-1">
-          {article.author.name}
+          {authorName}
         </h4>
         <span class="text-xs font-semibold text-apple-blue dark:text-apple-blue-dark block mb-3">
-          {article.author.role}
+          {authorRole}
         </span>
         <p class="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed">
           طراح و معمار ارشد سیستم‌های توزیع‌شده با تمرکز بر اکوسیستم دات‌نت، اصول طراحی دامنه‌محور و تست‌نویسی خودکار. علاقه‌مند به آموزش و انتقال تجربیات کاربردی در مقیاس‌های سازمانی.
@@ -136,7 +236,7 @@ const articleJsonLd = {
     </div>
 
     <!-- Recursive Comments Component -->
-    <CommentList comments={mockCommentsTree} entityId={article.id} />
+    <CommentList comments={commentsTree} entityId={article.id} entityType="article" />
   </article>
 </BaseLayout>
 

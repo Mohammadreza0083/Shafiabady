@@ -1,45 +1,49 @@
 ---
-import AdminLayout from '../../../layouts/AdminLayout.astro';
+export const prerender = false;
 
-// Mock Pending Comments Data for Admin Moderation
-const pendingComments = [
-  {
-    id: 'c1',
-    authorName: 'سید رضا حسینی',
-    authorEmail: 'reza.hosseini@gmail.com',
-    entityType: 'مقاله',
-    entityTitle: 'راهنمای جامع معماری تمیز در دات‌نت ۹',
-    entitySlug: '/articles/clean-architecture-dotnet-9',
-    content: 'استاد گرامی، بابت آموزش فوق‌العاده سپاسگزارم. در خصوص جداسازی لایه Infrastructure و تفکیک Core، پیشنهاد شما برای رجیستر کردن Dependency Injection در پروژه‌های ماژولار چیست؟',
-    createdAt: '۱۴۰۳/۰۶/۰۱ - ۱۱:۳۰',
-    status: 'pending',
-  },
-  {
-    id: 'c2',
-    authorName: 'مهندس مریم کاظمی',
-    authorEmail: 'm.kazemi@outlook.com',
-    entityType: 'دوره',
-    entityTitle: 'دوره جامع مسترکلاس Clean Architecture در .NET 9',
-    entitySlug: '/courses/mastering-clean-architecture-dotnet-9',
-    content: 'سلام وقت بخیر، آیا سرفصل‌های مربوط به Event Sourcing و Masstransit در آپدیت بعدی این دوره اضافه خواهند شد؟',
-    createdAt: '۱۴۰۳/۰۶/۰۱ - ۱۰:۱۵',
-    status: 'pending',
-  },
-  {
-    id: 'c3',
-    authorName: 'علیرضا نوری',
-    authorEmail: 'alireza.nouri@yahoo.com',
-    entityType: 'کتاب',
-    entityTitle: 'معماری تمیز در عمل',
-    entitySlug: '/books/hands-on-clean-architecture-dotnet',
-    content: 'کتاب بسیار روان و جامعی است. به همه برنامه‌نویسان ارشد دات‌نت توصیه می‌کنم حتماً فصل ۳ و ۴ رو مطالعه کنند.',
-    createdAt: '۱۴۰۳/۰۵/۳۰ - ۱۸:۴۵',
-    status: 'pending',
-  },
-];
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { commentsApi } from '../../../utils/api';
+import { CommentStatus } from '../../../types';
+import type { CommentDto } from '../../../types';
+
+const token = Astro.cookies.get('AdminAuthToken')?.value;
+if (!token) {
+  return Astro.redirect('/admin/login');
+}
+
+const currentTab = Astro.url.searchParams.get('status') || 'pending';
+let statusFilter: CommentStatus | null = CommentStatus.Pending;
+
+if (currentTab === 'all') {
+  statusFilter = null;
+} else if (currentTab === 'approved') {
+  statusFilter = CommentStatus.Approved;
+} else if (currentTab === 'rejected') {
+  statusFilter = CommentStatus.Rejected;
+} else {
+  statusFilter = CommentStatus.Pending;
+}
+
+let comments: CommentDto[] = [];
+let totalCount = 0;
+let fetchError: string | null = null;
+
+try {
+  const result = await commentsApi.getPagedForAdmin(1, 50, statusFilter, token);
+  if (result.isSuccess && result.data) {
+    comments = result.data.items || [];
+    totalCount = result.data.totalCount || 0;
+  } else if (result.statusCode === 401) {
+    return Astro.redirect('/admin/login');
+  } else {
+    fetchError = result.errorMessage;
+  }
+} catch (e: any) {
+  fetchError = e?.message || 'خطا در واکشی نظرات از سرور';
+}
 ---
 
-<AdminLayout title="مدیریت و تأیید نظرات کاربران" activeSection="comments">
+<AdminLayout title="مدیریت و نظارت بر دیدگاه‌ها" activeSection="comments">
   <div class="max-w-7xl mx-auto space-y-6">
     
     <!-- Header -->
@@ -49,8 +53,8 @@ const pendingComments = [
           <h1 class="text-2xl font-black text-neutral-950 dark:text-white">
             مدیریت نظرات کاربران
           </h1>
-          <span class="px-3 py-1 rounded-full text-xs font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
-            {pendingComments.length} نظر در انتظار تایید
+          <span class="px-3 py-1 rounded-full text-xs font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20" id="pending-counter">
+            {totalCount.toLocaleString('fa-IR')} دیدگاه
           </span>
         </div>
         <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
@@ -58,89 +62,161 @@ const pendingComments = [
         </p>
       </div>
 
-      <div class="flex items-center gap-2">
-        <button
-          type="button"
-          id="btn-approve-all"
-          class="px-4 py-2 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold shadow-sm transition-all duration-200"
+      <!-- Filter Tabs -->
+      <div class="flex items-center p-1 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 text-xs font-semibold">
+        <a
+          href="/admin/comments?status=pending"
+          class={`px-4 py-2 rounded-xl transition-all ${
+            currentTab === 'pending'
+              ? 'bg-white dark:bg-neutral-800 text-apple-blue dark:text-apple-blue-dark shadow-sm'
+              : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
+          }`}
         >
-          تأیید همه نظرات
-        </button>
+          در انتظار بررسی
+        </a>
+        <a
+          href="/admin/comments?status=approved"
+          class={`px-4 py-2 rounded-xl transition-all ${
+            currentTab === 'approved'
+              ? 'bg-white dark:bg-neutral-800 text-apple-blue dark:text-apple-blue-dark shadow-sm'
+              : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
+          }`}
+        >
+          تأیید شده
+        </a>
+        <a
+          href="/admin/comments?status=rejected"
+          class={`px-4 py-2 rounded-xl transition-all ${
+            currentTab === 'rejected'
+              ? 'bg-white dark:bg-neutral-800 text-apple-blue dark:text-apple-blue-dark shadow-sm'
+              : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
+          }`}
+        >
+          رد شده
+        </a>
+        <a
+          href="/admin/comments?status=all"
+          class={`px-4 py-2 rounded-xl transition-all ${
+            currentTab === 'all'
+              ? 'bg-white dark:bg-neutral-800 text-apple-blue dark:text-apple-blue-dark shadow-sm'
+              : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
+          }`}
+        >
+          همه
+        </a>
       </div>
     </div>
 
-    <!-- Comments Moderation Cards / Table -->
+    {fetchError && (
+      <div class="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs">
+        {fetchError}
+      </div>
+    )}
+
+    <!-- Comments Moderation Cards -->
     <div class="space-y-4" id="comments-container">
       {
-        pendingComments.map((comment) => (
-          <div
-            id={`comment-row-${comment.id}`}
-            class="p-6 rounded-3xl bg-white dark:bg-neutral-900 border border-black/5 dark:border-white/10 shadow-sm transition-all duration-300"
-          >
-            <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-4">
-              <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-2xl bg-apple-blue/10 text-apple-blue dark:bg-apple-blue-dark/20 dark:text-apple-blue-dark flex items-center justify-center font-bold text-sm">
-                  {comment.authorName.charAt(0)}
-                </div>
-                <div>
-                  <span class="font-bold text-sm text-neutral-900 dark:text-white block">
-                    {comment.authorName}
-                  </span>
-                  <span class="text-[11px] text-neutral-400 font-mono">
-                    {comment.authorEmail}
-                  </span>
-                </div>
-              </div>
-
-              <div class="flex items-center gap-2 text-xs">
-                <span class="px-2.5 py-1 rounded-full bg-black/5 dark:bg-white/5 text-neutral-500 dark:text-neutral-400">
-                  {comment.createdAt}
-                </span>
-                <span class="px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 font-semibold">
-                  در انتظار بررسی
-                </span>
-              </div>
+        comments.length === 0 ? (
+          <div class="p-12 text-center rounded-3xl bg-white dark:bg-neutral-900 border border-black/5 dark:border-white/10">
+            <div class="w-12 h-12 mx-auto rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-3">
+              <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
             </div>
-
-            <!-- Comment Context -->
-            <div class="mb-3 flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400">
-              <span>دیدگاه مربوط به {comment.entityType}:</span>
-              <a href={comment.entitySlug} target="_blank" class="font-semibold text-apple-blue dark:text-apple-blue-dark hover:underline">
-                {comment.entityTitle}
-              </a>
-            </div>
-
-            <!-- Comment Body Text -->
-            <p class="text-sm text-neutral-800 dark:text-neutral-200 leading-relaxed bg-neutral-50 dark:bg-neutral-800/60 p-4 rounded-2xl mb-5">
-              {comment.content}
-            </p>
-
-            <!-- Action Buttons -->
-            <div class="flex items-center justify-end gap-3 pt-3 border-t border-black/5 dark:border-white/5">
-              <button
-                type="button"
-                class="reject-btn px-4 py-2 rounded-full border border-rose-500/30 text-rose-600 dark:text-rose-400 hover:bg-rose-500 hover:text-white text-xs font-semibold transition-all duration-200 flex items-center gap-1.5"
-                data-id={comment.id}
-              >
-                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-                <span>رد دیدگاه</span>
-              </button>
-
-              <button
-                type="button"
-                class="approve-btn px-5 py-2 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold shadow-sm transition-all duration-200 flex items-center gap-1.5"
-                data-id={comment.id}
-              >
-                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                </svg>
-                <span>تأیید و انتشار عمومی</span>
-              </button>
-            </div>
+            <h3 class="text-sm font-bold text-neutral-900 dark:text-white mb-1">موردی یافت نشد</h3>
+            <p class="text-xs text-neutral-400">در این وضعیت هیچ دیدگاهی برای نمایش وجود ندارد.</p>
           </div>
-        ))
+        ) : (
+          comments.map((comment) => {
+            const author = comment.guestName || (comment as any).fullName || 'کاربر مهمان';
+            const statusLabel =
+              comment.status === CommentStatus.Pending
+                ? 'در انتظار بررسی'
+                : comment.status === CommentStatus.Approved
+                ? 'تأیید شده'
+                : 'رد شده';
+            const statusColor =
+              comment.status === CommentStatus.Pending
+                ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                : comment.status === CommentStatus.Approved
+                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                : 'bg-rose-500/10 text-rose-600 dark:text-rose-400';
+
+            return (
+              <div
+                id={`comment-row-${comment.id}`}
+                class="p-6 rounded-3xl bg-white dark:bg-neutral-900 border border-black/5 dark:border-white/10 shadow-sm transition-all duration-300"
+              >
+                <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-4">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-apple-blue/10 text-apple-blue dark:bg-apple-blue-dark/20 dark:text-apple-blue-dark flex items-center justify-center font-bold text-sm">
+                      {author.charAt(0)}
+                    </div>
+                    <div>
+                      <span class="font-bold text-sm text-neutral-900 dark:text-white block">
+                        {author}
+                      </span>
+                      <span class="text-[11px] text-neutral-400 font-mono">
+                        {comment.email}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center gap-2 text-xs">
+                    <span class="px-2.5 py-1 rounded-full bg-black/5 dark:bg-white/5 text-neutral-500 dark:text-neutral-400">
+                      {new Date(comment.createdAt).toLocaleDateString('fa-IR')}
+                    </span>
+                    <span class={`px-2.5 py-1 rounded-full font-semibold ${statusColor}`}>
+                      {statusLabel}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Comment Body Text -->
+                <p class="text-sm text-neutral-800 dark:text-neutral-200 leading-relaxed bg-neutral-50 dark:bg-neutral-800/60 p-4 rounded-2xl mb-5">
+                  {comment.text}
+                </p>
+
+                <!-- Action Buttons -->
+                <div class="flex flex-wrap items-center justify-end gap-3 pt-3 border-t border-black/5 dark:border-white/5">
+                  <button
+                    type="button"
+                    class="delete-comment-btn px-4 py-2 rounded-full border border-neutral-300 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-xs font-semibold transition-all duration-200"
+                    data-id={comment.id}
+                  >
+                    حذف دیدگاه
+                  </button>
+
+                  {comment.status !== CommentStatus.Rejected && (
+                    <button
+                      type="button"
+                      class="reject-btn px-4 py-2 rounded-full border border-rose-500/30 text-rose-600 dark:text-rose-400 hover:bg-rose-500 hover:text-white text-xs font-semibold transition-all duration-200 flex items-center gap-1.5"
+                      data-id={comment.id}
+                    >
+                      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                      <span>رد دیدگاه</span>
+                    </button>
+                  )}
+
+                  {comment.status !== CommentStatus.Approved && (
+                    <button
+                      type="button"
+                      class="approve-btn px-5 py-2 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold shadow-sm transition-all duration-200 flex items-center gap-1.5"
+                      data-id={comment.id}
+                    >
+                      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                      </svg>
+                      <span>تأیید و انتشار عمومی</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })
+        )
       }
     </div>
 
@@ -148,41 +224,121 @@ const pendingComments = [
 </AdminLayout>
 
 <script>
+  import { commentsApi } from '../../../utils/api';
+  import { CommentStatus } from '../../../types';
+  import { showToast, showAlert, showConfirm } from '../../../utils/ui-dialog';
+
+  // Approve button handler
   document.querySelectorAll('.approve-btn').forEach((btn) => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       const id = btn.getAttribute('data-id');
+      if (!id) return;
       const row = document.getElementById(`comment-row-${id}`);
-      if (row) {
-        row.style.opacity = '0.5';
-        row.innerHTML = `
-          <div class="py-4 text-center text-emerald-600 dark:text-emerald-400 font-bold text-xs flex items-center justify-center gap-2">
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-            </svg>
-            <span>دیدگاه با موفقیت تأیید شد و در سایت نمایش داده می‌شود.</span>
-          </div>
-        `;
+
+      try {
+        const res = await commentsApi.updateStatus({ commentId: id, status: CommentStatus.Approved });
+        if (res.isSuccess) {
+          showToast('دیدگاه با موفقیت تأیید شد و در سایت منتشر گردید.', 'success');
+          if (row) {
+            row.style.opacity = '0.5';
+            row.innerHTML = `
+              <div class="py-4 text-center text-emerald-600 dark:text-emerald-400 font-bold text-xs flex items-center justify-center gap-2">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <span>دیدگاه تأیید و منتشر شد.</span>
+              </div>
+            `;
+          }
+        } else {
+          showAlert({
+            title: 'خطا در تأیید دیدگاه',
+            message: res.errorMessage || 'خطا در تغییر وضعیت دیدگاه',
+            type: 'error',
+          });
+        }
+      } catch (e: any) {
+        showToast('خطای ارتباط با سرور', 'error');
       }
     });
   });
 
+  // Reject button handler
   document.querySelectorAll('.reject-btn').forEach((btn) => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       const id = btn.getAttribute('data-id');
+      if (!id) return;
       const row = document.getElementById(`comment-row-${id}`);
-      if (row && confirm('آیا از رد و حذف این دیدگاه اطمینان دارید؟')) {
-        row.style.opacity = '0.5';
-        row.innerHTML = `
-          <div class="py-4 text-center text-rose-500 font-bold text-xs">
-            دیدگاه رد و بایگانی شد.
-          </div>
-        `;
+
+      const confirmed = await showConfirm({
+        title: 'رد دیدگاه',
+        message: 'آیا از رد کردن و پنهان‌سازی این دیدگاه اطمینان دارید؟',
+        confirmText: 'رد دیدگاه',
+        cancelText: 'انصراف',
+        isDestructive: true,
+      });
+
+      if (!confirmed) return;
+
+      try {
+        const res = await commentsApi.updateStatus({ commentId: id, status: CommentStatus.Rejected });
+        if (res.isSuccess) {
+          showToast('دیدگاه با موفقیت رد شد.', 'info');
+          if (row) {
+            row.style.opacity = '0.5';
+            row.innerHTML = `
+              <div class="py-4 text-center text-rose-500 font-bold text-xs">
+                دیدگاه رد شد.
+              </div>
+            `;
+          }
+        } else {
+          showAlert({
+            title: 'خطا در رد دیدگاه',
+            message: res.errorMessage || 'خطا در تغییر وضعیت دیدگاه',
+            type: 'error',
+          });
+        }
+      } catch (e: any) {
+        showToast('خطای ارتباط با سرور', 'error');
       }
     });
   });
 
-  document.getElementById('btn-approve-all')?.addEventListener('click', () => {
-    alert('تمام دیدگاه‌های در انتظار بررسی تأیید شدند.');
-    document.querySelectorAll('.approve-btn').forEach((b) => (b as HTMLElement).click());
+  // Delete button handler
+  document.querySelectorAll('.delete-comment-btn').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const id = btn.getAttribute('data-id');
+      if (!id) return;
+      const row = document.getElementById(`comment-row-${id}`);
+
+      const confirmed = await showConfirm({
+        title: 'حذف دائمی دیدگاه',
+        message: 'آیا از حذف کامل این دیدگاه از پایگاه‌داده اطمینان دارید؟ این عملیات غیرقابل بازگشت است.',
+        confirmText: 'بله، حذف شود',
+        cancelText: 'انصراف',
+        isDestructive: true,
+      });
+
+      if (!confirmed) return;
+
+      try {
+        const res = await commentsApi.delete(id);
+        if (res.isSuccess) {
+          showToast('دیدگاه با موفقیت حذف گردید.', 'success');
+          if (row) {
+            row.remove();
+          }
+        } else {
+          showAlert({
+            title: 'خطا در حذف دیدگاه',
+            message: res.errorMessage || 'خطا در حذف دیدگاه',
+            type: 'error',
+          });
+        }
+      } catch (e: any) {
+        showToast('خطای ارتباط با سرور', 'error');
+      }
+    });
   });
 </script>

@@ -5,6 +5,8 @@ interface Props {
   href?: string;
   type?: 'button' | 'submit' | 'reset';
   className?: string;
+  id?: string;
+  disabled?: boolean;
 }
 
 const {
@@ -13,6 +15,8 @@ const {
   href,
   type = 'button',
   className = '',
+  id,
+  ...rest
 } = Astro.props;
 
 const sizeStyles = {
@@ -22,10 +26,10 @@ const sizeStyles = {
 };
 
 const variantStyles = {
-  primary: 'bg-apple-blue hover:bg-apple-blue-hover text-white shadow-md shadow-apple-blue/25 hover:shadow-apple-blue/40 dark:bg-apple-blue-dark dark:hover:bg-sky-400',
-  secondary: 'bg-black/5 hover:bg-black/10 text-neutral-800 dark:bg-white/10 dark:hover:bg-white/15 dark:text-neutral-100 border border-black/5 dark:border-white/10',
-  ghost: 'bg-transparent hover:bg-black/5 text-neutral-700 dark:text-neutral-300 dark:hover:bg-white/10',
-  glass: 'apple-glass text-neutral-900 dark:text-white hover:bg-white/90 dark:hover:bg-black/90 shadow-sm',
+  primary: 'bg-apple-blue hover:bg-apple-blue-hover text-white shadow-md shadow-apple-blue/25 hover:shadow-apple-blue/40 dark:bg-apple-blue-dark dark:hover:bg-sky-400 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100',
+  secondary: 'bg-black/5 hover:bg-black/10 text-neutral-800 dark:bg-white/10 dark:hover:bg-white/15 dark:text-neutral-100 border border-black/5 dark:border-white/10 disabled:opacity-60 disabled:cursor-not-allowed',
+  ghost: 'bg-transparent hover:bg-black/5 text-neutral-700 dark:text-neutral-300 dark:hover:bg-white/10 disabled:opacity-60 disabled:cursor-not-allowed',
+  glass: 'apple-glass text-neutral-900 dark:text-white hover:bg-white/90 dark:hover:bg-black/90 shadow-sm disabled:opacity-60 disabled:cursor-not-allowed',
 };
 
 const baseStyles = 'inline-flex items-center justify-center gap-2 rounded-full font-medium transition-all duration-300 transform active:scale-95 focus:outline-none focus:ring-2 focus:ring-apple-blue/50';
@@ -34,11 +38,11 @@ const combinedClass = `${baseStyles} ${sizeStyles[size]} ${variantStyles[variant
 
 {
   href ? (
-    <a href={href} class={combinedClass}>
+    <a id={id} href={href} class={combinedClass} {...rest}>
       <slot />
     </a>
   ) : (
-    <button type={type} class={combinedClass}>
+    <button id={id} type={type} class={combinedClass} {...rest}>
       <slot />
     </button>
   )

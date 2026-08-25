@@ -1,16 +1,45 @@
 ---
-import AdminLayout from '../../layouts/AdminLayout.astro';
-import { mockArticles, mockBooks, mockCourses } from '../../data/mockData';
+export const prerender = false;
 
-// Mock Aggregated Analytics Data
-const stats = {
-  totalViews: 48520,
-  viewsGrowth: '+۱۴.۲٪ نسبت به ماه گذشته',
-  topArticle: mockArticles[0], // "راهنمای جامع معماری تمیز در دات‌نت ۹"
-  topBook: mockBooks[0], // "معماری تمیز در عمل"
-  topCourse: mockCourses[0], // "دوره جامع مسترکلاس Clean Architecture در .NET 9"
-  pendingCommentsCount: 3,
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { viewsApi } from '../../utils/api';
+import type { ViewStatsDto } from '../../types';
+
+// Extract HttpOnly session cookie for authenticated SSR requests
+const token = Astro.cookies.get('AdminAuthToken')?.value;
+if (!token) {
+  return Astro.redirect('/admin/login');
+}
+
+// Fetch real aggregated engagement statistics from the backend
+let stats: ViewStatsDto = {
+  totalViews: 0,
+  totalArticlesViews: 0,
+  totalBooksViews: 0,
+  totalCoursesViews: 0,
+  topArticleTitle: 'در حال حاضر مقاله‌ای ثبت نشده است',
+  topArticleViews: 0,
+  topBookTitle: 'در حال حاضر کتابی ثبت نشده است',
+  topBookViews: 0,
+  topCourseTitle: 'در حال حاضر دوره‌ای ثبت نشده است',
+  topCourseViews: 0,
+  pendingCommentsCount: 0,
 };
+
+let fetchError: string | null = null;
+
+try {
+  const statsRes = await viewsApi.getStats(token);
+  if (statsRes.isSuccess && statsRes.data) {
+    stats = statsRes.data;
+  } else if (statsRes.statusCode === 401) {
+    return Astro.redirect('/admin/login');
+  } else {
+    fetchError = statsRes.errorMessage;
+  }
+} catch (e: any) {
+  fetchError = e?.message || 'خطای اتصال به سرور';
+}
 ---
 
 <AdminLayout title="داشبورد و آمار سیستم" activeSection="dashboard">
@@ -23,15 +52,21 @@ const stats = {
           خوش آمدید، استاد
         </span>
         <h1 class="text-2xl sm:text-3xl font-black mb-2">
-          داشبورد مدیریت پلتفرم آموزشی دکتر شفیعآبادی
+          داشبورد مدیریت پلتفرم آموزشی دکتر شفیع‌آبادی
         </h1>
         <p class="text-sm text-blue-100 leading-relaxed">
-          گزارش لحظه‌ای بازدیدها، وضعیت محتوا و نظرات نیازمند بازبینی در این بخش در دسترس است.
+          گزارش زنده و لحظه‌ای بازدیدها، وضعیت محتوا و نظرات نیازمند بازبینی متصل به دیتابیس دات‌نت ۹.
         </p>
       </div>
       <!-- Background decorative circle -->
       <div class="absolute -left-10 -bottom-10 w-60 h-60 rounded-full bg-white/10 blur-2xl pointer-events-none"></div>
     </div>
+
+    {fetchError && (
+      <div class="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400 text-xs">
+        {fetchError}
+      </div>
+    )}
 
     <!-- Stat Cards Grid -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -52,7 +87,7 @@ const stats = {
             {stats.totalViews.toLocaleString('fa-IR')}
           </div>
           <span class="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-            {stats.viewsGrowth}
+            مجموع تعاملات زنده
           </span>
         </div>
       </div>
@@ -68,11 +103,11 @@ const stats = {
           </div>
         </div>
         <div>
-          <div class="text-sm font-bold text-neutral-950 dark:text-white line-clamp-1 mb-1">
-            {stats.topArticle.title}
+          <div class="text-sm font-bold text-neutral-950 dark:text-white line-clamp-1 mb-1" title={stats.topArticleTitle}>
+            {stats.topArticleTitle}
           </div>
           <span class="text-xs font-medium text-neutral-400">
-            {stats.topArticle.viewsCount.toLocaleString('fa-IR')} بازدید
+            {stats.topArticleViews.toLocaleString('fa-IR')} بازدید
           </span>
         </div>
       </div>
@@ -88,11 +123,11 @@ const stats = {
           </div>
         </div>
         <div>
-          <div class="text-sm font-bold text-neutral-950 dark:text-white line-clamp-1 mb-1">
-            {stats.topBook.title}
+          <div class="text-sm font-bold text-neutral-950 dark:text-white line-clamp-1 mb-1" title={stats.topBookTitle}>
+            {stats.topBookTitle}
           </div>
           <span class="text-xs font-medium text-neutral-400">
-            {stats.topBook.viewsCount.toLocaleString('fa-IR')} بازدید
+            {stats.topBookViews.toLocaleString('fa-IR')} بازدید
           </span>
         </div>
       </div>
@@ -108,11 +143,11 @@ const stats = {
           </div>
         </div>
         <div>
-          <div class="text-sm font-bold text-neutral-950 dark:text-white line-clamp-1 mb-1">
-            {stats.topCourse.title}
+          <div class="text-sm font-bold text-neutral-950 dark:text-white line-clamp-1 mb-1" title={stats.topCourseTitle}>
+            {stats.topCourseTitle}
           </div>
           <span class="text-xs font-medium text-neutral-400">
-            {stats.topCourse.viewsCount.toLocaleString('fa-IR')} بازدید
+            {stats.topCourseViews.toLocaleString('fa-IR')} بازدید
           </span>
         </div>
       </div>
@@ -143,7 +178,7 @@ const stats = {
             </div>
             <div>
               <span class="text-sm font-bold block mb-1">نگارش مقاله جدید</span>
-              <span class="text-xs text-neutral-500 dark:text-neutral-400 group-hover:text-blue-100">با ویرایشگر هوشمند TinyMCE</span>
+              <span class="text-xs text-neutral-500 dark:text-neutral-400 group-hover:text-blue-100">با ویرایشگر استاندارد TinyMCE</span>
             </div>
           </a>
 
@@ -157,8 +192,8 @@ const stats = {
               </svg>
             </div>
             <div>
-              <span class="text-sm font-bold block mb-1">ثبت کتاب و تألیف</span>
-              <span class="text-xs text-neutral-500 dark:text-neutral-400 group-hover:text-blue-100">مدیریت مشخصات و لینک ناشر</span>
+              <span class="text-sm font-bold block mb-1">مدیریت کتاب‌ها</span>
+              <span class="text-xs text-neutral-500 dark:text-neutral-400 group-hover:text-blue-100">مشاهده و ویرایش کتاب‌ها</span>
             </div>
           </a>
 
@@ -172,8 +207,8 @@ const stats = {
               </svg>
             </div>
             <div>
-              <span class="text-sm font-bold block mb-1">تعریف دوره آموزشی</span>
-              <span class="text-xs text-neutral-500 dark:text-neutral-400 group-hover:text-blue-100">تنظیم سرفصل‌ها و تخفیف‌ها</span>
+              <span class="text-sm font-bold block mb-1">مدیریت دوره‌ها</span>
+              <span class="text-xs text-neutral-500 dark:text-neutral-400 group-hover:text-blue-100">تنظیم سرفصل‌ها و جلسات</span>
             </div>
           </a>
         </div>
@@ -184,12 +219,14 @@ const stats = {
         <div>
           <div class="flex items-center justify-between mb-4">
             <h2 class="text-base font-bold text-neutral-900 dark:text-white">نظرات در انتظار بررسی</h2>
-            <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400">
-              {stats.pendingCommentsCount} نظر جدید
+            <span class={`px-2.5 py-0.5 rounded-full text-xs font-bold ${stats.pendingCommentsCount > 0 ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400' : 'bg-emerald-500/10 text-emerald-600'}`}>
+              {stats.pendingCommentsCount.toLocaleString('fa-IR')} نظر جدید
             </span>
           </div>
           <p class="text-xs text-neutral-500 dark:text-neutral-400 mb-6 leading-relaxed">
-            کاربران برای مقالات و دوره‌ها نظرات جدید ارسال کرده‌اند که نیاز به تایید دارند.
+            {stats.pendingCommentsCount > 0
+              ? 'دیدگاه‌های جدیدی برای محتوا ثبت شده که منتظر تأیید و انتشار عمومی شماست.'
+              : 'در حال حاضر هیچ دیدگاه در انتظار تأییدی وجود ندارد.'}
           </p>
         </div>
 

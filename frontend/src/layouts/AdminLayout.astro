@@ -1,15 +1,32 @@
 ---
 import ThemeToggle from '../components/ThemeToggle.astro';
+import UiModal from '../components/UiModal.astro';
 import '../styles/global.css';
+import { viewsApi } from '../utils/api';
 
 interface Props {
   title?: string;
-  activeSection?: 'dashboard' | 'articles' | 'books' | 'courses' | 'comments';
+  activeSection?: 'dashboard' | 'articles' | 'books' | 'courses' | 'categories' | 'comments';
 }
 
 const { title = 'پیش‌خوان مدیریت', activeSection = 'dashboard' } = Astro.props;
 
 const currentPath = Astro.url.pathname;
+
+// Extract HttpOnly session cookie to fetch live statistics for Admin Sidebar
+const token = Astro.cookies.get('AdminAuthToken')?.value;
+let pendingCommentsCount = 0;
+
+if (token) {
+  try {
+    const statsRes = await viewsApi.getStats(token);
+    if (statsRes.isSuccess && statsRes.data) {
+      pendingCommentsCount = statsRes.data.pendingCommentsCount || 0;
+    }
+  } catch (e) {
+    // Graceful fallback if backend is momentarily unreachable
+  }
+}
 
 const sidebarLinks = [
   {
@@ -37,10 +54,16 @@ const sidebarLinks = [
     icon: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0020 6.818V4.182a1 1 0 00-.553-.894L15 1m0 9v13m0-13L3.447 4.182A1 1 0 003 5.076v13.848a1 1 0 001.447.894L15 14.273" />`,
   },
   {
+    id: 'categories',
+    href: '/admin/categories',
+    label: 'مدیریت دسته‌بندی‌ها',
+    icon: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />`,
+  },
+  {
     id: 'comments',
     href: '/admin/comments',
     label: 'مدیریت نظرات',
-    badge: '۳',
+    badge: pendingCommentsCount > 0 ? pendingCommentsCount.toLocaleString('fa-IR') : null,
     icon: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />`,
   },
 ];
@@ -52,7 +75,7 @@ const sidebarLinks = [
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <title>{title} | پنل مدیریت دکتر محمد حسین شفیعآبادی</title>
+    <title>{title} | پنل مدیریت دکتر محمد حسین شفیع‌آبادی</title>
     <meta name="robots" content="noindex, nofollow" />
 
     <!-- Anti-FOUC Theme Initializer -->
@@ -88,7 +111,7 @@ const sidebarLinks = [
                 پنل مدیریت محتوا
               </span>
               <span class="text-[11px] text-neutral-400">
-                دکتر محمد حسین شفیعآبادی
+                دکتر محمد حسین شفیع‌آبادی
               </span>
             </div>
           </a>
@@ -137,7 +160,7 @@ const sidebarLinks = [
           class="flex items-center gap-2 text-xs font-semibold text-neutral-500 hover:text-apple-blue dark:hover:text-apple-blue-dark transition-colors"
         >
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 01-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
           </svg>
           <span>مشاهده وب‌سایت</span>
         </a>
@@ -164,15 +187,16 @@ const sidebarLinks = [
             <span>سیستم آنلاین</span>
           </span>
 
-          <a
-            href="/admin/login"
+          <button
+            type="button"
+            id="admin-logout-btn"
             class="p-2 rounded-xl text-neutral-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors"
             title="خروج از حساب"
           >
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
             </svg>
-          </a>
+          </button>
         </div>
       </header>
 
@@ -181,5 +205,56 @@ const sidebarLinks = [
         <slot />
       </main>
     </div>
+
+    <!-- Apple-styled UI Modal & Toast Notification System -->
+    <UiModal />
+
+    <script>
+      import { authApi } from '../utils/api';
+      import { showConfirm } from '../utils/ui-dialog';
+
+      // Silent Token Refresh Mechanism (Every 4 minutes if Remember Me is active)
+      function setupSilentRefresh() {
+        const rememberMe = localStorage.getItem('admin_remember_me') === 'true';
+        if (!rememberMe) return;
+
+        // Execute every 4 minutes (240,000 ms)
+        setInterval(async () => {
+          try {
+            const res = await authApi.refresh();
+            if (res.isSuccess) {
+              console.log('[Auth] Session refreshed silently.');
+            } else if (res.statusCode === 401) {
+              localStorage.removeItem('admin_remember_me');
+              window.location.href = '/admin/login';
+            }
+          } catch (e) {
+            console.warn('[Auth] Silent refresh check skipped:', e);
+          }
+        }, 4 * 60 * 1000);
+      }
+
+      setupSilentRefresh();
+
+      document.getElementById('admin-logout-btn')?.addEventListener('click', async () => {
+        const confirmed = await showConfirm({
+          title: 'خروج از حساب کاربری',
+          message: 'آیا قصد خروج از پنل مدیریت را دارید؟',
+          confirmText: 'خروج از حساب',
+          cancelText: 'انصراف',
+          isDestructive: true,
+        });
+
+        if (confirmed) {
+          try {
+            await authApi.logout();
+          } catch (e) {}
+          // Clear remember me flag and session
+          localStorage.removeItem('admin_remember_me');
+          document.cookie = 'AdminAuthToken=; Max-Age=0; path=/;';
+          window.location.href = '/admin/login';
+        }
+      });
+    </script>
   </body>
 </html>

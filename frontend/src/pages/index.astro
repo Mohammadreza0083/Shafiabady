@@ -5,11 +5,36 @@ import ArticleCard from '../components/cards/ArticleCard.astro';
 import BookCard from '../components/cards/BookCard.astro';
 import CourseCard from '../components/cards/CourseCard.astro';
 import Button from '../components/ui/Button.astro';
+import { articlesApi, booksApi, coursesApi } from '../utils/api';
 import { mockArticles, mockBooks, mockCourses } from '../data/mockData';
 
-const featuredArticles = mockArticles.slice(0, 3);
-const featuredBooks = mockBooks.slice(0, 3);
-const featuredCourses = mockCourses.slice(0, 3);
+let featuredArticles: any[] = [];
+let featuredBooks: any[] = [];
+let featuredCourses: any[] = [];
+
+try {
+  const [articlesRes, booksRes, coursesRes] = await Promise.all([
+    articlesApi.getPaged({ pageNumber: 1, pageSize: 3 }),
+    booksApi.getPaged({ pageNumber: 1, pageSize: 3 }),
+    coursesApi.getPaged({ pageNumber: 1, pageSize: 3 }),
+  ]);
+
+  featuredArticles = articlesRes.isSuccess && articlesRes.data?.items?.length
+    ? articlesRes.data.items
+    : mockArticles.slice(0, 3);
+
+  featuredBooks = booksRes.isSuccess && booksRes.data?.items?.length
+    ? booksRes.data.items
+    : mockBooks.slice(0, 3);
+
+  featuredCourses = coursesRes.isSuccess && coursesRes.data?.items?.length
+    ? coursesRes.data.items
+    : mockCourses.slice(0, 3);
+} catch (e) {
+  featuredArticles = mockArticles.slice(0, 3);
+  featuredBooks = mockBooks.slice(0, 3);
+  featuredCourses = mockCourses.slice(0, 3);
+}
 
 const homeJsonLd = {
   '@context': 'https://schema.org',
@@ -18,14 +43,14 @@ const homeJsonLd = {
       '@type': 'WebSite',
       '@id': 'https://shafieiabadi.ir/#website',
       'url': 'https://shafieiabadi.ir',
-      'name': 'دکتر محمد حسین شفیعآبادی',
+      'name': 'دکتر محمد حسین شفیع‌آبادی',
       'description': 'پلتفرم تخصصی مهندسی نرم‌افزار، معماری تمیز (Clean Architecture)، دات‌نت و وب مدرن.',
       'inLanguage': 'fa-IR',
     },
     {
       '@type': 'Person',
       '@id': 'https://shafieiabadi.ir/#person',
-      'name': 'دکتر محمد حسین شفیعآبادی',
+      'name': 'دکتر محمد حسین شفیع‌آبادی',
       'jobTitle': 'استاد دانشگاه و پژوهشگر مهندسی نرم‌افزار',
       'description': 'طراح و معمار ارشد سیستم‌های نرم‌افزاری، نویسنده کتاب‌های مرجع معماری تمیز و مدرس دوره‌های تخصصی دات‌نت.',
       'url': 'https://shafieiabadi.ir',
@@ -47,7 +72,7 @@ const homeJsonLd = {
 ---
 
 <BaseLayout
-  description="پلتفرم برندینگ شخصی و آموزش تخصصی مهندسی نرم‌افزار، معماری تمیز (Clean Architecture)، دات‌نت و وب مدرن - دکتر محمد حسین شفیعآبادی."
+  description="پلتفرم برندینگ شخصی و آموزش تخصصی مهندسی نرم‌افزار، معماری تمیز (Clean Architecture)، دات‌نت و وب مدرن - دکتر محمد حسین شفیع‌آبادی."
   jsonLd={homeJsonLd}
 >
   <!-- Top Hero Banner Slider (Apple-Inspired with Swiper.js) -->

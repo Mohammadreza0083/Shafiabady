@@ -1,4 +1,6 @@
 ---
+export const prerender = false;
+
 import ThemeToggle from '../../components/ThemeToggle.astro';
 import '../../styles/global.css';
 ---
@@ -9,7 +11,7 @@ import '../../styles/global.css';
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <title>ورود به پنل مدیریت | دکتر محمد حسین شفیعآبادی</title>
+    <title>ورود به پنل مدیریت | دکتر محمد حسین شفیع‌آبادی</title>
     <meta name="robots" content="noindex, nofollow" />
 
     <!-- Anti-FOUC Theme Initializer -->
@@ -66,8 +68,20 @@ import '../../styles/global.css';
             ورود به پنل مدیریت
           </h1>
           <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-1.5 font-medium">
-            پلتفرم اختصاصی دکتر محمد حسین شفیعآبادی
+            پلتفرم اختصاصی دکتر محمد حسین شفیع‌آبادی
           </p>
+        </div>
+
+        <!-- Dynamic Error Alert Box -->
+        <div
+          id="login-error-alert"
+          class="hidden mb-6 p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs leading-relaxed flex items-start gap-2.5"
+          role="alert"
+        >
+          <svg class="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span id="login-error-text">اطلاعات ورود نامعتبر است.</span>
         </div>
 
         <!-- Login Form -->
@@ -116,24 +130,29 @@ import '../../styles/global.css';
             </div>
           </div>
 
+          <!-- Remember Me Checkbox -->
+          <div class="flex items-center justify-between text-xs">
+            <label class="flex items-center gap-2 text-neutral-600 dark:text-neutral-400 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                id="remember-me"
+                class="w-4 h-4 rounded-lg text-apple-blue focus:ring-apple-blue border-black/10 dark:border-white/10 dark:bg-neutral-800"
+              />
+              <span>مرا به خاطر بسپار</span>
+            </label>
+          </div>
+
           <button
             type="submit"
             id="login-btn"
             class="w-full py-3.5 rounded-2xl bg-apple-blue hover:bg-blue-600 text-white font-bold text-sm shadow-lg shadow-apple-blue/30 transition-all duration-200 flex items-center justify-center gap-2 mt-2"
           >
-            <span>ورود به داشبورد</span>
-            <svg class="w-4 h-4 transform rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <span id="login-btn-text">ورود به داشبورد</span>
+            <svg id="login-btn-arrow" class="w-4 h-4 transform rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
             </svg>
           </button>
         </form>
-
-        <!-- Security Note -->
-        <div class="mt-8 pt-6 border-t border-black/5 dark:border-white/10 text-center">
-          <p class="text-[11px] text-neutral-400 dark:text-neutral-500 leading-relaxed">
-            احراز هویت تک‌کاربره مدیریت با مکانیزم توکن امن JWT و کوکی‌های HttpOnly در فاز بک‌اند
-          </p>
-        </div>
 
       </div>
     </div>
@@ -142,16 +161,85 @@ import '../../styles/global.css';
 </html>
 
 <script>
-  const form = document.getElementById('admin-login-form');
-  form?.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const btn = document.getElementById('login-btn');
+  import { authApi } from '../../utils/api';
+
+  const form = document.getElementById('admin-login-form') as HTMLFormElement | null;
+  const usernameInput = document.getElementById('username') as HTMLInputElement | null;
+  const passwordInput = document.getElementById('password') as HTMLInputElement | null;
+  const rememberMeInput = document.getElementById('remember-me') as HTMLInputElement | null;
+  const btn = document.getElementById('login-btn') as HTMLButtonElement | null;
+  const btnText = document.getElementById('login-btn-text');
+  const btnArrow = document.getElementById('login-btn-arrow');
+  const errorAlert = document.getElementById('login-error-alert');
+  const errorText = document.getElementById('login-error-text');
+
+  function showError(message: string) {
+    if (errorAlert && errorText) {
+      errorText.textContent = message;
+      errorAlert.classList.remove('hidden');
+    }
+  }
+
+  function hideError() {
+    if (errorAlert) {
+      errorAlert.classList.add('hidden');
+    }
+  }
+
+  function setLoading(isLoading: boolean) {
     if (btn) {
-      btn.innerHTML = `<span>در حال بررسی اعتبار...</span>`;
-      setTimeout(() => {
-        // In frontend mock, navigate directly to /admin dashboard
-        window.location.href = '/admin';
-      }, 600);
+      btn.disabled = isLoading;
+      if (isLoading) {
+        btn.classList.add('opacity-75', 'cursor-not-allowed');
+        if (btnText) btnText.textContent = 'در حال بررسی اعتبار...';
+        if (btnArrow) btnArrow.classList.add('hidden');
+      } else {
+        btn.classList.remove('opacity-75', 'cursor-not-allowed');
+        if (btnText) btnText.textContent = 'ورود به داشبورد';
+        if (btnArrow) btnArrow.classList.remove('hidden');
+      }
+    }
+  }
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideError();
+
+    const usernameOrEmail = usernameInput?.value?.trim() || '';
+    const password = passwordInput?.value || '';
+    const isRememberMe = rememberMeInput?.checked ?? false;
+
+    if (!usernameOrEmail || !password) {
+      showError('لطفاً نام کاربری و گذرواژه را وارد نمایید.');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const result = await authApi.login({
+        usernameOrEmail,
+        password,
+      });
+
+      if (result.isSuccess) {
+        if (isRememberMe) {
+          localStorage.setItem('admin_remember_me', 'true');
+        } else {
+          localStorage.removeItem('admin_remember_me');
+        }
+
+        if (btnText) btnText.textContent = 'ورود موفقیت‌آمیز! در حال انتقال...';
+        setTimeout(() => {
+          window.location.href = '/admin';
+        }, 300);
+      } else {
+        showError(result.errorMessage || 'نام کاربری یا کلمه عبور وارد شده صحیح نمی‌باشد.');
+        setLoading(false);
+      }
+    } catch (error: any) {
+      showError('خطا در برقراری ارتباط با سرویس احراز هویت.');
+      setLoading(false);
     }
   });
 </script>

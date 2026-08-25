@@ -1,157 +1,373 @@
 ---
 import Button from './Button.astro';
 
-const slides = [
+export interface SlideItem {
+  tag?: string;
+  title: string;
+  description: string;
+  primaryBtn?: { text: string; href: string };
+  secondaryBtn?: { text: string; href: string };
+  badge?: string;
+  gradient?: string;
+  glowColor1?: string;
+  glowColor2?: string;
+}
+
+interface Props {
+  slides?: SlideItem[];
+}
+
+const defaultSlides: SlideItem[] = [
   {
-    tag: 'مهندسی سیستم‌های توزیع‌شده',
-    title: 'معماری تمیز و مقیاس‌پذیر در اکوسیستم دات‌نت',
-    description: 'توسعه سیستم‌های سازمانی با بالاترین استانداردها، اصول Domain-Driven Design (DDD) و رویکرد دقیق Test-Driven Development (TDD).',
-    primaryBtn: { text: 'مشاهده دوره‌ها', href: '/courses' },
-    secondaryBtn: { text: 'مطالعه مقالات', href: '/articles' },
-    badge: 'جدیدترین متدهای معماری ۲۰۲۶',
+    tag: 'آموزش و تدریس',
+    title: 'مدرس و استاد دانشگاه',
+    description: '۲۵ سال تدریس و تجربه در حوزههای تخصصی کامپیوتر و هوش مصنوعی، همراه با برگزاری دورههای تخصصی برای سازمانها و شرکتها.',
+    primaryBtn: { text: 'اطلاعات بیشتر', href: '/about' },
+    badge: '۲۵ سال سابقه دانشگاهی',
     gradient: 'from-blue-600/10 via-indigo-500/5 to-transparent dark:from-blue-900/20 dark:via-indigo-900/10 dark:to-transparent',
-    iconBg: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
+    glowColor1: 'bg-blue-500/15 dark:bg-blue-500/25',
+    glowColor2: 'bg-indigo-400/15 dark:bg-purple-500/20',
   },
   {
-    tag: 'تألیفات و انتشارات',
-    title: 'مرجع جامع معماری نرم‌افزار و طراحی سیستم',
-    description: 'کتاب‌ها و راهنماهای جامع مهندسی برای ارتقای تفکر معماری و ساخت محصولاتی مقاوم، پایدار و قابل نگهداری.',
-    primaryBtn: { text: 'مشاهده کتاب‌ها', href: '/books' },
-    secondaryBtn: { text: 'درباره نویسنده', href: '/about' },
-    badge: 'نسخه‌های چاپی و الکترونیک',
+    tag: 'مشاوره و نوآوری',
+    title: 'مشاور کسبوکار',
+    description: 'مشاوره تخصصی در زمینه توسعه کسبوکار، نوآوری و تحول دیجیتال با رویکرد عملی و متناسب با نیازهای روز بازار.',
+    primaryBtn: { text: 'اطلاعات بیشتر', href: '/about' },
+    badge: 'تحول دیجیتال و استراتژی',
+    gradient: 'from-emerald-600/10 via-teal-500/5 to-transparent dark:from-emerald-900/20 dark:via-teal-900/10 dark:to-transparent',
+    glowColor1: 'bg-emerald-500/15 dark:bg-emerald-500/25',
+    glowColor2: 'bg-teal-400/15 dark:bg-cyan-500/20',
+  },
+  {
+    tag: 'تألیفات و پژوهش',
+    title: 'نویسنده',
+    description: '۳۹ مقاله علمی معتبر و دو کتاب کاربردی در زمینه هوش مصنوعی، با هدف انتقال دانش و کاربردهای آن در دنیای واقعی.',
+    primaryBtn: { text: 'اطلاعات بیشتر', href: '/books' },
+    badge: '۳۹ مقاله علمی و ۲ کتاب',
     gradient: 'from-sky-600/10 via-cyan-500/5 to-transparent dark:from-sky-900/20 dark:via-cyan-900/10 dark:to-transparent',
-    iconBg: 'bg-sky-500/10 text-sky-600 dark:text-sky-400',
+    glowColor1: 'bg-sky-500/15 dark:bg-sky-500/25',
+    glowColor2: 'bg-teal-400/15 dark:bg-cyan-500/20',
   },
   {
-    tag: 'پلتفرم آموزشی و منتورشیپ',
-    title: 'یادگیری عمیق و کاربردی برای توسعه‌دهندگان ارشد',
-    description: 'دوره‌های فشرده و پیشرفته با تمرکز بر چالش‌های واقعی صنعت، پیاده‌سازی Microservices و بهینه‌سازی Performance.',
-    primaryBtn: { text: 'ثبت‌نام در دوره‌ها', href: '/courses' },
-    secondaryBtn: { text: 'ارتباط مستقیم', href: '/contact' },
-    badge: 'پشتیبانی اختصاصی و تعاملی',
+    tag: 'کوچینگ و رهبری',
+    title: 'بیزینس کوچ',
+    description: '۵ سال تجربه کوچینگ با مدرک بینالمللی، همراهی کسبوکارها برای شناسایی پتانسیلهای رشد و دستیابی به اهداف بلندمدت.',
+    primaryBtn: { text: 'اطلاعات بیشتر', href: '/about' },
+    badge: 'مدرک بین‌المللی کوچینگ',
     gradient: 'from-purple-600/10 via-blue-500/5 to-transparent dark:from-purple-900/20 dark:via-blue-900/10 dark:to-transparent',
-    iconBg: 'bg-purple-500/10 text-purple-600 dark:text-purple-400',
+    glowColor1: 'bg-purple-500/15 dark:bg-purple-500/25',
+    glowColor2: 'bg-blue-400/15 dark:bg-indigo-500/20',
   },
 ];
+
+const slides = Astro.props.slides || defaultSlides;
 ---
 
-<div class="relative w-full overflow-hidden pt-6 pb-12 sm:pt-10 sm:pb-16">
-  <!-- Swiper Container -->
-  <div class="swiper hero-swiper max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="swiper-wrapper">
+<div class="relative w-full overflow-hidden pt-6 pb-12 sm:pt-10 sm:pb-16 hero-slider-container" id="hero-slider" tabindex="0">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    
+    <!-- Slides Viewport with Guaranteed Minimum Height to Prevent Container Collapse -->
+    <div class="relative w-full min-h-[490px] sm:min-h-[440px] md:min-h-[420px] lg:min-h-[450px] flex items-center justify-center">
       {
-        slides.map((slide, index) => (
-          <div class="swiper-slide">
-            <div class={`relative rounded-3xl sm:rounded-[2.5rem] p-8 sm:p-14 lg:p-18 border border-black/5 dark:border-white/10 overflow-hidden bg-gradient-to-br ${slide.gradient} bg-white/70 dark:bg-neutral-900/70 backdrop-blur-2xl shadow-xl dark:shadow-2xl`}>
-              
-              <!-- Subtle Apple Glow Background Orb -->
-              <div class="absolute -top-24 -left-24 w-96 h-96 bg-apple-blue/15 dark:bg-apple-blue/20 rounded-full blur-3xl pointer-events-none"></div>
-              <div class="absolute -bottom-24 -right-24 w-96 h-96 bg-sky-400/15 dark:bg-purple-500/15 rounded-full blur-3xl pointer-events-none"></div>
-
-              <div class="relative z-10 max-w-3xl mx-auto text-center flex flex-col items-center">
+        slides.map((slide, index) => {
+          const isInitialActive = index === 0;
+          return (
+            <div
+              class={`hero-slide absolute inset-0 w-full h-full transition-all duration-500 ease-out flex items-center justify-center ${
+                isInitialActive
+                  ? 'opacity-100 z-10 pointer-events-auto scale-100'
+                  : 'opacity-0 z-0 pointer-events-none scale-[0.98]'
+              }`}
+              data-slide-index={index}
+              aria-hidden={isInitialActive ? 'false' : 'true'}
+            >
+              <div class={`relative w-full h-full rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-12 lg:p-16 border border-black/5 dark:border-white/10 overflow-hidden bg-gradient-to-br ${slide.gradient || 'from-blue-600/10 via-indigo-500/5 to-transparent'} bg-white/80 dark:bg-neutral-900/80 backdrop-blur-2xl shadow-xl dark:shadow-2xl flex flex-col justify-center`}>
                 
-                <!-- Badge Tag -->
-                <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold tracking-wide bg-apple-blue/10 text-apple-blue dark:bg-apple-blue-dark/20 dark:text-apple-blue-dark mb-6 border border-apple-blue/15 shadow-sm">
-                  <span class="w-2 h-2 rounded-full bg-apple-blue dark:bg-apple-blue-dark animate-pulse"></span>
-                  <span>{slide.tag}</span>
-                  <span class="text-neutral-400 dark:text-neutral-500">•</span>
-                  <span class="font-normal text-neutral-600 dark:text-neutral-400">{slide.badge}</span>
+                <!-- Ambient Apple Glow Background Orbs -->
+                <div class={`absolute -top-24 -left-24 w-80 sm:w-96 h-80 sm:h-96 ${slide.glowColor1 || 'bg-apple-blue/15 dark:bg-apple-blue/20'} rounded-full blur-3xl pointer-events-none transition-all duration-700`}></div>
+                <div class={`absolute -bottom-24 -right-24 w-80 sm:w-96 h-80 sm:h-96 ${slide.glowColor2 || 'bg-sky-400/15 dark:bg-purple-500/15'} rounded-full blur-3xl pointer-events-none transition-all duration-700`}></div>
+
+                <div class="relative z-10 max-w-3xl mx-auto text-center flex flex-col items-center">
+                  
+                  <!-- Badge Tag -->
+                  {(slide.tag || slide.badge) && (
+                    <div class="inline-flex items-center gap-2 px-3.5 py-1.5 sm:px-4 sm:py-1.5 rounded-full text-xs font-semibold tracking-wide bg-apple-blue/10 text-apple-blue dark:bg-apple-blue-dark/20 dark:text-apple-blue-dark mb-5 sm:mb-6 border border-apple-blue/15 shadow-sm transition-transform duration-300 hover:scale-105">
+                      <span class="w-2 h-2 rounded-full bg-apple-blue dark:bg-apple-blue-dark animate-pulse"></span>
+                      {slide.tag && <span>{slide.tag}</span>}
+                      {slide.tag && slide.badge && <span class="text-neutral-400 dark:text-neutral-500">•</span>}
+                      {slide.badge && <span class="font-normal text-neutral-600 dark:text-neutral-400">{slide.badge}</span>}
+                    </div>
+                  )}
+
+                  <!-- Main Heading (Single H1 on page for SEO, H2 for secondary slides) -->
+                  {
+                    index === 0 ? (
+                      <h1 class="text-2xl sm:text-4xl md:text-5xl lg:text-5xl font-black tracking-tight text-neutral-950 dark:text-white leading-[1.3] sm:leading-[1.2] mb-5 sm:mb-6">
+                        {slide.title}
+                      </h1>
+                    ) : (
+                      <h2 class="text-2xl sm:text-4xl md:text-5xl lg:text-5xl font-black tracking-tight text-neutral-950 dark:text-white leading-[1.3] sm:leading-[1.2] mb-5 sm:mb-6">
+                        {slide.title}
+                      </h2>
+                    )
+                  }
+
+                  <!-- Subtitle Description -->
+                  <p class="text-sm sm:text-base md:text-lg lg:text-xl text-neutral-600 dark:text-neutral-300 max-w-2xl font-normal leading-relaxed mb-7 sm:mb-9">
+                    {slide.description}
+                  </p>
+
+                  <!-- Call to Action Buttons -->
+                  {(slide.primaryBtn || slide.secondaryBtn) && (
+                    <div class="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 w-full sm:w-auto">
+                      {slide.primaryBtn && (
+                        <Button href={slide.primaryBtn.href} variant="primary" size="lg" className="w-full sm:w-auto justify-center">
+                          <span>{slide.primaryBtn.text}</span>
+                          <svg class="w-4 h-4 transform rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                          </svg>
+                        </Button>
+                      )}
+                      {slide.secondaryBtn && (
+                        <Button href={slide.secondaryBtn.href} variant="secondary" size="lg" className="w-full sm:w-auto justify-center">
+                          <span>{slide.secondaryBtn.text}</span>
+                        </Button>
+                      )}
+                    </div>
+                  )}
+
                 </div>
-
-                <!-- Main Heading (Single H1 on page, H2 for secondary slides) -->
-                {
-                  index === 0 ? (
-                    <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-neutral-950 dark:text-white leading-[1.25] sm:leading-[1.2] mb-6">
-                      {slide.title}
-                    </h1>
-                  ) : (
-                    <h2 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-neutral-950 dark:text-white leading-[1.25] sm:leading-[1.2] mb-6">
-                      {slide.title}
-                    </h2>
-                  )
-                }
-
-                <!-- Subtitle Description -->
-                <p class="text-base sm:text-lg md:text-xl text-neutral-600 dark:text-neutral-300 max-w-2xl font-normal leading-relaxed mb-8 sm:mb-10">
-                  {slide.description}
-                </p>
-
-                <!-- Call to Action Buttons -->
-                <div class="flex flex-wrap items-center justify-center gap-3 sm:gap-4 w-full sm:w-auto">
-                  <Button href={slide.primaryBtn.href} variant="primary" size="lg" className="w-full sm:w-auto">
-                    <span>{slide.primaryBtn.text}</span>
-                    <svg class="w-4 h-4 transform rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                    </svg>
-                  </Button>
-                  <Button href={slide.secondaryBtn.href} variant="secondary" size="lg" className="w-full sm:w-auto">
-                    <span>{slide.secondaryBtn.text}</span>
-                  </Button>
-                </div>
-
               </div>
             </div>
-          </div>
-        ))
+          );
+        })
       }
     </div>
 
-    <!-- Frosted Glass Apple Pagination Dots -->
-    <div class="flex justify-center mt-6">
-      <div class="hero-pagination-wrapper inline-flex items-center px-4 py-2 rounded-full apple-glass shadow-md shadow-black/5">
-        <div class="swiper-pagination !static flex items-center gap-1.5"></div>
+    <!-- Frosted Glass Apple Controls Bar (Pagination Dots + Navigation Arrows) -->
+    <div class="flex items-center justify-center gap-3 mt-6 sm:mt-8 select-none relative z-20">
+      <!-- Previous Slide Button (Right Arrow in RTL) -->
+      <button
+        type="button"
+        id="hero-prev-btn"
+        class="p-2.5 rounded-full apple-glass text-neutral-700 dark:text-neutral-200 hover:text-apple-blue dark:hover:text-apple-blue-dark active:scale-90 transition-all duration-300 shadow-sm border border-black/5 dark:border-white/10 hover:border-apple-blue/30 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-apple-blue"
+        aria-label="اسلاید قبلی"
+      >
+        <svg class="w-4 h-4 transform rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
+
+      <!-- Pagination Indicators Container (Server-Side Rendered Initial State) -->
+      <div class="inline-flex items-center px-4 py-2.5 rounded-full apple-glass shadow-md shadow-black/5 border border-black/5 dark:border-white/10 gap-2">
+        {
+          slides.map((_, index) => {
+            const isInitialActive = index === 0;
+            return (
+              <button
+                type="button"
+                class={`hero-dot rounded-full transition-all duration-500 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-apple-blue cursor-pointer ${
+                  isInitialActive
+                    ? 'w-8 sm:w-10 h-2.5 bg-apple-blue dark:bg-apple-blue-dark shadow-sm shadow-apple-blue/50 active-dot'
+                    : 'w-2.5 h-2.5 bg-neutral-300 dark:bg-neutral-700 hover:bg-neutral-400 dark:hover:bg-neutral-600'
+                }`}
+                data-dot-index={index}
+                aria-label={`رفتن به اسلاید ${index + 1}`}
+                aria-current={isInitialActive ? 'true' : 'false'}
+              />
+            );
+          })
+        }
       </div>
+
+      <!-- Next Slide Button (Left Arrow in RTL) -->
+      <button
+        type="button"
+        id="hero-next-btn"
+        class="p-2.5 rounded-full apple-glass text-neutral-700 dark:text-neutral-200 hover:text-apple-blue dark:hover:text-apple-blue-dark active:scale-90 transition-all duration-300 shadow-sm border border-black/5 dark:border-white/10 hover:border-apple-blue/30 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-apple-blue"
+        aria-label="اسلاید بعدی"
+      >
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
     </div>
+
   </div>
 </div>
 
 <script>
-  import Swiper from 'swiper';
-  import { Pagination, Autoplay, EffectFade } from 'swiper/modules';
+  function initHeroSlider() {
+    const sliderContainer = document.getElementById('hero-slider');
+    if (!sliderContainer) return;
 
-  let heroSwiperInstance: any = null;
+    // Clear any previous global timer to prevent multiple loops
+    if ((window as any).__heroSliderInterval) {
+      clearInterval((window as any).__heroSliderInterval);
+      (window as any).__heroSliderInterval = null;
+    }
 
-  function initHeroSwiper() {
-    const swiperEl = document.querySelector('.hero-swiper') as any;
-    if (!swiperEl) return;
+    const slides = Array.from(sliderContainer.querySelectorAll('.hero-slide')) as HTMLElement[];
+    const dots = Array.from(sliderContainer.querySelectorAll('.hero-dot')) as HTMLElement[];
+    const prevBtn = sliderContainer.querySelector('#hero-prev-btn') as HTMLButtonElement | null;
+    const nextBtn = sliderContainer.querySelector('#hero-next-btn') as HTMLButtonElement | null;
 
-    if (heroSwiperInstance) {
-      try {
-        heroSwiperInstance.destroy(true, true);
-      } catch (e) {
-        // ignore cleanup error
+    if (!slides.length) return;
+
+    let currentIndex = 0;
+    let autoPlayTimer: any = null;
+    const AUTOPLAY_INTERVAL = 3000; // 3-second continuous universal auto-play
+
+    function updateSlider(newIndex: number) {
+      // Bounds normalization
+      if (newIndex < 0) {
+        newIndex = slides.length - 1;
+      } else if (newIndex >= slides.length) {
+        newIndex = 0;
+      }
+
+      currentIndex = newIndex;
+
+      // Update Slides Visibility & Animation
+      slides.forEach((slide, idx) => {
+        if (idx === currentIndex) {
+          slide.classList.remove('opacity-0', 'z-0', 'pointer-events-none', 'scale-[0.98]');
+          slide.classList.add('opacity-100', 'z-10', 'pointer-events-auto', 'scale-100');
+          slide.setAttribute('aria-hidden', 'false');
+        } else {
+          slide.classList.remove('opacity-100', 'z-10', 'pointer-events-auto', 'scale-100');
+          slide.classList.add('opacity-0', 'z-0', 'pointer-events-none', 'scale-[0.98]');
+          slide.setAttribute('aria-hidden', 'true');
+        }
+      });
+
+      // Update Dynamic Pagination Indicators
+      dots.forEach((dot, idx) => {
+        if (idx === currentIndex) {
+          dot.classList.remove('w-2.5', 'h-2.5', 'bg-neutral-300', 'dark:bg-neutral-700', 'hover:bg-neutral-400', 'dark:hover:bg-neutral-600');
+          dot.classList.add('w-8', 'sm:w-10', 'h-2.5', 'bg-apple-blue', 'dark:bg-apple-blue-dark', 'shadow-sm', 'shadow-apple-blue/50', 'active-dot');
+          dot.setAttribute('aria-current', 'true');
+        } else {
+          dot.classList.remove('w-8', 'sm:w-10', 'bg-apple-blue', 'dark:bg-apple-blue-dark', 'shadow-sm', 'shadow-apple-blue/50', 'active-dot');
+          dot.classList.add('w-2.5', 'h-2.5', 'bg-neutral-300', 'dark:bg-neutral-700', 'hover:bg-neutral-400', 'dark:hover:bg-neutral-600');
+          dot.setAttribute('aria-current', 'false');
+        }
+      });
+    }
+
+    function nextSlide() {
+      updateSlider(currentIndex + 1);
+    }
+
+    function prevSlide() {
+      updateSlider(currentIndex - 1);
+    }
+
+    function startAutoPlay() {
+      stopAutoPlay();
+      autoPlayTimer = setInterval(nextSlide, AUTOPLAY_INTERVAL);
+      (window as any).__heroSliderInterval = autoPlayTimer;
+    }
+
+    function stopAutoPlay() {
+      if (autoPlayTimer) {
+        clearInterval(autoPlayTimer);
+        autoPlayTimer = null;
+      }
+      if ((window as any).__heroSliderInterval) {
+        clearInterval((window as any).__heroSliderInterval);
+        (window as any).__heroSliderInterval = null;
       }
     }
 
-    heroSwiperInstance = new Swiper('.hero-swiper', {
-      modules: [Pagination, Autoplay, EffectFade],
-      effect: 'fade',
-      fadeEffect: {
-        crossFade: true,
-      },
-      loop: true,
-      speed: 800,
-      autoplay: {
-        delay: 5000,
-        disableOnInteraction: false,
-        pauseOnMouseEnter: true,
-      },
-      pagination: {
-        el: '.hero-pagination-wrapper .swiper-pagination',
-        clickable: true,
-      },
-      grabCursor: true,
-      keyboard: {
-        enabled: true,
-      },
+    // Direct Dot Navigation
+    dots.forEach((dot, idx) => {
+      dot.addEventListener('click', (e) => {
+        e.preventDefault();
+        updateSlider(idx);
+        startAutoPlay();
+      });
     });
+
+    // Arrow Buttons Navigation
+    if (prevBtn) {
+      prevBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        prevSlide();
+        startAutoPlay();
+      });
+    }
+
+    if (nextBtn) {
+      nextBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        nextSlide();
+        startAutoPlay();
+      });
+    }
+
+    // Hover Pause & Resume
+    sliderContainer.addEventListener('mouseenter', () => {
+      stopAutoPlay();
+    });
+
+    sliderContainer.addEventListener('mouseleave', () => {
+      startAutoPlay();
+    });
+
+    // Touch Swipe Support for Mobile
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    sliderContainer.addEventListener(
+      'touchstart',
+      (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+        stopAutoPlay();
+      },
+      { passive: true }
+    );
+
+    sliderContainer.addEventListener(
+      'touchend',
+      (e) => {
+        touchEndX = e.changedTouches[0].screenX;
+        const diff = touchEndX - touchStartX;
+        if (Math.abs(diff) > 40) {
+          // RTL layout: Swiping left advances to next, swiping right goes to previous
+          if (diff < 0) {
+            nextSlide();
+          } else {
+            prevSlide();
+          }
+        }
+        startAutoPlay();
+      },
+      { passive: true }
+    );
+
+    // Keyboard Navigation (Arrow Keys)
+    sliderContainer.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft') {
+        nextSlide();
+        startAutoPlay();
+      } else if (e.key === 'ArrowRight') {
+        prevSlide();
+        startAutoPlay();
+      }
+    });
+
+    // Start Autoplay Loop
+    startAutoPlay();
   }
 
+  // Ensure execution across all Astro and DOM lifecycle events
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initHeroSwiper);
+    document.addEventListener('DOMContentLoaded', initHeroSlider);
   } else {
-    initHeroSwiper();
+    initHeroSlider();
   }
 
-  document.addEventListener('astro:page-load', initHeroSwiper);
+  document.addEventListener('astro:page-load', initHeroSlider);
 </script>
+

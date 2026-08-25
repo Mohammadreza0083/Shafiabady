@@ -30,7 +30,7 @@ export const mockArticles: Article[] = [
     commentsCount: 12,
     createdAt: '2026-08-20T10:30:00Z',
     author: {
-      name: 'دکتر محمد حسین شفیعآبادی',
+      name: 'دکتر محمد حسین شفیع‌آبادی',
       avatar: '',
       role: 'دانشیار و پژوهشگر مهندسی نرم‌افزار',
     },
@@ -55,7 +55,7 @@ export const mockArticles: Article[] = [
     commentsCount: 8,
     createdAt: '2026-08-18T14:15:00Z',
     author: {
-      name: 'دکتر محمد حسین شفیعآبادی',
+      name: 'دکتر محمد حسین شفیع‌آبادی',
       avatar: '',
       role: 'دانشیار و پژوهشگر مهندسی نرم‌افزار',
     },
@@ -77,7 +77,7 @@ export const mockArticles: Article[] = [
     commentsCount: 5,
     createdAt: '2026-08-15T09:00:00Z',
     author: {
-      name: 'دکتر محمد حسین شفیعآبادی',
+      name: 'دکتر محمد حسین شفیع‌آبادی',
       avatar: '',
       role: 'دانشیار و پژوهشگر مهندسی نرم‌افزار',
     },
@@ -99,7 +99,7 @@ export const mockArticles: Article[] = [
     commentsCount: 18,
     createdAt: '2026-08-10T16:45:00Z',
     author: {
-      name: 'دکتر محمد حسین شفیعآبادی',
+      name: 'دکتر محمد حسین شفیع‌آبادی',
       avatar: '',
       role: 'دانشیار و پژوهشگر مهندسی نرم‌افزار',
     },
@@ -121,7 +121,7 @@ export const mockArticles: Article[] = [
     commentsCount: 9,
     createdAt: '2026-08-05T11:20:00Z',
     author: {
-      name: 'دکتر محمد حسین شفیعآبادی',
+      name: 'دکتر محمد حسین شفیع‌آبادی',
       avatar: '',
       role: 'دانشیار و پژوهشگر مهندسی نرم‌افزار',
     },
@@ -143,7 +143,7 @@ export const mockArticles: Article[] = [
     createdAt: '2026-07-28T08:10:00Z',
     coverImage: '',
     author: {
-      name: 'دکتر محمد حسین شفیعآبادی',
+      name: 'دکتر محمد حسین شفیع‌آبادی',
       avatar: '',
       role: 'دانشیار و پژوهشگر مهندسی نرم‌افزار',
     },
@@ -271,7 +271,7 @@ export const mockCommentsTree: Comment[] = [
     replies: [
       {
         id: 'cm-002',
-        authorName: 'دکتر محمد حسین شفیعآبادی',
+        authorName: 'دکتر محمد حسین شفیع‌آبادی',
         authorEmail: 'author@shafieiabadi.ir',
         content: 'سلام سارا جان، بسیار متشکرم از بازخوردت. در پروژه‌های بزرگ همین تفکیک مرزها تضمین‌کننده مقیاس‌پذیری و پایداری تیم است.',
         createdAt: '2026-08-21T15:10:00Z',
@@ -287,7 +287,7 @@ export const mockCommentsTree: Comment[] = [
             replies: [
               {
                 id: 'cm-004',
-                authorName: 'دکتر محمد حسین شفیعآبادی',
+                authorName: 'دکتر محمد حسین شفیع‌آبادی',
                 authorEmail: 'author@shafieiabadi.ir',
                 content: 'برای رویدادهای همگام داخل یک پردازش (In-Process)، MediatR عالی است؛ اما برای عملیات آسنکرون سنگین Channels یا Outbox Pattern همراه با RabbitMQ/Kafka بهترین عملکرد را دارد.',
                 createdAt: '2026-08-21T16:45:00Z',

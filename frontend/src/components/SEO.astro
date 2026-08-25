@@ -14,8 +14,8 @@ export interface Props {
   };
 }
 
-const SITE_NAME = 'دکتر محمد حسین شفیعآبادی';
-const DEFAULT_DESCRIPTION = 'پلتفرم تخصصی مهندسی نرم‌افزار، معماری تمیز (Clean Architecture)، دات‌نت و وب مدرن - دکتر محمد حسین شفیعآبادی';
+const SITE_NAME = 'دکتر محمد حسین شفیع‌آبادی';
+const DEFAULT_DESCRIPTION = 'پلتفرم تخصصی مهندسی نرم‌افزار، معماری تمیز (Clean Architecture)، دات‌نت و وب مدرن - دکتر محمد حسین شفیع‌آبادی';
 const DEFAULT_OG_IMAGE = 'https://shafieiabadi.ir/images/og-default.svg';
 
 const {
@@ -28,7 +28,7 @@ const {
   articleData,
 } = Astro.props;
 
-// Formatting browser tab title: strictly 'دکتر محمد حسین شفیعآبادی' or '[Dynamic Title] | دکتر محمد حسین شفیعآبادی'
+// Formatting browser tab title: strictly 'دکتر محمد حسین شفیع‌آبادی' or '[Dynamic Title] | دکتر محمد حسین شفیع‌آبادی'
 const formattedTitle = title && title.trim() && title.trim() !== SITE_NAME
   ? `${title.trim()} | ${SITE_NAME}`
   : SITE_NAME;

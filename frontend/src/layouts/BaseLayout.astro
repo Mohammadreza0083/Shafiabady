@@ -2,6 +2,7 @@
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import ScrollToTop from '../components/ui/ScrollToTop.astro';
+import UiModal from '../components/UiModal.astro';
 import SEO from '../components/SEO.astro';
 import '../styles/global.css';
 
@@ -93,6 +94,9 @@ const currentPath = Astro.url.pathname;
 
     <!-- Scroll To Top FAB (Appears 150px from Footer) -->
     <ScrollToTop />
+
+    <!-- Apple-styled UI Modal & Toast Notification System -->
+    <UiModal />
 
     <!-- Client-side Animation Initializer -->
     <script>

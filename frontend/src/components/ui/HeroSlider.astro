@@ -1,0 +1,137 @@
+---
+import Button from './Button.astro';
+
+const slides = [
+  {
+    tag: 'مهندسی سیستم‌های توزیع‌شده',
+    title: 'معماری تمیز و مقیاس‌پذیر در اکوسیستم دات‌نت',
+    description: 'توسعه سیستم‌های سازمانی با بالاترین استانداردها، اصول Domain-Driven Design (DDD) و رویکرد دقیق Test-Driven Development (TDD).',
+    primaryBtn: { text: 'مشاهده دوره‌ها', href: '/courses' },
+    secondaryBtn: { text: 'مطالعه مقالات', href: '/articles' },
+    badge: 'جدیدترین متدهای معماری ۲۰۲۶',
+    gradient: 'from-blue-600/10 via-indigo-500/5 to-transparent dark:from-blue-900/20 dark:via-indigo-900/10 dark:to-transparent',
+    iconBg: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
+  },
+  {
+    tag: 'تألیفات و انتشارات',
+    title: 'مرجع جامع معماری نرم‌افزار و طراحی سیستم',
+    description: 'کتاب‌ها و راهنماهای جامع مهندسی برای ارتقای تفکر معماری و ساخت محصولاتی مقاوم، پایدار و قابل نگهداری.',
+    primaryBtn: { text: 'مشاهده کتاب‌ها', href: '/books' },
+    secondaryBtn: { text: 'درباره نویسنده', href: '/about' },
+    badge: 'نسخه‌های چاپی و الکترونیک',
+    gradient: 'from-sky-600/10 via-cyan-500/5 to-transparent dark:from-sky-900/20 dark:via-cyan-900/10 dark:to-transparent',
+    iconBg: 'bg-sky-500/10 text-sky-600 dark:text-sky-400',
+  },
+  {
+    tag: 'پلتفرم آموزشی و منتورشیپ',
+    title: 'یادگیری عمیق و کاربردی برای توسعه‌دهندگان ارشد',
+    description: 'دوره‌های فشرده و پیشرفته با تمرکز بر چالش‌های واقعی صنعت، پیاده‌سازی Microservices و بهینه‌سازی Performance.',
+    primaryBtn: { text: 'ثبت‌نام در دوره‌ها', href: '/courses' },
+    secondaryBtn: { text: 'ارتباط مستقیم', href: '/contact' },
+    badge: 'پشتیبانی اختصاصی و تعاملی',
+    gradient: 'from-purple-600/10 via-blue-500/5 to-transparent dark:from-purple-900/20 dark:via-blue-900/10 dark:to-transparent',
+    iconBg: 'bg-purple-500/10 text-purple-600 dark:text-purple-400',
+  },
+];
+---
+
+<div class="relative w-full overflow-hidden pt-6 pb-12 sm:pt-10 sm:pb-16">
+  <!-- Swiper Container -->
+  <div class="swiper hero-swiper max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="swiper-wrapper">
+      {
+        slides.map((slide) => (
+          <div class="swiper-slide">
+            <div class={`relative rounded-3xl sm:rounded-[2.5rem] p-8 sm:p-14 lg:p-18 border border-black/5 dark:border-white/10 overflow-hidden bg-gradient-to-br ${slide.gradient} bg-white/70 dark:bg-neutral-900/70 backdrop-blur-2xl shadow-xl dark:shadow-2xl`}>
+              
+              <!-- Subtle Apple Glow Background Orb -->
+              <div class="absolute -top-24 -left-24 w-96 h-96 bg-apple-blue/15 dark:bg-apple-blue/20 rounded-full blur-3xl pointer-events-none"></div>
+              <div class="absolute -bottom-24 -right-24 w-96 h-96 bg-sky-400/15 dark:bg-purple-500/15 rounded-full blur-3xl pointer-events-none"></div>
+
+              <div class="relative z-10 max-w-3xl mx-auto text-center flex flex-col items-center">
+                
+                <!-- Badge Tag -->
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold tracking-wide bg-apple-blue/10 text-apple-blue dark:bg-apple-blue-dark/20 dark:text-apple-blue-dark mb-6 border border-apple-blue/15 shadow-sm">
+                  <span class="w-2 h-2 rounded-full bg-apple-blue dark:bg-apple-blue-dark animate-pulse"></span>
+                  <span>{slide.tag}</span>
+                  <span class="text-neutral-400 dark:text-neutral-500">•</span>
+                  <span class="font-normal text-neutral-600 dark:text-neutral-400">{slide.badge}</span>
+                </div>
+
+                <!-- Main Heading (Large Vazirmatn Typography) -->
+                <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-neutral-950 dark:text-white leading-[1.25] sm:leading-[1.2] mb-6">
+                  {slide.title}
+                </h1>
+
+                <!-- Subtitle Description -->
+                <p class="text-base sm:text-lg md:text-xl text-neutral-600 dark:text-neutral-300 max-w-2xl font-normal leading-relaxed mb-8 sm:mb-10">
+                  {slide.description}
+                </p>
+
+                <!-- Call to Action Buttons -->
+                <div class="flex flex-wrap items-center justify-center gap-3 sm:gap-4 w-full sm:w-auto">
+                  <Button href={slide.primaryBtn.href} variant="primary" size="lg" className="w-full sm:w-auto">
+                    <span>{slide.primaryBtn.text}</span>
+                    <svg class="w-4 h-4 transform rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                    </svg>
+                  </Button>
+                  <Button href={slide.secondaryBtn.href} variant="secondary" size="lg" className="w-full sm:w-auto">
+                    <span>{slide.secondaryBtn.text}</span>
+                  </Button>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        ))
+      }
+    </div>
+
+    <!-- Frosted Glass Apple Pagination Dots -->
+    <div class="flex justify-center mt-6">
+      <div class="hero-pagination-wrapper inline-flex items-center px-4 py-2 rounded-full apple-glass shadow-md shadow-black/5">
+        <div class="swiper-pagination !static flex items-center gap-1.5"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  import Swiper from 'swiper';
+  import { Pagination, Autoplay, EffectFade } from 'swiper/modules';
+
+  function initHeroSwiper() {
+    const swiperEl = document.querySelector('.hero-swiper');
+    if (!swiperEl) return;
+
+    new Swiper('.hero-swiper', {
+      modules: [Pagination, Autoplay, EffectFade],
+      effect: 'fade',
+      fadeEffect: {
+        crossFade: true,
+      },
+      loop: true,
+      speed: 800,
+      autoplay: {
+        delay: 5500,
+        disableOnInteraction: false,
+        pauseOnMouseEnter: true,
+      },
+      pagination: {
+        el: '.hero-pagination-wrapper .swiper-pagination',
+        clickable: true,
+      },
+      grabCursor: true,
+      keyboard: {
+        enabled: true,
+      },
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initHeroSwiper);
+  } else {
+    initHeroSwiper();
+  }
+</script>

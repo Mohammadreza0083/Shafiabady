@@ -29,9 +29,6 @@ Log.Logger = new LoggerConfiguration()
 
 builder.Host.UseSerilog();
 
-// Enforce port 8200 strictly
-builder.WebHost.UseUrls("http://localhost:8200");
-
 // Add Layer Services
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
@@ -120,7 +117,7 @@ using (var scope = app.Services.CreateScope())
 
 try
 {
-    Log.Information("Starting ShafieiAbadi.Api Web Host on port 8200...");
+    Log.Information("Starting ShafieiAbadi.Api Web Host...");
     app.Run();
 }
 catch (Exception ex)

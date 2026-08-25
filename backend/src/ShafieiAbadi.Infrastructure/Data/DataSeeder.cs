@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
+using Microsoft.EntityFrameworkCore;
 using ShafieiAbadi.Domain.Entities;
 using ShafieiAbadi.Domain.Enums;
 
@@ -9,7 +10,9 @@ public static class DataSeeder
 {
     public static async Task SeedAsync(AppDbContext context)
     {
-        if (context.AdminUsers.Any())
+        await context.Database.EnsureCreatedAsync();
+
+        if (await context.AdminUsers.AnyAsync())
             return;
 
         // Seed Admin User

@@ -1,6 +1,7 @@
 ---
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
+import ScrollToTop from '../components/ui/ScrollToTop.astro';
 import '../styles/global.css';
 
 interface Props {
@@ -9,7 +10,7 @@ interface Props {
 }
 
 const {
-  title = 'محمدرضا شفیعی‌آبادی | پلتفرم تخصصی معماری نرم‌افزار و دات‌نت',
+  title = 'دکتر محمد حسین شفیعآبادی | پلتفرم تخصصی معماری نرم‌افزار و دات‌نت',
   description = 'پلتفرم برندینگ شخصی و آموزش تخصصی مهندسی نرم‌افزار، معماری تمیز (Clean Architecture)، دات‌نت و وب مدرن.',
 } = Astro.props;
 
@@ -82,6 +83,9 @@ const currentPath = Astro.url.pathname;
 
     <!-- Footer -->
     <Footer />
+
+    <!-- Scroll To Top FAB (Appears 150px from Footer) -->
+    <ScrollToTop />
 
     <!-- Client-side Animation Initializer -->
     <script>

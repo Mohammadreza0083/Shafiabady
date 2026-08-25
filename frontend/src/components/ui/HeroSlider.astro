@@ -101,11 +101,21 @@ const slides = [
   import Swiper from 'swiper';
   import { Pagination, Autoplay, EffectFade } from 'swiper/modules';
 
+  let heroSwiperInstance: any = null;
+
   function initHeroSwiper() {
-    const swiperEl = document.querySelector('.hero-swiper');
+    const swiperEl = document.querySelector('.hero-swiper') as any;
     if (!swiperEl) return;
 
-    new Swiper('.hero-swiper', {
+    if (heroSwiperInstance) {
+      try {
+        heroSwiperInstance.destroy(true, true);
+      } catch (e) {
+        // ignore cleanup error
+      }
+    }
+
+    heroSwiperInstance = new Swiper('.hero-swiper', {
       modules: [Pagination, Autoplay, EffectFade],
       effect: 'fade',
       fadeEffect: {
@@ -114,7 +124,7 @@ const slides = [
       loop: true,
       speed: 800,
       autoplay: {
-        delay: 5500,
+        delay: 5000,
         disableOnInteraction: false,
         pauseOnMouseEnter: true,
       },
@@ -134,4 +144,6 @@ const slides = [
   } else {
     initHeroSwiper();
   }
+
+  document.addEventListener('astro:page-load', initHeroSwiper);
 </script>

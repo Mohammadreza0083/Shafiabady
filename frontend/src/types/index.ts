@@ -44,6 +44,9 @@ export interface Course extends BaseEntity {
   lessonsCount: number;
   level: 'مقدماتی' | 'متوسط' | 'پیشرفته' | 'جامع';
   price: number;
+  originalPrice?: number;
+  discountedPrice?: number;
+  discountPercentage?: number;
   isFree: boolean;
   viewsCount: number;
 }

@@ -14,7 +14,7 @@ const { course } = Astro.props;
 ---
 
 <BaseLayout
-  title={`${course.title} | محمدرضا شفیعی‌آبادی`}
+  title={`${course.title} | دکتر محمد حسین شفیعآبادی`}
   description={course.description}
 >
   <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16" data-entity-id={course.id}>
@@ -33,6 +33,13 @@ const { course } = Astro.props;
         <span class="px-3 py-1 rounded-full text-xs font-semibold bg-apple-blue/10 text-apple-blue dark:bg-apple-blue-dark/20 dark:text-apple-blue-dark">
           سطح: {course.level}
         </span>
+        {
+          course.discountPercentage && (
+            <span class="px-3 py-1 rounded-full text-xs font-bold bg-rose-500 text-white shadow-sm">
+              {course.discountPercentage}٪ تخفیف ویژه
+            </span>
+          )
+        }
         <span class="text-xs text-neutral-400 dark:text-neutral-500">
           مدت زمان: {course.duration}
         </span>
@@ -59,15 +66,30 @@ const { course } = Astro.props;
     <div class="p-8 rounded-3xl apple-card bg-neutral-900 text-white flex flex-col md:flex-row items-center justify-between gap-6 mb-12 shadow-2xl">
       <div class="space-y-2 text-center md:text-right">
         <span class="text-xs text-neutral-400 font-semibold uppercase tracking-wider">سرمایه‌گذاری برای این دوره</span>
-        <div class="text-3xl font-extrabold text-white flex items-baseline justify-center md:justify-start gap-2">
+        <div class="flex flex-col items-center md:items-start">
           {
             course.isFree ? (
-              <span class="text-emerald-400">رایگان و بدون هزینه</span>
+              <span class="text-3xl font-extrabold text-emerald-400">رایگان و بدون هزینه</span>
+            ) : course.originalPrice && course.originalPrice > course.price ? (
+              <div>
+                <span class="text-sm text-neutral-400 line-through block mb-1">
+                  {course.originalPrice.toLocaleString('fa-IR')} تومان
+                </span>
+                <div class="text-3xl font-extrabold text-white flex items-baseline justify-center md:justify-start gap-2">
+                  <span>{course.price.toLocaleString('fa-IR')}</span>
+                  <span class="text-sm font-normal text-neutral-400">تومان</span>
+                  {course.discountPercentage && (
+                    <span class="mr-2 px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-500 text-white">
+                      {course.discountPercentage}٪ تخفیف
+                    </span>
+                  )}
+                </div>
+              </div>
             ) : (
-              <>
+              <div class="text-3xl font-extrabold text-white flex items-baseline justify-center md:justify-start gap-2">
                 <span>{course.price.toLocaleString('fa-IR')}</span>
                 <span class="text-sm font-normal text-neutral-400">تومان</span>
-              </>
+              </div>
             )
           }
         </div>

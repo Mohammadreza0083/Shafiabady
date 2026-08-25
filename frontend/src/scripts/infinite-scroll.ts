@@ -81,7 +81,7 @@ export function setupInfiniteScroll({
                 ${article.author?.name ? article.author.name[0] : 'ش'}
               </div>
               <span class="text-xs text-neutral-600 dark:text-neutral-400 font-medium">
-                ${article.author?.name || 'محمدرضا شفیعی‌آبادی'}
+                ${article.author?.name || 'دکتر محمد حسین شفیعآبادی'}
               </span>
             </div>
             <span class="text-xs font-semibold text-apple-blue dark:text-apple-blue-dark inline-flex items-center gap-1 group-hover:translate-x-[-2px] transition-transform">

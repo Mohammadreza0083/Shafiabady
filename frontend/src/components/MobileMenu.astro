@@ -20,28 +20,29 @@ const navLinks = [
   type="button"
   id="mobile-menu-toggle"
   aria-label="منوی ناوبری"
+  aria-expanded="false"
   class="md:hidden relative inline-flex items-center justify-center w-10 h-10 rounded-full bg-black/5 dark:bg-white/10 text-neutral-800 dark:text-neutral-200 transition-colors focus:outline-none"
 >
-  <div class="w-5 h-4 flex flex-col justify-between items-center relative">
-    <span class="hamburger-line w-full h-[2px] bg-current rounded-full transition-all duration-300 transform origin-center"></span>
-    <span class="hamburger-line w-full h-[2px] bg-current rounded-full transition-all duration-300"></span>
-    <span class="hamburger-line w-full h-[2px] bg-current rounded-full transition-all duration-300 transform origin-center"></span>
+  <div class="w-5 h-4 flex flex-col justify-between items-center relative pointer-events-none">
+    <span id="h-line-1" class="w-full h-[2px] bg-current rounded-full transition-transform duration-300 transform origin-center"></span>
+    <span id="h-line-2" class="w-full h-[2px] bg-current rounded-full transition-opacity duration-300"></span>
+    <span id="h-line-3" class="w-full h-[2px] bg-current rounded-full transition-transform duration-300 transform origin-center"></span>
   </div>
 </button>
 
 <!-- Mobile Navigation Overlay & Drawer -->
 <div
   id="mobile-menu-drawer"
-  class="fixed inset-0 top-[60px] z-40 bg-white/90 dark:bg-black/90 backdrop-blur-2xl opacity-0 pointer-events-none transition-all duration-400 ease-[cubic-bezier(0.16,1,0.3,1)] md:hidden flex flex-col justify-between p-6 overflow-y-auto"
+  class="fixed inset-x-0 top-16 bottom-0 z-50 bg-white/95 dark:bg-neutral-950/95 backdrop-blur-2xl opacity-0 pointer-events-none transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] md:hidden flex flex-col justify-between p-6 overflow-y-auto"
 >
-  <nav class="flex flex-col space-y-3 pt-4">
+  <nav class="flex flex-col space-y-2 pt-2">
     {
       navLinks.map((link) => {
         const isActive = currentPath === link.href || (link.href !== '/' && currentPath.startsWith(link.href));
         return (
           <a
             href={link.href}
-            class={`mobile-nav-link text-xl font-medium px-5 py-3.5 rounded-2xl transition-all duration-300 flex items-center justify-between ${
+            class={`mobile-nav-link text-lg font-medium px-5 py-3.5 rounded-2xl transition-all duration-200 flex items-center justify-between ${
               isActive
                 ? 'bg-apple-blue/10 text-apple-blue dark:bg-apple-blue-dark/20 dark:text-apple-blue-dark font-semibold'
                 : 'text-neutral-700 dark:text-neutral-300 hover:bg-black/5 dark:hover:bg-white/5'
@@ -49,7 +50,7 @@ const navLinks = [
           >
             <span>{link.label}</span>
             <svg
-              class={`w-4 h-4 transition-transform duration-300 ${isActive ? 'rotate-180 text-apple-blue dark:text-apple-blue-dark' : 'text-neutral-400'}`}
+              class={`w-4 h-4 transition-transform duration-200 ${isActive ? 'rotate-180 text-apple-blue dark:text-apple-blue-dark' : 'text-neutral-400'}`}
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -63,47 +64,83 @@ const navLinks = [
   </nav>
 
   <!-- Mobile Footer Info -->
-  <div class="pt-8 pb-4 border-t border-black/5 dark:border-white/10 text-center">
+  <div class="pt-6 pb-2 border-t border-black/5 dark:border-white/10 text-center">
     <p class="text-xs text-neutral-400 dark:text-neutral-500">
-      طراحی مینیمال و استاندارد با الهام از اپل
+      دکتر محمد حسین شفیعآبادی • پلتفرم تخصصی معماری نرم‌افزار
     </p>
   </div>
 </div>
 
 <script>
-  function initMobileMenu() {
+  function setupMobileMenu() {
     const toggleBtn = document.getElementById('mobile-menu-toggle');
     const drawer = document.getElementById('mobile-menu-drawer');
+    const line1 = document.getElementById('h-line-1');
+    const line2 = document.getElementById('h-line-2');
+    const line3 = document.getElementById('h-line-3');
     const links = document.querySelectorAll('.mobile-nav-link');
 
     if (!toggleBtn || !drawer) return;
 
     let isOpen = false;
 
-    const toggle = (force?: boolean) => {
-      isOpen = force !== undefined ? force : !isOpen;
-      
+    const setMenuState = (open: boolean) => {
+      isOpen = open;
+      toggleBtn.setAttribute('aria-expanded', String(isOpen));
+
       if (isOpen) {
         drawer.classList.remove('opacity-0', 'pointer-events-none');
         drawer.classList.add('opacity-100', 'pointer-events-auto');
         document.body.style.overflow = 'hidden';
+
+        // Animate hamburger to X
+        if (line1 && line2 && line3) {
+          line1.style.transform = 'translateY(7px) rotate(45deg)';
+          line2.style.opacity = '0';
+          line3.style.transform = 'translateY(-7px) rotate(-45deg)';
+        }
       } else {
         drawer.classList.add('opacity-0', 'pointer-events-none');
         drawer.classList.remove('opacity-100', 'pointer-events-auto');
         document.body.style.overflow = '';
+
+        // Reset hamburger lines
+        if (line1 && line2 && line3) {
+          line1.style.transform = '';
+          line2.style.opacity = '1';
+          line3.style.transform = '';
+        }
       }
     };
 
-    toggleBtn.addEventListener('click', () => toggle());
+    // Remove any previous listener by cloning if re-rendered
+    const newToggleBtn = toggleBtn.cloneNode(true) as HTMLElement;
+    toggleBtn.parentNode?.replaceChild(newToggleBtn, toggleBtn);
 
-    links.forEach(link => {
-      link.addEventListener('click', () => toggle(false));
+    newToggleBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      setMenuState(!isOpen);
+    });
+
+    links.forEach((link) => {
+      link.addEventListener('click', () => {
+        setMenuState(false);
+      });
+    });
+
+    // Close on escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && isOpen) {
+        setMenuState(false);
+      }
     });
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initMobileMenu);
+    document.addEventListener('DOMContentLoaded', setupMobileMenu);
   } else {
-    initMobileMenu();
+    setupMobileMenu();
   }
+
+  document.addEventListener('astro:page-load', setupMobileMenu);
 </script>

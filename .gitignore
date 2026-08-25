@@ -1,0 +1,71 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Node / Astro
+node_modules
+dist
+.astro
+.cache
+.env
+.env.*
+!.env.example
+
+# .NET / C#
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/
+.idea/
+*.DotSettings.user
+TestResults/
+*.trx
+*.coverage
+*.opencover.xml
+
+# EF Core migrations / secrets
+appsettings.Development.json
+appsettings.Local.json
+secrets.json
+
+# Python / Telegram Bot
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+venv/
+ENV/
+.venv
+
+# Docker
+.dockerignore
+
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini

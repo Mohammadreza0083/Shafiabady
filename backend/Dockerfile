@@ -22,7 +22,7 @@ COPY . .
 
 # Build and publish optimized release artifacts
 WORKDIR /src/src/ShafieiAbadi.Api
-RUN dotnet publish ShafieiAbadi.Api.csproj -c Release -o /app/publish /p:UseAppHost=false --no-restore
+RUN dotnet publish ShafieiAbadi.Api.csproj -c Release -o /app/publish /p:UseAppHost=false
 
 # Stage 2: Minimal ASP.NET Core 9.0 Runtime
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS runtime

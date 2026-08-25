@@ -1,10 +1,13 @@
+using System.Text.Json.Serialization;
+
 namespace ShafieiAbadi.Application.Common;
 
 public class Result<T> : Result
 {
     public T? Data { get; }
 
-    protected Result(bool isSuccess, T? data, int statusCode, string? errorMessage = null, List<string>? validationErrors = null)
+    [JsonConstructor]
+    public Result(bool isSuccess, T? data, int statusCode, string? errorMessage = null, List<string>? validationErrors = null)
         : base(isSuccess, statusCode, errorMessage, validationErrors)
     {
         Data = data;

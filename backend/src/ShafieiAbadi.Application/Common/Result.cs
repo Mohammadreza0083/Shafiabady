@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace ShafieiAbadi.Application.Common;
 
 public class Result
@@ -7,7 +9,8 @@ public class Result
     public string? ErrorMessage { get; }
     public List<string> ValidationErrors { get; }
 
-    protected Result(bool isSuccess, int statusCode, string? errorMessage = null, List<string>? validationErrors = null)
+    [JsonConstructor]
+    public Result(bool isSuccess, int statusCode, string? errorMessage = null, List<string>? validationErrors = null)
     {
         IsSuccess = isSuccess;
         StatusCode = statusCode;

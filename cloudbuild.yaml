@@ -1,0 +1,130 @@
+﻿# ==============================================================================
+# Google Cloud Build Pipeline for Dr. Mohammad Hossein Shafiei Abadi Platform
+# Multi-Service Architecture: .NET 9 Backend & Astro SSR Frontend on Cloud Run
+# ==============================================================================
+
+steps:
+  # ----------------------------------------------------------------------------
+  # Step 1: Build .NET 9 Web API Container Image
+  # ----------------------------------------------------------------------------
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'build-backend'
+    args:
+      - 'build'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_ARTIFACT_REGISTRY_REPO}/shafieiabadi-backend:${SHORT_SHA}'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_ARTIFACT_REGISTRY_REPO}/shafieiabadi-backend:latest'
+      - '-f'
+      - 'backend/Dockerfile'
+      - 'backend'
+
+  # ----------------------------------------------------------------------------
+  # Step 2: Build Astro SSR Frontend Container Image
+  # ----------------------------------------------------------------------------
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'build-frontend'
+    args:
+      - 'build'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_ARTIFACT_REGISTRY_REPO}/shafieiabadi-frontend:${SHORT_SHA}'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_ARTIFACT_REGISTRY_REPO}/shafieiabadi-frontend:latest'
+      - '-f'
+      - 'frontend/Dockerfile'
+      - 'frontend'
+
+  # ----------------------------------------------------------------------------
+  # Step 3: Push Images to Google Artifact Registry
+  # ----------------------------------------------------------------------------
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'push-backend'
+    args:
+      - 'push'
+      - '--all-tags'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_ARTIFACT_REGISTRY_REPO}/shafieiabadi-backend'
+
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'push-frontend'
+    args:
+      - 'push'
+      - '--all-tags'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_ARTIFACT_REGISTRY_REPO}/shafieiabadi-frontend'
+
+  # ----------------------------------------------------------------------------
+  # Step 4: Deploy .NET 9 Backend Microservice to Cloud Run
+  # ----------------------------------------------------------------------------
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'deploy-backend'
+    entrypoint: 'gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - '${_BACKEND_SERVICE_NAME}'
+      - '--image'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_ARTIFACT_REGISTRY_REPO}/shafieiabadi-backend:${SHORT_SHA}'
+      - '--region'
+      - '${_REGION}'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--port'
+      - '5000'
+      - '--memory'
+      - '512Mi'
+      - '--cpu'
+      - '1'
+      - '--min-instances'
+      - '0'
+      - '--max-instances'
+      - '10'
+      - '--set-env-vars'
+      - 'ASPNETCORE_ENVIRONMENT=Production,ASPNETCORE_URLS=http://+:5000,PORT=5000'
+
+  # ----------------------------------------------------------------------------
+  # Step 5: Deploy Astro Frontend Microservice to Cloud Run
+  # ----------------------------------------------------------------------------
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'deploy-frontend'
+    entrypoint: 'gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - '${_FRONTEND_SERVICE_NAME}'
+      - '--image'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_ARTIFACT_REGISTRY_REPO}/shafieiabadi-frontend:${SHORT_SHA}'
+      - '--region'
+      - '${_REGION}'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--port'
+      - '4500'
+      - '--memory'
+      - '512Mi'
+      - '--cpu'
+      - '1'
+      - '--min-instances'
+      - '0'
+      - '--max-instances'
+      - '10'
+      - '--set-env-vars'
+      - 'NODE_ENV=production,HOST=0.0.0.0,PORT=4500,PUBLIC_API_URL=${_BACKEND_API_URL}'
+
+# Output images to be tracked in Cloud Build
+images:
+  - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_ARTIFACT_REGISTRY_REPO}/shafieiabadi-backend:${SHORT_SHA}'
+  - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_ARTIFACT_REGISTRY_REPO}/shafieiabadi-backend:latest'
+  - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_ARTIFACT_REGISTRY_REPO}/shafieiabadi-frontend:${SHORT_SHA}'
+  - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_ARTIFACT_REGISTRY_REPO}/shafieiabadi-frontend:latest'
+
+# Default Substitutions (overridable via gcloud CLI)
+substitutions:
+  _REGION: 'us-central1'
+  _ARTIFACT_REGISTRY_REPO: 'shafieiabadi-repo'
+  _BACKEND_SERVICE_NAME: 'shafieiabadi-backend'
+  _FRONTEND_SERVICE_NAME: 'shafieiabadi-frontend'
+  _BACKEND_API_URL: 'https://shafieiabadi-backend-PLACEHOLDER.run.app'
+
+options:
+  logging: CLOUD_LOGGING_ONLY

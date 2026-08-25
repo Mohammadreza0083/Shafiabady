@@ -14,7 +14,15 @@ const { book } = Astro.props;
     <div class="relative w-44 h-60 mb-6 rounded-xl overflow-hidden shadow-xl group-hover:shadow-2xl group-hover:-translate-y-2 transition-all duration-300 bg-neutral-900 border border-white/10 flex items-center justify-center">
       {
         book.coverImage ? (
-          <img src={book.coverImage} alt={book.title} class="w-full h-full object-cover" loading="lazy" />
+          <img
+            src={book.coverImage}
+            alt={`طرح جلد کتاب ${book.title}`}
+            width="176"
+            height="240"
+            loading="lazy"
+            decoding="async"
+            class="w-full h-full object-cover"
+          />
         ) : (
           <div class="p-4 flex flex-col items-center justify-center text-white h-full w-full bg-gradient-to-br from-neutral-800 via-neutral-900 to-black">
             <div class="w-10 h-10 rounded-lg bg-apple-blue flex items-center justify-center text-white font-bold mb-3 shadow-md">

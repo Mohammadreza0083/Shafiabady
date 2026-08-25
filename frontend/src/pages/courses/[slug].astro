@@ -11,11 +11,36 @@ export function getStaticPaths() {
 }
 
 const { course } = Astro.props;
+
+const courseJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Course',
+  'name': course.title,
+  'description': course.description,
+  'provider': {
+    '@type': 'Person',
+    'name': 'دکتر محمد حسین شفیعآبادی',
+    'url': 'https://shafieiabadi.ir/about',
+  },
+  'educationalLevel': course.level,
+  'timeRequired': course.duration,
+  'offers': {
+    '@type': 'Offer',
+    'price': course.isFree ? 0 : course.price,
+    'priceCurrency': 'IRR',
+    'availability': 'https://schema.org/InStock',
+    'url': `https://shafieiabadi.ir/courses/${course.slug}`,
+  },
+  'inLanguage': 'fa',
+};
 ---
 
 <BaseLayout
-  title={`${course.title} | دکتر محمد حسین شفیعآبادی`}
+  title={course.title}
   description={course.description}
+  pageType="course"
+  ogImage={course.thumbnail || undefined}
+  jsonLd={courseJsonLd}
 >
   <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16" data-entity-id={course.id}>
     <!-- Breadcrumb -->

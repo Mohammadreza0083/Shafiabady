@@ -40,7 +40,7 @@ const slides = [
   <div class="swiper hero-swiper max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="swiper-wrapper">
       {
-        slides.map((slide) => (
+        slides.map((slide, index) => (
           <div class="swiper-slide">
             <div class={`relative rounded-3xl sm:rounded-[2.5rem] p-8 sm:p-14 lg:p-18 border border-black/5 dark:border-white/10 overflow-hidden bg-gradient-to-br ${slide.gradient} bg-white/70 dark:bg-neutral-900/70 backdrop-blur-2xl shadow-xl dark:shadow-2xl`}>
               
@@ -58,10 +58,18 @@ const slides = [
                   <span class="font-normal text-neutral-600 dark:text-neutral-400">{slide.badge}</span>
                 </div>
 
-                <!-- Main Heading (Large Vazirmatn Typography) -->
-                <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-neutral-950 dark:text-white leading-[1.25] sm:leading-[1.2] mb-6">
-                  {slide.title}
-                </h1>
+                <!-- Main Heading (Single H1 on page, H2 for secondary slides) -->
+                {
+                  index === 0 ? (
+                    <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-neutral-950 dark:text-white leading-[1.25] sm:leading-[1.2] mb-6">
+                      {slide.title}
+                    </h1>
+                  ) : (
+                    <h2 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-neutral-950 dark:text-white leading-[1.25] sm:leading-[1.2] mb-6">
+                      {slide.title}
+                    </h2>
+                  )
+                }
 
                 <!-- Subtitle Description -->
                 <p class="text-base sm:text-lg md:text-xl text-neutral-600 dark:text-neutral-300 max-w-2xl font-normal leading-relaxed mb-8 sm:mb-10">

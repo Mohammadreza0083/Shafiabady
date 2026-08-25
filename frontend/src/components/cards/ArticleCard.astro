@@ -16,9 +16,12 @@ const { article, featured = false } = Astro.props;
       article.coverImage ? (
         <img
           src={article.coverImage}
-          alt={article.title}
-          class="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+          alt={`تصویر مقاله ${article.title}`}
+          width="600"
+          height="375"
           loading="lazy"
+          decoding="async"
+          class="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
         />
       ) : (
         <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-500/10 via-sky-400/5 to-purple-500/10 p-6">

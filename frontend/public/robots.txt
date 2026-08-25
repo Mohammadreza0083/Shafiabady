@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://shafieiabadi.ir/sitemap-index.xml

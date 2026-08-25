@@ -1,0 +1,19 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="630" fill="#0A0A0C"/>
+  <circle cx="1000" cy="150" r="350" fill="#0071E3" fill-opacity="0.25" filter="blur(120px)"/>
+  <circle cx="200" cy="500" r="300" fill="#8B5CF6" fill-opacity="0.2" filter="blur(140px)"/>
+  
+  <rect x="60" y="60" width="1080" height="510" rx="32" stroke="white" stroke-opacity="0.1" stroke-width="2" fill="white" fill-opacity="0.02"/>
+  
+  <!-- Icon / Monogram -->
+  <rect x="120" y="120" width="80" height="80" rx="24" fill="#0071E3"/>
+  <text x="160" y="172" fill="white" font-family="system-ui, -apple-system, sans-serif" font-size="42" font-weight="900" text-anchor="middle">ش</text>
+  
+  <!-- Content -->
+  <text x="120" y="270" fill="#0071E3" font-family="system-ui, -apple-system, sans-serif" font-size="22" font-weight="700" letter-spacing="2">پلتفرم تخصصی مهندسی نرم‌افزار و معماری</text>
+  <text x="120" y="340" fill="white" font-family="system-ui, -apple-system, sans-serif" font-size="52" font-weight="900">دکتر محمد حسین شفیعآبادی</text>
+  <text x="120" y="410" fill="#A1A1AA" font-family="system-ui, -apple-system, sans-serif" font-size="24">Clean Architecture • Domain-Driven Design (DDD) • .NET 9 • TDD</text>
+  
+  <!-- Footer URL -->
+  <text x="120" y="500" fill="#71717A" font-family="system-ui, -apple-system, sans-serif" font-size="20">shafieiabadi.ir</text>
+</svg>

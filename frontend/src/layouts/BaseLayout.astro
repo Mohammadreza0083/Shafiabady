@@ -2,17 +2,23 @@
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import ScrollToTop from '../components/ui/ScrollToTop.astro';
+import SEO from '../components/SEO.astro';
 import '../styles/global.css';
 
 interface Props {
   title?: string;
   description?: string;
+  canonicalURL?: string | URL;
+  ogImage?: string;
+  pageType?: 'website' | 'article' | 'book' | 'course' | 'profile';
+  jsonLd?: Record<string, any> | Record<string, any>[];
+  articleData?: {
+    publishedTime?: string;
+    modifiedTime?: string;
+    author?: string;
+    tags?: string[];
+  };
 }
-
-const {
-  title = 'دکتر محمد حسین شفیعآبادی | پلتفرم تخصصی معماری نرم‌افزار و دات‌نت',
-  description = 'پلتفرم برندینگ شخصی و آموزش تخصصی مهندسی نرم‌افزار، معماری تمیز (Clean Architecture)، دات‌نت و وب مدرن.',
-} = Astro.props;
 
 const currentPath = Astro.url.pathname;
 ---
@@ -24,9 +30,10 @@ const currentPath = Astro.url.pathname;
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
-    <title>{title}</title>
-    <meta name="description" content={description} />
     <meta name="theme-color" content="#0071E3" />
+
+    <!-- SEO Meta, Open Graph, Twitter & JSON-LD Structured Data -->
+    <SEO {...Astro.props} />
 
     <!-- Anti-FOUC Theme Initializer (Sync inline script with IRST UTC+3:30 18:00 Auto Dark Mode logic) -->
     <script is:inline>

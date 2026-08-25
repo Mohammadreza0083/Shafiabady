@@ -11,11 +11,34 @@ export function getStaticPaths() {
 }
 
 const { book } = Astro.props;
+
+const bookJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Book',
+  'name': book.title,
+  'headline': book.subtitle,
+  'description': book.description,
+  'author': {
+    '@type': 'Person',
+    'name': 'دکتر محمد حسین شفیعآبادی',
+    'url': 'https://shafieiabadi.ir/about',
+  },
+  'publisher': {
+    '@type': 'Organization',
+    'name': book.publisher,
+  },
+  'datePublished': book.publishYear,
+  'numberOfPages': book.pagesCount,
+  'inLanguage': 'fa',
+};
 ---
 
 <BaseLayout
-  title={`${book.title} | دکتر محمد حسین شفیعآبادی`}
+  title={book.title}
   description={book.description}
+  pageType="book"
+  ogImage={book.coverImage || undefined}
+  jsonLd={bookJsonLd}
 >
   <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16" data-entity-id={book.id}>
     <!-- Breadcrumb -->

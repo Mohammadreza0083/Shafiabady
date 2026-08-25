@@ -11,11 +11,45 @@ export function getStaticPaths() {
 }
 
 const { article } = Astro.props;
+
+const articleJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BlogPosting',
+  'mainEntityOfPage': {
+    '@type': 'WebPage',
+    '@id': `https://shafieiabadi.ir/articles/${article.slug}`,
+  },
+  'headline': article.title,
+  'description': article.summary,
+  'image': article.coverImage || 'https://shafieiabadi.ir/images/og-default.png',
+  'author': {
+    '@type': 'Person',
+    'name': article.author.name || 'دکتر محمد حسین شفیعآبادی',
+    'url': 'https://shafieiabadi.ir/about',
+  },
+  'publisher': {
+    '@type': 'Person',
+    'name': 'دکتر محمد حسین شفیعآبادی',
+    'url': 'https://shafieiabadi.ir',
+  },
+  'datePublished': article.createdAt,
+  'dateModified': article.createdAt,
+  'keywords': article.tags.join(', '),
+  'articleSection': article.category,
+};
 ---
 
 <BaseLayout
-  title={`${article.title} | دکتر محمد حسین شفیعآبادی`}
+  title={article.title}
   description={article.summary}
+  pageType="article"
+  ogImage={article.coverImage || undefined}
+  jsonLd={articleJsonLd}
+  articleData={{
+    publishedTime: article.createdAt,
+    author: article.author.name,
+    tags: article.tags,
+  }}
 >
   <article class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16" data-entity-id={article.id}>
     

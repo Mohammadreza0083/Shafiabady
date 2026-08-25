@@ -1,11 +1,37 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Button from '../components/ui/Button.astro';
+
+const aboutJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'ProfilePage',
+  'mainEntity': {
+    '@type': 'Person',
+    'name': 'دکتر محمد حسین شفیعآبادی',
+    'jobTitle': 'استاد دانشگاه، طراح و معمار ارشد سیستم‌های نرم‌افزاری',
+    'description': 'درباره دکتر محمد حسین شفیعآبادی، طراح و معمار ارشد سیستم‌های نرم‌افزاری، نویسنده و مدرس تخصصی دات‌نت.',
+    'url': 'https://shafieiabadi.ir/about',
+    'sameAs': [
+      'https://t.me',
+      'https://github.com',
+    ],
+    'knowsAbout': [
+      'Clean Architecture',
+      'Domain-Driven Design',
+      'Test-Driven Development',
+      'Distributed Systems',
+      'C# / .NET 9',
+      'Microservices',
+    ],
+  },
+};
 ---
 
 <BaseLayout
-  title="درباره من | دکتر محمد حسین شفیعآبادی"
+  title="درباره من"
   description="درباره دکتر محمد حسین شفیعآبادی، طراح و معمار ارشد سیستم‌های نرم‌افزاری، نویسنده و مدرس تخصصی دات‌نت."
+  pageType="profile"
+  jsonLd={aboutJsonLd}
 >
   <!-- Full-Screen Scrollable Presentation Container -->
   <div id="slides-container" class="snap-container h-[calc(100vh-4rem)] overflow-y-auto snap-y snap-mandatory scroll-smooth relative">

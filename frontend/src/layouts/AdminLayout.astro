@@ -296,6 +296,13 @@ const sidebarLinks = [
       function setupSilentRefresh() {
         setInterval(async () => {
           try {
+            const isMock =
+              document.cookie.includes('mock-demo-token') ||
+              localStorage.getItem('AdminAuthToken') === 'mock-demo-token';
+            if (isMock) {
+              return; // Active mock demo session does not require remote token refresh
+            }
+
             const res = await authApi.refresh();
             if (res.isSuccess) {
               console.log('[Auth] Session refreshed silently.');

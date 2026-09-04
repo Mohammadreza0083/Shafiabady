@@ -31,4 +31,29 @@ public interface IAuthService
     /// <param name="ct">Cancellation token.</param>
     /// <returns>Standardized result containing updated administrator profile and fresh JWT token.</returns>
     Task<Result<LoginResultDto>> RefreshTokenAsync(string username, CancellationToken ct = default);
+
+    /// <summary>
+    /// Validates an active refresh token from HttpOnly cookie and generates a renewed 5-minute JWT access token.
+    /// </summary>
+    /// <param name="refreshToken">Cryptographic refresh token string.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>Standardized result containing updated administrator profile, new JWT, and rotated refresh token.</returns>
+    Task<Result<LoginResultDto>> RefreshTokenByTokenAsync(string refreshToken, CancellationToken ct = default);
+
+    /// <summary>
+    /// Changes the administrator password, verifying the current password and invalidating active refresh tokens upon success.
+    /// </summary>
+    /// <param name="username">Administrator username.</param>
+    /// <param name="dto">Change password request payload containing current and new passwords.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>Result indicating success or validation failure.</returns>
+    Task<Result> ChangePasswordAsync(string username, ChangePasswordDto dto, CancellationToken ct = default);
+
+    /// <summary>
+    /// Logs out the administrator by revoking stored refresh tokens.
+    /// </summary>
+    /// <param name="username">Administrator username.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>Result indicating successful session termination.</returns>
+    Task<Result> LogoutAsync(string username, CancellationToken ct = default);
 }

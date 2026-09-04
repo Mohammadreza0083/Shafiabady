@@ -32,6 +32,8 @@ export interface PaginationParams {
   pageSize?: number;
   searchTerm?: string;
   categoryId?: string;
+  category?: string;
+  categorySlug?: string;
 }
 
 // ==========================================
@@ -238,6 +240,7 @@ export interface AdminUserDto {
 export interface LoginRequestDto {
   usernameOrEmail: string;
   password: string;
+  rememberMe?: boolean;
 }
 
 export interface LoginResultDto {

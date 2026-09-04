@@ -36,4 +36,14 @@ public class AdminUser : BaseEntity, IAggregateRoot
     /// UTC timestamp of the most recent successful login.
     /// </summary>
     public DateTime? LastLoginAt { get; set; }
+
+    /// <summary>
+    /// Secure cryptographic refresh token for extending admin sessions without re-authenticating.
+    /// </summary>
+    public string? RefreshToken { get; set; }
+
+    /// <summary>
+    /// UTC expiration timestamp of the active refresh token.
+    /// </summary>
+    public DateTime? RefreshTokenExpiresAt { get; set; }
 }

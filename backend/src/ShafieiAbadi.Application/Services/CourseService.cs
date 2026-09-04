@@ -31,7 +31,8 @@ public class CourseService : ICourseService
         Expression<Func<Course, bool>> filter = c =>
             !c.IsDeleted &&
             (string.IsNullOrWhiteSpace(@params.Search) || c.Title.Contains(@params.Search) || c.Description.Contains(@params.Search)) &&
-            (string.IsNullOrWhiteSpace(@params.CategorySlug) || (c.Category != null && c.Category.Slug == @params.CategorySlug));
+            (!@params.CategoryId.HasValue || c.CategoryId == @params.CategoryId.Value) &&
+            (string.IsNullOrWhiteSpace(@params.CategorySlug) || @params.CategorySlug == "all" || @params.CategorySlug == "همه" || (c.Category != null && (c.Category.Slug == @params.CategorySlug || c.Category.Title == @params.CategorySlug)));
 
         var pagedEntities = await _unitOfWork.Repository<Course>().GetPagedAsync(
             @params.PageNumber,

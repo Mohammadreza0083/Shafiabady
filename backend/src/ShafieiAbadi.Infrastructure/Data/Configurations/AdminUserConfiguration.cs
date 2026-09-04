@@ -30,5 +30,10 @@ public class AdminUserConfiguration : IEntityTypeConfiguration<AdminUser>
         builder.Property(u => u.FullName)
             .IsRequired()
             .HasMaxLength(200);
+
+        builder.Property(u => u.RefreshToken)
+            .HasMaxLength(500);
+
+        builder.HasIndex(u => u.RefreshToken);
     }
 }

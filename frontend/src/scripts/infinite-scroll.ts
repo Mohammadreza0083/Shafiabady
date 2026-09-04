@@ -6,6 +6,9 @@
 import { articlesApi } from '../utils/api';
 import type { ArticleDto } from '../types';
 
+// Keep track of active observer instance to disconnect on category reset
+let activeObserver: IntersectionObserver | null = null;
+
 export function setupInfiniteScroll({
   sentinelId = 'scroll-sentinel',
   containerId = 'articles-grid',
@@ -20,13 +23,18 @@ export function setupInfiniteScroll({
   endMessageId?: string;
   initialPage?: number;
   limit?: number;
-} = {}): void {
+} = {}): { disconnect: () => void } {
+  if (activeObserver) {
+    activeObserver.disconnect();
+    activeObserver = null;
+  }
+
   const sentinel = document.getElementById(sentinelId);
   const container = document.getElementById(containerId);
   const loading = document.getElementById(loadingId);
   const endMessage = document.getElementById(endMessageId);
 
-  if (!sentinel || !container) return;
+  if (!sentinel || !container) return { disconnect: () => {} };
 
   // Read initial configuration from container data attributes
   const hasMoreAttr = container.getAttribute('data-has-more');
@@ -41,7 +49,9 @@ export function setupInfiniteScroll({
   if (!hasMore) {
     if (loading) loading.classList.add('hidden');
     if (endMessage) endMessage.classList.remove('hidden');
-    return;
+    return { disconnect: () => {} };
+  } else {
+    if (endMessage) endMessage.classList.add('hidden');
   }
 
   const renderCardHTML = (article: ArticleDto) => {
@@ -154,8 +164,17 @@ export function setupInfiniteScroll({
     if (loading) loading.classList.remove('hidden');
 
     try {
-      const nextPage = currentPage + 1;
-      const result = await articlesApi.getPaged({ pageNumber: nextPage, pageSize: effectiveLimit });
+      const rawSlug = container.getAttribute('data-slug');
+      const rawCategory = container.getAttribute('data-category');
+      const categorySlug = (rawSlug && rawSlug !== 'all' && rawSlug !== 'همه') ? rawSlug : undefined;
+      const category = (rawCategory && rawCategory !== 'همه' && rawCategory !== 'all') ? rawCategory : undefined;
+
+      const result = await articlesApi.getPaged({
+        pageNumber: nextPage,
+        pageSize: effectiveLimit,
+        categorySlug: categorySlug || category,
+        category: category || categorySlug,
+      });
 
       if (result.isSuccess && result.data) {
         currentPage = result.data.pageNumber;
@@ -206,4 +225,12 @@ export function setupInfiniteScroll({
   );
 
   observer.observe(sentinel);
+  activeObserver = observer;
+
+  return {
+    disconnect: () => {
+      observer.disconnect();
+      if (activeObserver === observer) activeObserver = null;
+    },
+  };
 }

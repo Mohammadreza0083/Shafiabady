@@ -36,6 +36,7 @@ public class CommentConfiguration : IEntityTypeConfiguration<Comment>
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasIndex(c => c.Status);
+        builder.HasIndex(c => new { c.Status, c.RejectedAt });
         builder.HasIndex(c => c.ParentCommentId);
         builder.HasIndex(c => c.ArticleId);
         builder.HasIndex(c => c.BookId);

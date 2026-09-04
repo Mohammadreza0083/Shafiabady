@@ -2,6 +2,7 @@ using System.Reflection;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Prometheus;
@@ -211,11 +212,37 @@ app.MapHealthChecks("/health");
 app.MapMetrics("/metrics");
 app.MapControllers();
 
-// 11. Seed Initial Database Records (Admin user, categories, sample articles, books, and courses)
+// 11. Database Migration & Seed Initial Database Records
 using (var scope = app.Services.CreateScope())
 {
-    var seeder = scope.ServiceProvider.GetRequiredService<DatabaseSeeder>();
-    await seeder.SeedAsync();
+    var services = scope.ServiceProvider;
+    var dbContext = services.GetRequiredService<ShafieiAbadi.Infrastructure.Data.AppDbContext>();
+
+    if (dbContext.Database.IsRelational())
+    {
+        try
+        {
+            Log.Information("Applying pending SQL Server database migrations...");
+            await dbContext.Database.MigrateAsync();
+            Log.Information("SQL Server database migrations applied successfully.");
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Failed to connect to SQL Server or apply migrations. Ensure SQL Server is running and reachable on port 1433 (`docker compose up -d sqlserver`) or set 'UseInMemoryDatabase': true in appsettings.");
+        }
+    }
+
+    try
+    {
+        Log.Information("Executing initial database seeding...");
+        var seeder = services.GetRequiredService<ShafieiAbadi.Infrastructure.Data.DatabaseSeeder>();
+        await seeder.SeedAsync();
+        Log.Information("Initial database seeding finished successfully.");
+    }
+    catch (Exception ex)
+    {
+        Log.Error(ex, "An error occurred while executing database seeder.");
+    }
 }
 
 try

@@ -107,6 +107,17 @@ try {
       </div>
     </div>
 
+    <!-- 7-Day Auto-Purge Policy Notice Banner -->
+    <div class="flex items-center gap-3 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-300 text-xs leading-relaxed">
+      <svg class="w-5 h-5 flex-shrink-0 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+      </svg>
+      <div>
+        <span class="font-bold">سیاست پاکسازی خودکار: </span>
+        <span>نظرات رد شده به مدت ۷ روز نگهداری می‌شوند و سپس به صورت خودکار برای همیشه حذف خواهند شد.</span>
+      </div>
+    </div>
+
     {fetchError && (
       <div class="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs">
         {fetchError}
@@ -228,6 +239,38 @@ try {
   import { CommentStatus } from '../../../types';
   import { showToast, showAlert, showConfirm } from '../../../utils/ui-dialog';
 
+  function decrementCounters() {
+    // 1. Decrement page-level pending counter
+    const pageCounter = document.getElementById('pending-counter');
+    if (pageCounter) {
+      const currentVal = parseInt(pageCounter.textContent?.replace(/[^\d]/g, '') || '0', 10);
+      const newVal = Math.max(0, currentVal - 1);
+      if (newVal === 0) {
+        pageCounter.textContent = '۰ دیدگاه';
+        pageCounter.classList.add('opacity-50');
+      } else {
+        pageCounter.textContent = `${newVal.toLocaleString('fa-IR')} دیدگاه`;
+      }
+    }
+
+    // 2. Decrement sidebar comments badge
+    const sidebarBadge = document.getElementById('sidebar-comments-badge');
+    if (sidebarBadge) {
+      const currentBadge = parseInt(sidebarBadge.textContent?.replace(/[^\d]/g, '') || '0', 10);
+      const newBadge = Math.max(0, currentBadge - 1);
+      if (newBadge <= 0) {
+        sidebarBadge.classList.add('hidden');
+        sidebarBadge.textContent = '0';
+      } else {
+        sidebarBadge.classList.remove('hidden');
+        sidebarBadge.textContent = newBadge.toLocaleString('fa-IR');
+      }
+    }
+
+    // 3. Dispatch global event for other listeners
+    window.dispatchEvent(new CustomEvent('comment-count-updated', { detail: { delta: -1 } }));
+  }
+
   // Approve button handler
   document.querySelectorAll('.approve-btn').forEach((btn) => {
     btn.addEventListener('click', async () => {
@@ -239,6 +282,7 @@ try {
         const res = await commentsApi.updateStatus({ commentId: id, status: CommentStatus.Approved });
         if (res.isSuccess) {
           showToast('دیدگاه با موفقیت تأیید شد و در سایت منتشر گردید.', 'success');
+          decrementCounters();
           if (row) {
             row.style.opacity = '0.5';
             row.innerHTML = `
@@ -284,6 +328,7 @@ try {
         const res = await commentsApi.updateStatus({ commentId: id, status: CommentStatus.Rejected });
         if (res.isSuccess) {
           showToast('دیدگاه با موفقیت رد شد.', 'info');
+          decrementCounters();
           if (row) {
             row.style.opacity = '0.5';
             row.innerHTML = `
@@ -326,6 +371,7 @@ try {
         const res = await commentsApi.delete(id);
         if (res.isSuccess) {
           showToast('دیدگاه با موفقیت حذف گردید.', 'success');
+          decrementCounters();
           if (row) {
             row.remove();
           }

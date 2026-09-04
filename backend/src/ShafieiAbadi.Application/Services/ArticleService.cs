@@ -31,7 +31,8 @@ public class ArticleService : IArticleService
         Expression<Func<Article, bool>> filter = a =>
             !a.IsDeleted &&
             (string.IsNullOrWhiteSpace(@params.Search) || a.Title.Contains(@params.Search) || a.Summary.Contains(@params.Search) || a.Tags.Contains(@params.Search)) &&
-            (string.IsNullOrWhiteSpace(@params.CategorySlug) || (a.Category != null && a.Category.Slug == @params.CategorySlug)) &&
+            (!@params.CategoryId.HasValue || a.CategoryId == @params.CategoryId.Value) &&
+            (string.IsNullOrWhiteSpace(@params.CategorySlug) || @params.CategorySlug == "all" || @params.CategorySlug == "همه" || (a.Category != null && (a.Category.Slug == @params.CategorySlug || a.Category.Title == @params.CategorySlug))) &&
             (string.IsNullOrWhiteSpace(@params.Tag) || a.Tags.Contains(@params.Tag));
 
         var pagedEntities = await _unitOfWork.Repository<Article>().GetPagedAsync(

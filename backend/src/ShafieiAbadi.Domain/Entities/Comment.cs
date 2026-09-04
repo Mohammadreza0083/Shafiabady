@@ -29,6 +29,11 @@ public class Comment : BaseEntity, IAggregateRoot
     public CommentStatus Status { get; set; } = CommentStatus.Pending;
 
     /// <summary>
+    /// Timestamp when the comment was marked as Rejected (used for 7-day auto-purge policy).
+    /// </summary>
+    public DateTime? RejectedAt { get; set; }
+
+    /// <summary>
     /// Optional self-referencing foreign key for recursive nested replies.
     /// </summary>
     public Guid? ParentCommentId { get; set; }

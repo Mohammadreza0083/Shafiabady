@@ -112,10 +112,20 @@ public class CommentService : ICommentService
         comment.Status = dto.Status;
         comment.UpdatedAt = DateTime.UtcNow;
 
+        if (dto.Status == CommentStatus.Rejected)
+        {
+            comment.RejectedAt = DateTime.UtcNow;
+        }
+        else
+        {
+            comment.RejectedAt = null;
+        }
+
         _unitOfWork.Repository<Comment>().Update(comment);
         await _unitOfWork.SaveChangesAsync(ct);
 
-        _logger.LogInformation("Comment {CommentId} status changed from {OldStatus} to {NewStatus}", comment.Id, oldStatus, comment.Status);
+        _logger.LogInformation("Comment {CommentId} status changed from {OldStatus} to {NewStatus} (RejectedAt: {RejectedAt})",
+            comment.Id, oldStatus, comment.Status, comment.RejectedAt);
         return Result.Success();
     }
 

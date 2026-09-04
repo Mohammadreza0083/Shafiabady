@@ -31,7 +31,8 @@ public class BookService : IBookService
         Expression<Func<Book, bool>> filter = b =>
             !b.IsDeleted &&
             (string.IsNullOrWhiteSpace(@params.Search) || b.Title.Contains(@params.Search) || b.Description.Contains(@params.Search) || b.Publisher.Contains(@params.Search)) &&
-            (string.IsNullOrWhiteSpace(@params.CategorySlug) || (b.Category != null && b.Category.Slug == @params.CategorySlug));
+            (!@params.CategoryId.HasValue || b.CategoryId == @params.CategoryId.Value) &&
+            (string.IsNullOrWhiteSpace(@params.CategorySlug) || @params.CategorySlug == "all" || @params.CategorySlug == "همه" || (b.Category != null && (b.Category.Slug == @params.CategorySlug || b.Category.Title == @params.CategorySlug)));
 
         var pagedEntities = await _unitOfWork.Repository<Book>().GetPagedAsync(
             @params.PageNumber,

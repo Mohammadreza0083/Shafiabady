@@ -14,6 +14,11 @@ public class LoginRequestDto
     /// Administrator plain-text password.
     /// </summary>
     public string Password { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Whether the session should be remembered for 30 days (default is false = 24 hours).
+    /// </summary>
+    public bool RememberMe { get; set; } = false;
 }
 
 /// <summary>
@@ -28,13 +33,33 @@ public class AdminUserDto
 }
 
 /// <summary>
-/// Internal result container holding the authenticated administrator profile and the generated JWT.
+/// Internal result container holding the authenticated administrator profile, generated JWT, and refresh token.
 /// </summary>
 public class LoginResultDto
 {
     public AdminUserDto User { get; set; } = new();
     public string Token { get; set; } = string.Empty;
     public DateTime ExpiresAt { get; set; }
+    public string RefreshToken { get; set; } = string.Empty;
+    public DateTime RefreshTokenExpiresAt { get; set; }
+}
+
+/// <summary>
+/// Request payload for renewing access tokens using an active refresh token.
+/// </summary>
+public class RefreshTokenRequestDto
+{
+    public string? RefreshToken { get; set; }
+}
+
+/// <summary>
+/// Request payload for changing the administrative account password.
+/// </summary>
+public class ChangePasswordDto
+{
+    public string CurrentPassword { get; set; } = string.Empty;
+    public string NewPassword { get; set; } = string.Empty;
+    public string ConfirmNewPassword { get; set; } = string.Empty;
 }
 
 /// <summary>

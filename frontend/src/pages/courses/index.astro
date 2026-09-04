@@ -5,18 +5,40 @@ import { coursesApi } from '../../utils/api';
 import { mockCourses } from '../../data/mockData';
 import type { CourseDto } from '../../types';
 
+const categories = ['همه', 'معماری نرم‌افزار', 'طراحی سیستم', 'کیفیت و تست', 'میکروسرویس', 'فرانت‌اند مدرن'];
+const currentCategory = Astro.url.searchParams.get('category') || 'همه';
+
 const PAGE_SIZE = 10;
 let courses: any[] = [];
 
 try {
-  const response = await coursesApi.getPaged({ pageNumber: 1, pageSize: PAGE_SIZE });
+  const response = await coursesApi.getPaged({
+    pageNumber: 1,
+    pageSize: PAGE_SIZE,
+    category: currentCategory !== 'همه' ? currentCategory : undefined,
+  });
+
   if (response.isSuccess && response.data && response.data.items && response.data.items.length > 0) {
     courses = response.data.items;
   } else {
-    courses = mockCourses;
+    courses = currentCategory === 'همه'
+      ? mockCourses
+      : mockCourses.filter(
+          (c) =>
+            c.category === currentCategory ||
+            (c as any).categoryTitle === currentCategory ||
+            (c as any).categorySlug === currentCategory
+        );
   }
 } catch (error) {
-  courses = mockCourses;
+  courses = currentCategory === 'همه'
+    ? mockCourses
+    : mockCourses.filter(
+        (c) =>
+          c.category === currentCategory ||
+          (c as any).categoryTitle === currentCategory ||
+          (c as any).categorySlug === currentCategory
+      );
 }
 ---
 
@@ -26,7 +48,7 @@ try {
 >
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
     <!-- Header Section -->
-    <div class="text-center max-w-3xl mx-auto mb-16">
+    <div class="text-center max-w-3xl mx-auto mb-12">
       <span class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-apple-blue/10 text-apple-blue dark:bg-apple-blue-dark/20 dark:text-apple-blue-dark mb-4">
         آکادمی و آموزش حرفه‌ای
       </span>
@@ -38,9 +60,187 @@ try {
       </p>
     </div>
 
-    <!-- Courses Grid - Full array rendered with NO slicing -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-      {courses.map((course) => <CourseCard course={course} />)}
+    <!-- Category Filters -->
+    <div class="flex items-center justify-start sm:justify-center gap-2 overflow-x-auto pb-4 mb-10 no-scrollbar" id="course-category-pills">
+      {
+        categories.map((cat) => {
+          const isActive = cat === currentCategory;
+          return (
+            <button
+              type="button"
+              data-category={cat}
+              class={`course-category-btn px-4 py-2 rounded-full text-xs sm:text-sm font-medium whitespace-nowrap transition-all duration-200 cursor-pointer ${
+                isActive
+                  ? 'bg-apple-blue text-white shadow-sm dark:bg-apple-blue-dark active-cat'
+                  : 'bg-black/5 dark:bg-white/5 text-neutral-700 dark:text-neutral-300 hover:bg-black/10 dark:hover:bg-white/10'
+              }`}
+            >
+              {cat}
+            </button>
+          );
+        })
+      }
+    </div>
+
+    <!-- Courses Grid -->
+    <div
+      id="courses-grid"
+      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+      data-category={currentCategory !== 'همه' ? currentCategory : ''}
+    >
+      {
+        courses.length > 0 ? (
+          courses.map((course) => <CourseCard course={course} />)
+        ) : (
+          <div class="col-span-full py-16 text-center text-neutral-500 dark:text-neutral-400">
+            هیچ دوره‌ای در این دسته‌بندی یافت نشد.
+          </div>
+        )
+      }
     </div>
   </div>
 </BaseLayout>
+
+<script>
+  import { coursesApi } from '../../utils/api';
+  import type { CourseDto } from '../../types';
+
+  function renderCourseCardHTML(course: CourseDto): string {
+    const title = course.title || '';
+    const slug = course.slug || '';
+    const description = course.description || '';
+    const thumbnail = (course as any).thumbnail || course.thumbnailUrl || '';
+    const level = course.level || 'متوسط';
+    const duration = course.duration || '۱۰ ساعت';
+    const lessonsCount = course.lessonsCount ?? 0;
+    const viewsCount = course.viewsCount ?? 0;
+    const price = course.discountedPrice ?? (course as any).price ?? course.originalPrice ?? 0;
+    const originalPrice = course.originalPrice;
+    const discountPercentage = course.discountPercentage;
+    const isFree = (course as any).isFree ?? (price === 0);
+
+    return `
+      <div class="group apple-card overflow-hidden flex flex-col justify-between reveal-on-scroll revealed transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+        <div>
+          <div class="relative aspect-video bg-neutral-100 dark:bg-neutral-800 overflow-hidden">
+            ${
+              thumbnail
+                ? `<img src="${thumbnail}" alt="تصویر دوره آموزشی ${title}" width="640" height="360" loading="lazy" decoding="async" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />`
+                : `<div class="w-full h-full flex items-center justify-center bg-gradient-to-tr from-neutral-900 to-neutral-800 text-white p-6"><div class="w-12 h-12 rounded-2xl bg-apple-blue/30 backdrop-blur-md flex items-center justify-center text-apple-blue-dark"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg></div></div>`
+            }
+            <div class="absolute top-3 right-3 flex items-center gap-1.5">
+              <span class="px-3 py-1 rounded-full text-xs font-semibold bg-white/90 dark:bg-black/90 backdrop-blur-md text-apple-blue dark:text-apple-blue-dark shadow-sm">
+                ${level}
+              </span>
+              ${
+                discountPercentage
+                  ? `<span class="px-2.5 py-1 rounded-full text-xs font-bold bg-rose-500 text-white shadow-sm">${discountPercentage}٪ تخفیف</span>`
+                  : ''
+              }
+            </div>
+            <div class="absolute bottom-3 left-3">
+              <span class="px-2.5 py-1 rounded-full text-[11px] font-medium bg-black/60 backdrop-blur-md text-white shadow-sm flex items-center gap-1">
+                <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>${duration}</span>
+              </span>
+            </div>
+          </div>
+
+          <div class="p-6">
+            <div class="flex items-center gap-2 text-xs text-neutral-400 dark:text-neutral-500 mb-2">
+              <span>${lessonsCount} جلسه آموزشی</span>
+              <span>•</span>
+              <span>${viewsCount} بازدید</span>
+            </div>
+
+            <h3 class="text-lg font-bold text-neutral-900 dark:text-white group-hover:text-apple-blue dark:group-hover:text-apple-blue-dark transition-colors mb-2">
+              <a href="/courses/${slug}">
+                ${title}
+              </a>
+            </h3>
+
+            <p class="text-xs text-neutral-600 dark:text-neutral-400 line-clamp-2 leading-relaxed">
+              ${description}
+            </p>
+          </div>
+        </div>
+
+        <div class="p-6 pt-0 flex items-center justify-between border-t border-black/5 dark:border-white/5 mt-4">
+          <div>
+            ${
+              isFree
+                ? `<span class="text-sm font-bold text-emerald-600 dark:text-emerald-400">رایگان</span>`
+                : originalPrice && originalPrice > price
+                ? `<div class="flex flex-col"><span class="text-[11px] text-neutral-400 line-through">${originalPrice.toLocaleString('fa-IR')} تومان</span><div class="flex items-baseline gap-1"><span class="text-base font-extrabold text-neutral-950 dark:text-white">${price.toLocaleString('fa-IR')}</span><span class="text-[10px] text-neutral-400">تومان</span></div></div>`
+                : `<div class="flex items-baseline gap-1"><span class="text-base font-bold text-neutral-950 dark:text-white">${price.toLocaleString('fa-IR')}</span><span class="text-[10px] text-neutral-400">تومان</span></div>`
+            }
+          </div>
+
+          <a
+            href="/courses/${slug}"
+            class="px-4 py-2 rounded-full text-xs font-semibold bg-apple-blue/10 dark:bg-apple-blue-dark/20 text-apple-blue dark:text-apple-blue-dark hover:bg-apple-blue hover:text-white dark:hover:bg-apple-blue-dark dark:hover:text-white transition-all duration-200"
+          >
+            مشاهده دوره
+          </a>
+        </div>
+      </div>
+    `;
+  }
+
+  const buttons = document.querySelectorAll<HTMLButtonElement>('.course-category-btn');
+  const container = document.getElementById('courses-grid');
+
+  buttons.forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const selectedCategory = btn.getAttribute('data-category') || 'همه';
+
+      // Update button styles
+      buttons.forEach((b) => {
+        b.classList.remove('bg-apple-blue', 'text-white', 'shadow-sm', 'dark:bg-apple-blue-dark', 'active-cat');
+        b.classList.add('bg-black/5', 'dark:bg-white/5', 'text-neutral-700', 'dark:text-neutral-300');
+      });
+      btn.classList.remove('bg-black/5', 'dark:bg-white/5', 'text-neutral-700', 'dark:text-neutral-300');
+      btn.classList.add('bg-apple-blue', 'text-white', 'shadow-sm', 'dark:bg-apple-blue-dark', 'active-cat');
+
+      // Update URL query state
+      const newUrl = selectedCategory === 'همه'
+        ? window.location.pathname
+        : `${window.location.pathname}?category=${encodeURIComponent(selectedCategory)}`;
+      window.history.pushState({ category: selectedCategory }, '', newUrl);
+
+      if (!container) return;
+      container.setAttribute('data-category', selectedCategory === 'همه' ? '' : selectedCategory);
+
+      try {
+        const res = await coursesApi.getPaged({
+          pageNumber: 1,
+          pageSize: 20,
+          category: selectedCategory !== 'همه' ? selectedCategory : undefined,
+        });
+
+        if (res.isSuccess && res.data && res.data.items) {
+          const items = res.data.items;
+          if (items.length === 0) {
+            container.innerHTML = '<div class="col-span-full py-16 text-center text-neutral-500 dark:text-neutral-400">هیچ دوره‌ای در این دسته‌بندی یافت نشد.</div>';
+          } else {
+            container.innerHTML = items.map((c) => renderCourseCardHTML(c)).join('');
+            window.dispatchEvent(new CustomEvent('content-loaded'));
+          }
+        }
+      } catch (err) {
+        console.warn('Error loading courses for category:', err);
+      }
+    });
+  });
+
+  window.addEventListener('popstate', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const cat = urlParams.get('category') || 'همه';
+    const targetBtn = Array.from(buttons).find((b) => b.getAttribute('data-category') === cat);
+    if (targetBtn) {
+      targetBtn.click();
+    }
+  });
+</script>

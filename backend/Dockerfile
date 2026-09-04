@@ -14,8 +14,8 @@ COPY src/ShafieiAbadi.Infrastructure/ShafieiAbadi.Infrastructure.csproj src/Shaf
 COPY src/ShafieiAbadi.Api/ShafieiAbadi.Api.csproj src/ShafieiAbadi.Api/
 COPY tests/ShafieiAbadi.UnitTests/ShafieiAbadi.UnitTests.csproj tests/ShafieiAbadi.UnitTests/
 
-# Restore NuGet dependencies
-RUN dotnet restore src/ShafieiAbadi.Api/ShafieiAbadi.Api.csproj
+# Restore NuGet dependencies across solution to ensure analyzers and packages are cached
+RUN dotnet restore ShafieiAbadi.slnx
 
 # Copy all source files
 COPY . .

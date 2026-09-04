@@ -84,4 +84,73 @@ public class CommentServiceTests
         result.Data[0].Replies.Should().HaveCount(1);
         result.Data[0].Replies[0].Id.Should().Be(replyId);
     }
+
+    [Fact]
+    public async Task UpdateCommentStatusAsync_ShouldSetRejectedAt_WhenStatusIsRejected()
+    {
+        // Arrange
+        var commentId = Guid.NewGuid();
+        var comment = new Comment
+        {
+            Id = commentId,
+            GuestName = "Guest",
+            Text = "Content",
+            Status = CommentStatus.Pending,
+            RejectedAt = null
+        };
+
+        _mockCommentRepo.Setup(r => r.GetByIdAsync(commentId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(comment);
+
+        var dto = new UpdateCommentStatusDto
+        {
+            CommentId = commentId,
+            Status = CommentStatus.Rejected
+        };
+
+        // Act
+        var result = await _service.UpdateCommentStatusAsync(dto);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        comment.Status.Should().Be(CommentStatus.Rejected);
+        comment.RejectedAt.Should().NotBeNull();
+        comment.RejectedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
+        _mockCommentRepo.Verify(r => r.Update(comment), Times.Once);
+        _mockUow.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task UpdateCommentStatusAsync_ShouldClearRejectedAt_WhenStatusIsApproved()
+    {
+        // Arrange
+        var commentId = Guid.NewGuid();
+        var comment = new Comment
+        {
+            Id = commentId,
+            GuestName = "Guest",
+            Text = "Content",
+            Status = CommentStatus.Rejected,
+            RejectedAt = DateTime.UtcNow.AddDays(-2)
+        };
+
+        _mockCommentRepo.Setup(r => r.GetByIdAsync(commentId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(comment);
+
+        var dto = new UpdateCommentStatusDto
+        {
+            CommentId = commentId,
+            Status = CommentStatus.Approved
+        };
+
+        // Act
+        var result = await _service.UpdateCommentStatusAsync(dto);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        comment.Status.Should().Be(CommentStatus.Approved);
+        comment.RejectedAt.Should().BeNull();
+        _mockCommentRepo.Verify(r => r.Update(comment), Times.Once);
+        _mockUow.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
 }

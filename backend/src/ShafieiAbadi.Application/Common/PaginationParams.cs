@@ -28,9 +28,32 @@ public class PaginationParams
     public string? Search { get; set; }
 
     /// <summary>
+    /// Alias for Search parameter (matching frontend query naming conventions).
+    /// </summary>
+    public string? SearchTerm
+    {
+        get => Search;
+        set => Search = value;
+    }
+
+    /// <summary>
     /// Optional category slug filter.
     /// </summary>
     public string? CategorySlug { get; set; }
+
+    /// <summary>
+    /// Alias for CategorySlug parameter (matching frontend query naming conventions).
+    /// </summary>
+    public string? Category
+    {
+        get => CategorySlug;
+        set => CategorySlug = value;
+    }
+
+    /// <summary>
+    /// Optional category unique identifier filter.
+    /// </summary>
+    public Guid? CategoryId { get; set; }
 
     /// <summary>
     /// Optional tag keyword filter.

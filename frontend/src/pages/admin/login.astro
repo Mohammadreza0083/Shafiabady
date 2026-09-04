@@ -220,6 +220,7 @@ import '../../styles/global.css';
       const result = await authApi.login({
         usernameOrEmail,
         password,
+        rememberMe: isRememberMe,
       });
 
       if (result.isSuccess) {

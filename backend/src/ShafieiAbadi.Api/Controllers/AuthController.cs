@@ -13,6 +13,7 @@ namespace ShafieiAbadi.Api.Controllers;
 public class AuthController : BaseApiController
 {
     private const string AuthCookieName = "AdminAuthToken";
+    private const string RefreshCookieName = "AdminRefreshToken";
     private readonly IAuthService _authService;
 
     public AuthController(IAuthService authService)
@@ -21,11 +22,11 @@ public class AuthController : BaseApiController
     }
 
     /// <summary>
-    /// Authenticates an administrator, issues a secure 5-minute HttpOnly JWT cookie, and returns user profile data.
+    /// Authenticates an administrator, issues secure HttpOnly JWT (5 min) and Refresh Token (1 or 30 days) cookies.
     /// </summary>
-    /// <param name="request">Administrator username/email and password credentials.</param>
+    /// <param name="request">Administrator credentials and RememberMe preference.</param>
     /// <param name="ct">Cancellation token.</param>
-    /// <returns>Standardized result containing administrator profile metadata (JWT is secured in HttpOnly cookie).</returns>
+    /// <returns>Standardized result containing administrator profile metadata.</returns>
     [HttpPost("login")]
     [ProducesResponseType(typeof(Result<AdminUserDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Result<AdminUserDto>), StatusCodes.Status401Unauthorized)]
@@ -37,37 +38,55 @@ public class AuthController : BaseApiController
             return HandleResult(Result<AdminUserDto>.Unauthorized(result.ErrorMessage ?? "Invalid credentials."));
         }
 
-        // Append JWT strictly to HttpOnly, Secure, and SameSite=Strict cookie with 5-minute expiration
-        var cookieOptions = new CookieOptions
+        // 1. Append JWT strictly to HttpOnly, Secure, and SameSite=Strict cookie with 5-minute expiration
+        Response.Cookies.Append(AuthCookieName, result.Data.Token, new CookieOptions
         {
             HttpOnly = true,
             Secure = Request.IsHttps,
             SameSite = SameSiteMode.Strict,
             Expires = result.Data.ExpiresAt,
             Path = "/"
-        };
+        });
 
-        Response.Cookies.Append(AuthCookieName, result.Data.Token, cookieOptions);
+        // 2. Append Refresh Token to separate HttpOnly cookie with 1-day (24h) or 30-day expiration
+        Response.Cookies.Append(RefreshCookieName, result.Data.RefreshToken, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = Request.IsHttps,
+            SameSite = SameSiteMode.Strict,
+            Expires = result.Data.RefreshTokenExpiresAt,
+            Path = "/"
+        });
 
         // Return user profile data without exposing raw JWT in JSON response body
         return Ok(Result<AdminUserDto>.Success(result.Data.User));
     }
 
     /// <summary>
-    /// Logs out the administrator by revoking and deleting the authentication cookie.
+    /// Logs out the administrator by revoking stored refresh tokens and deleting authentication cookies.
     /// </summary>
+    /// <param name="ct">Cancellation token.</param>
     /// <returns>Standardized success result.</returns>
     [HttpPost("logout")]
     [ProducesResponseType(typeof(Result), StatusCodes.Status200OK)]
-    public IActionResult Logout()
+    public async Task<IActionResult> Logout(CancellationToken ct)
     {
-        Response.Cookies.Delete(AuthCookieName, new CookieOptions
+        var username = User.FindFirstValue(ClaimTypes.Name) ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!string.IsNullOrEmpty(username))
+        {
+            await _authService.LogoutAsync(username, ct);
+        }
+
+        var deleteOptions = new CookieOptions
         {
             HttpOnly = true,
             Secure = Request.IsHttps,
             SameSite = SameSiteMode.Strict,
             Path = "/"
-        });
+        };
+
+        Response.Cookies.Delete(AuthCookieName, deleteOptions);
+        Response.Cookies.Delete(RefreshCookieName, deleteOptions);
 
         return Ok(Result.Success());
     }
@@ -94,39 +113,106 @@ public class AuthController : BaseApiController
     }
 
     /// <summary>
-    /// Refreshes administrator session and re-issues a fresh 5-minute HttpOnly JWT cookie.
+    /// Refreshes administrator session using HttpOnly Refresh Token cookie, re-issuing a renewed 5-minute JWT cookie.
     /// </summary>
+    /// <param name="requestDto">Optional request payload with token if cookies are unavailable.</param>
     /// <param name="ct">Cancellation token.</param>
-    /// <returns>Administrator profile details and refreshed cookie.</returns>
+    /// <returns>Administrator profile details and refreshed cookies.</returns>
     [HttpPost("refresh")]
-    [Authorize]
+    [AllowAnonymous]
     [ProducesResponseType(typeof(Result<AdminUserDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Result<AdminUserDto>), StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> RefreshToken(CancellationToken ct)
+    public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequestDto? requestDto, CancellationToken ct)
     {
-        var username = User.FindFirstValue(ClaimTypes.Name) ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(username))
+        // 1. Read refresh token from HttpOnly cookie or request body
+        var refreshToken = Request.Cookies[RefreshCookieName] ?? requestDto?.RefreshToken;
+
+        Result<LoginResultDto> result;
+
+        if (!string.IsNullOrWhiteSpace(refreshToken))
         {
-            return HandleResult(Result<AdminUserDto>.Unauthorized("User identity claim not found."));
+            result = await _authService.RefreshTokenByTokenAsync(refreshToken, ct);
+        }
+        else if (User.Identity?.IsAuthenticated == true)
+        {
+            var username = User.FindFirstValue(ClaimTypes.Name) ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(username))
+            {
+                return HandleResult(Result<AdminUserDto>.Unauthorized("User identity claim not found."));
+            }
+            result = await _authService.RefreshTokenAsync(username, ct);
+        }
+        else
+        {
+            return HandleResult(Result<AdminUserDto>.Unauthorized("No active refresh token found. Please log in."));
         }
 
-        var result = await _authService.RefreshTokenAsync(username, ct);
         if (!result.IsSuccess || result.Data == null)
         {
+            // Clear stale cookies on failed refresh
+            var deleteOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = Request.IsHttps,
+                SameSite = SameSiteMode.Strict,
+                Path = "/"
+            };
+            Response.Cookies.Delete(AuthCookieName, deleteOptions);
+            Response.Cookies.Delete(RefreshCookieName, deleteOptions);
+
             return HandleResult(Result<AdminUserDto>.Unauthorized(result.ErrorMessage ?? "Invalid token refresh request."));
         }
 
-        var cookieOptions = new CookieOptions
+        // Re-issue Access Token cookie (5 min)
+        Response.Cookies.Append(AuthCookieName, result.Data.Token, new CookieOptions
         {
             HttpOnly = true,
             Secure = Request.IsHttps,
             SameSite = SameSiteMode.Strict,
             Expires = result.Data.ExpiresAt,
             Path = "/"
-        };
+        });
 
-        Response.Cookies.Append(AuthCookieName, result.Data.Token, cookieOptions);
+        // Re-issue rotated Refresh Token cookie
+        Response.Cookies.Append(RefreshCookieName, result.Data.RefreshToken, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = Request.IsHttps,
+            SameSite = SameSiteMode.Strict,
+            Expires = result.Data.RefreshTokenExpiresAt,
+            Path = "/"
+        });
 
         return Ok(Result<AdminUserDto>.Success(result.Data.User));
+    }
+
+    /// <summary>
+    /// Changes the password of the currently authenticated administrator and invalidates active refresh tokens.
+    /// </summary>
+    /// <param name="dto">Change password credentials.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>Standardized result.</returns>
+    [HttpPost("change-password")]
+    [Authorize]
+    [ProducesResponseType(typeof(Result), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(Result), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(Result), StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto dto, CancellationToken ct)
+    {
+        var username = User.FindFirstValue(ClaimTypes.Name)
+            ?? User.FindFirstValue(ClaimTypes.NameIdentifier)
+            ?? User.Identity?.Name;
+        if (string.IsNullOrEmpty(username))
+        {
+            return HandleResult(Result.Unauthorized("User identity claim not found."));
+        }
+
+        var result = await _authService.ChangePasswordAsync(username, dto, ct);
+        if (!result.IsSuccess)
+        {
+            return HandleResult(result);
+        }
+
+        return Ok(Result.Success());
     }
 }

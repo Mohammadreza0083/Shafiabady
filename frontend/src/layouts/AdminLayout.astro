@@ -139,11 +139,18 @@ const sidebarLinks = [
                     <span>{link.label}</span>
                   </div>
                   {
-                    link.badge && (
+                    link.id === 'comments' ? (
+                      <span
+                        id="sidebar-comments-badge"
+                        class={`px-2 py-0.5 rounded-full text-xs font-bold ${isActive ? 'bg-white text-apple-blue' : 'bg-rose-500 text-white'} ${link.badge ? '' : 'hidden'}`}
+                      >
+                        {link.badge || '0'}
+                      </span>
+                    ) : link.badge ? (
                       <span class={`px-2 py-0.5 rounded-full text-xs font-bold ${isActive ? 'bg-white text-apple-blue' : 'bg-rose-500 text-white'}`}>
                         {link.badge}
                       </span>
-                    )
+                    ) : null
                   }
                 </a>
               );
@@ -152,21 +159,34 @@ const sidebarLinks = [
         </nav>
       </div>
 
-      <!-- Sidebar Bottom Info -->
-      <div class="pt-6 mt-6 border-t border-black/5 dark:border-white/10 flex items-center justify-between">
-        <a
-          href="/"
-          target="_blank"
-          class="flex items-center gap-2 text-xs font-semibold text-neutral-500 hover:text-apple-blue dark:hover:text-apple-blue-dark transition-colors"
+      <!-- Sidebar Bottom Info & Actions -->
+      <div class="pt-4 mt-6 border-t border-black/5 dark:border-white/10 space-y-2">
+        <button
+          type="button"
+          id="sidebar-change-password-btn"
+          class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:text-apple-blue dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-all duration-200"
         >
-          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 01-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+          <svg class="w-4 h-4 text-apple-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
           </svg>
-          <span>مشاهده وب‌سایت</span>
-        </a>
+          <span>تغییر کلمه عبور</span>
+        </button>
 
-        <div class="hidden md:block">
-          <ThemeToggle />
+        <div class="flex items-center justify-between pt-1">
+          <a
+            href="/"
+            target="_blank"
+            class="flex items-center gap-2 text-xs font-semibold text-neutral-500 hover:text-apple-blue dark:hover:text-apple-blue-dark transition-colors"
+          >
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 01-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            </svg>
+            <span>مشاهده وب‌سایت</span>
+          </a>
+
+          <div class="hidden md:block">
+            <ThemeToggle />
+          </div>
         </div>
       </div>
     </aside>
@@ -181,21 +201,35 @@ const sidebarLinks = [
           <span class="text-neutral-800 dark:text-neutral-200 font-semibold">{title}</span>
         </div>
 
-        <div class="flex items-center gap-3">
-          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+        <div class="flex items-center gap-2.5">
+          <span class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
             <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
             <span>سیستم آنلاین</span>
           </span>
 
+          <!-- Visible Change Password button in Header -->
+          <button
+            type="button"
+            id="admin-change-password-btn"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-neutral-700 dark:text-neutral-300 hover:text-apple-blue dark:hover:text-apple-blue hover:bg-apple-blue/10 dark:hover:bg-apple-blue/20 border border-black/10 dark:border-white/10 transition-colors shadow-sm"
+            title="تغییر کلمه عبور"
+          >
+            <svg class="w-4 h-4 text-apple-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+            </svg>
+            <span>تغییر کلمه عبور</span>
+          </button>
+
           <button
             type="button"
             id="admin-logout-btn"
-            class="p-2 rounded-xl text-neutral-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors"
+            class="inline-flex items-center gap-1.5 p-2 sm:px-3 sm:py-1.5 rounded-xl text-xs font-medium text-neutral-400 hover:text-rose-500 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/20 transition-colors"
             title="خروج از حساب"
           >
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
             </svg>
+            <span class="hidden sm:inline">خروج</span>
           </button>
         </div>
       </header>
@@ -206,19 +240,60 @@ const sidebarLinks = [
       </main>
     </div>
 
+    <!-- Change Password Modal -->
+    <div id="change-password-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm hidden" role="dialog" aria-modal="true">
+      <div class="w-full max-w-md rounded-3xl p-6 bg-white dark:bg-neutral-900 border border-black/5 dark:border-white/10 shadow-2xl">
+        <div class="flex items-center justify-between pb-4 border-b border-black/5 dark:border-white/10 mb-5">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-xl bg-apple-blue/10 text-apple-blue dark:bg-apple-blue-dark/20 dark:text-apple-blue-dark flex items-center justify-center">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+              </svg>
+            </div>
+            <h3 class="text-base font-bold text-neutral-900 dark:text-white">تغییر کلمه عبور مدیریت</h3>
+          </div>
+          <button type="button" id="close-change-password-btn" class="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <form id="change-password-form" class="space-y-4">
+          <div id="cp-error-alert" class="hidden p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs leading-relaxed"></div>
+          
+          <div>
+            <label class="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1.5">کلمه عبور فعلی</label>
+            <input type="password" id="current-password" required dir="ltr" placeholder="••••••••" class="w-full px-3.5 py-2.5 rounded-xl bg-neutral-50 dark:bg-neutral-800 border border-black/5 dark:border-white/10 text-sm font-mono focus:ring-2 focus:ring-apple-blue outline-none" />
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1.5">کلمه عبور جدید (حداقل ۸ کاراکتر شامل حروف و اعداد)</label>
+            <input type="password" id="new-password" required minlength="8" dir="ltr" placeholder="••••••••" class="w-full px-3.5 py-2.5 rounded-xl bg-neutral-50 dark:bg-neutral-800 border border-black/5 dark:border-white/10 text-sm font-mono focus:ring-2 focus:ring-apple-blue outline-none" />
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1.5">تکرار کلمه عبور جدید</label>
+            <input type="password" id="confirm-password" required minlength="8" dir="ltr" placeholder="••••••••" class="w-full px-3.5 py-2.5 rounded-xl bg-neutral-50 dark:bg-neutral-800 border border-black/5 dark:border-white/10 text-sm font-mono focus:ring-2 focus:ring-apple-blue outline-none" />
+          </div>
+
+          <div class="flex items-center justify-end gap-2 pt-2">
+            <button type="button" id="cancel-change-password-btn" class="px-4 py-2 rounded-xl text-xs font-semibold text-neutral-600 dark:text-neutral-400 hover:bg-black/5 dark:hover:bg-white/5">انصراف</button>
+            <button type="submit" id="submit-change-password-btn" class="px-5 py-2 rounded-xl bg-apple-blue hover:bg-blue-600 text-white text-xs font-bold transition-all shadow-md shadow-apple-blue/20">تغییر رمز</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <!-- Apple-styled UI Modal & Toast Notification System -->
     <UiModal />
 
     <script>
       import { authApi } from '../utils/api';
-      import { showConfirm } from '../utils/ui-dialog';
+      import { showConfirm, showToast } from '../utils/ui-dialog';
 
-      // Silent Token Refresh Mechanism (Every 4 minutes if Remember Me is active)
+      // Silent Token Refresh Mechanism (Every 4 minutes)
       function setupSilentRefresh() {
-        const rememberMe = localStorage.getItem('admin_remember_me') === 'true';
-        if (!rememberMe) return;
-
-        // Execute every 4 minutes (240,000 ms)
         setInterval(async () => {
           try {
             const res = await authApi.refresh();
@@ -235,6 +310,129 @@ const sidebarLinks = [
       }
 
       setupSilentRefresh();
+
+      // Listen for comment count updates to keep sidebar badge in sync reactively
+      window.addEventListener('comment-count-updated', (e: any) => {
+        const delta = e?.detail?.delta ?? -1;
+        const badge = document.getElementById('sidebar-comments-badge');
+        if (!badge) return;
+        const currentCount = parseInt(badge.textContent?.replace(/[^\d]/g, '') || '0', 10);
+        const newCount = Math.max(0, currentCount + delta);
+        if (newCount <= 0) {
+          badge.classList.add('hidden');
+          badge.textContent = '0';
+        } else {
+          badge.classList.remove('hidden');
+          badge.textContent = newCount.toLocaleString('fa-IR');
+        }
+      });
+
+      // Change Password Dialog Logic
+      const cpModal = document.getElementById('change-password-modal');
+      const headerCpBtn = document.getElementById('admin-change-password-btn');
+      const sidebarCpBtn = document.getElementById('sidebar-change-password-btn');
+      const closeCpBtn = document.getElementById('close-change-password-btn');
+      const cancelCpBtn = document.getElementById('cancel-change-password-btn');
+      const cpForm = document.getElementById('change-password-form') as HTMLFormElement | null;
+      const cpErrorAlert = document.getElementById('cp-error-alert');
+      const currentPwdInput = document.getElementById('current-password') as HTMLInputElement | null;
+      const newPwdInput = document.getElementById('new-password') as HTMLInputElement | null;
+      const confirmPwdInput = document.getElementById('confirm-password') as HTMLInputElement | null;
+      const submitCpBtn = document.getElementById('submit-change-password-btn') as HTMLButtonElement | null;
+
+      function openCpDialog() {
+        if (cpModal) cpModal.classList.remove('hidden');
+        if (cpErrorAlert) cpErrorAlert.classList.add('hidden');
+        if (cpForm) cpForm.reset();
+        currentPwdInput?.focus();
+      }
+
+      function closeCpDialog() {
+        if (cpModal) cpModal.classList.add('hidden');
+      }
+
+      headerCpBtn?.addEventListener('click', openCpDialog);
+      sidebarCpBtn?.addEventListener('click', openCpDialog);
+      closeCpBtn?.addEventListener('click', closeCpDialog);
+      cancelCpBtn?.addEventListener('click', closeCpDialog);
+
+      // Close modal on Escape key press or clicking outside
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && cpModal && !cpModal.classList.contains('hidden')) {
+          closeCpDialog();
+        }
+      });
+      cpModal?.addEventListener('click', (e) => {
+        if (e.target === cpModal) closeCpDialog();
+      });
+
+      cpForm?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const currentPassword = currentPwdInput?.value?.trim() || '';
+        const newPassword = newPwdInput?.value || '';
+        const confirmNewPassword = confirmPwdInput?.value || '';
+
+        if (!currentPassword || !newPassword) {
+          if (cpErrorAlert) {
+            cpErrorAlert.textContent = 'کلمه عبور فعلی و کلمه عبور جدید الزامی هستند.';
+            cpErrorAlert.classList.remove('hidden');
+          }
+          return;
+        }
+
+        if (newPassword.length < 8) {
+          if (cpErrorAlert) {
+            cpErrorAlert.textContent = 'کلمه عبور جدید باید حداقل ۸ کاراکتر باشد.';
+            cpErrorAlert.classList.remove('hidden');
+          }
+          return;
+        }
+
+        if (newPassword !== confirmNewPassword) {
+          if (cpErrorAlert) {
+            cpErrorAlert.textContent = 'کلمه عبور جدید با تکرار آن مطابقت ندارد.';
+            cpErrorAlert.classList.remove('hidden');
+          }
+          return;
+        }
+
+        if (submitCpBtn) {
+          submitCpBtn.disabled = true;
+          submitCpBtn.innerHTML = `
+            <span class="inline-flex items-center gap-1.5">
+              <svg class="animate-spin -ml-1 mr-1 h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span>در حال ثبت...</span>
+            </span>
+          `;
+        }
+
+        try {
+          const res = await authApi.changePassword({ currentPassword, newPassword, confirmNewPassword });
+          if (res.isSuccess) {
+            showToast('کلمه عبور با موفقیت به‌روزرسانی شد.', 'success');
+            if (cpForm) cpForm.reset();
+            closeCpDialog();
+          } else {
+            if (cpErrorAlert) {
+              cpErrorAlert.textContent = res.errorMessage || 'کلمه عبور فعلی نادرست است یا خطایی رخ داد.';
+              cpErrorAlert.classList.remove('hidden');
+            }
+          }
+        } catch (err: any) {
+          if (cpErrorAlert) {
+            cpErrorAlert.textContent = err?.message || 'خطا در برقراری ارتباط با سرور.';
+            cpErrorAlert.classList.remove('hidden');
+          }
+        } finally {
+          if (submitCpBtn) {
+            submitCpBtn.disabled = false;
+            submitCpBtn.textContent = 'تغییر رمز';
+          }
+        }
+      });
 
       document.getElementById('admin-logout-btn')?.addEventListener('click', async () => {
         const confirmed = await showConfirm({

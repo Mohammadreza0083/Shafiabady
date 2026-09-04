@@ -3,6 +3,7 @@ using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using ShafieiAbadi.Application.Interfaces;
 using ShafieiAbadi.Domain.Entities;
 
 namespace ShafieiAbadi.Infrastructure.Data;
@@ -15,31 +16,34 @@ public class DatabaseSeeder
     private readonly AppDbContext _context;
     private readonly IConfiguration _configuration;
     private readonly ILogger<DatabaseSeeder> _logger;
+    private readonly IPasswordHasher _passwordHasher;
 
     public DatabaseSeeder(
         AppDbContext context,
         IConfiguration configuration,
-        ILogger<DatabaseSeeder> logger)
+        ILogger<DatabaseSeeder> logger,
+        IPasswordHasher passwordHasher)
     {
         _context = context;
         _configuration = configuration;
         _logger = logger;
+        _passwordHasher = passwordHasher;
     }
 
     /// <summary>
     /// Executes the full database seeding workflow.
+    /// Schema creation and migrations are handled in Program.cs via MigrateAsync().
     /// </summary>
     public async Task SeedAsync()
     {
         try
         {
-            await _context.Database.EnsureCreatedAsync();
+            var adminSeeded = await SeedAdminUserAsync();
+            var (catCount, articleCount, bookCount, courseCount) = await SeedNonSensitiveEntitiesAsync();
 
-            await SeedAdminUserAsync();
-            await SeedNonSensitiveEntitiesAsync();
-
-            await _context.SaveChangesAsync();
-            _logger.LogInformation("Database seeding completed successfully.");
+            _logger.LogInformation(
+                "Database seeding completed successfully. Summary: {AdminCount} admin user, {CatCount} categories, {ArticleCount} articles, {BookCount} books, {CourseCount} courses.",
+                adminSeeded ? 1 : 0, catCount, articleCount, bookCount, courseCount);
         }
         catch (Exception ex)
         {
@@ -48,7 +52,7 @@ public class DatabaseSeeder
         }
     }
 
-    private async Task SeedAdminUserAsync()
+    private async Task<bool> SeedAdminUserAsync()
     {
         // 1. Read Admin Credentials from Configuration
         var adminUsername = _configuration["AdminSeeding:Username"] ?? "admin";
@@ -66,17 +70,27 @@ public class DatabaseSeeder
                 Username = adminUsername,
                 Email = adminEmail,
                 FullName = fullName,
-                PasswordHash = HashPassword(rawPassword),
+                PasswordHash = _passwordHasher.HashPassword(rawPassword),
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow
             };
 
             await _context.AdminUsers.AddAsync(adminUser);
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Successfully seeded default administrator user into SQL Server.");
+            return true;
         }
+
+        return false;
     }
 
-    private async Task SeedNonSensitiveEntitiesAsync()
+    private async Task<(int catCount, int articleCount, int bookCount, int courseCount)> SeedNonSensitiveEntitiesAsync()
     {
+        int seededCatCount = 0;
+        int seededArticleCount = 0;
+        int seededBookCount = 0;
+        int seededCourseCount = 0;
+
         // 2. Seed Categories if empty
         Category catArch;
         Category catAI;
@@ -85,7 +99,7 @@ public class DatabaseSeeder
 
         if (!await _context.Categories.AnyAsync())
         {
-            _logger.LogInformation("Seeding initial categories...");
+            _logger.LogInformation("Seeding initial categories into SQL Server...");
 
             catArch = new Category
             {
@@ -128,19 +142,22 @@ public class DatabaseSeeder
             };
 
             await _context.Categories.AddRangeAsync(catArch, catAI, catDistributed, catWeb);
+            await _context.SaveChangesAsync();
+            seededCatCount = 4;
+            _logger.LogInformation("Successfully seeded {CatCount} categories into SQL Server.", seededCatCount);
         }
         else
         {
-            catArch = await _context.Categories.FirstAsync();
-            catAI = catArch;
-            catDistributed = catArch;
-            catWeb = catArch;
+            catArch = await _context.Categories.FirstOrDefaultAsync(c => c.Slug == "software-architecture") ?? await _context.Categories.FirstAsync();
+            catAI = await _context.Categories.FirstOrDefaultAsync(c => c.Slug == "ai-machine-learning") ?? catArch;
+            catDistributed = await _context.Categories.FirstOrDefaultAsync(c => c.Slug == "distributed-cloud-systems") ?? catArch;
+            catWeb = await _context.Categories.FirstOrDefaultAsync(c => c.Slug == "modern-web-development") ?? catArch;
         }
 
         // 3. Seed Articles if empty (At least 10 articles for infinite scrolling testing)
         if (!await _context.Articles.AnyAsync())
         {
-            _logger.LogInformation("Seeding 10 initial articles for infinite scroll testing...");
+            _logger.LogInformation("Seeding initial articles into SQL Server...");
 
             var articles = new List<Article>
             {
@@ -307,12 +324,16 @@ public class DatabaseSeeder
             };
 
             await _context.Articles.AddRangeAsync(articles);
+            await _context.SaveChangesAsync();
+            seededArticleCount = articles.Count;
+            _logger.LogInformation("Database seeded successfully with {Count} articles.", seededArticleCount);
+            _logger.LogInformation("Successfully seeded {Count} articles into SQL Server.", seededArticleCount);
         }
 
         // 4. Seed Books if empty (At least 3 books)
         if (!await _context.Books.AnyAsync())
         {
-            _logger.LogInformation("Seeding 3 academic books...");
+            _logger.LogInformation("Seeding initial academic books into SQL Server...");
 
             var books = new List<Book>
             {
@@ -373,6 +394,9 @@ public class DatabaseSeeder
             };
 
             await _context.Books.AddRangeAsync(books);
+            await _context.SaveChangesAsync();
+            seededBookCount = books.Count;
+            _logger.LogInformation("Successfully seeded {Count} books into SQL Server.", seededBookCount);
         }
         else
         {
@@ -387,7 +411,7 @@ public class DatabaseSeeder
         // 5. Seed Courses if empty (At least 3 courses with Aparat videos)
         if (!await _context.Courses.AnyAsync())
         {
-            _logger.LogInformation("Seeding 3 comprehensive video training courses with Aparat previews...");
+            _logger.LogInformation("Seeding initial video training courses into SQL Server...");
 
             var courses = new List<Course>
             {
@@ -448,12 +472,11 @@ public class DatabaseSeeder
             };
 
             await _context.Courses.AddRangeAsync(courses);
+            await _context.SaveChangesAsync();
+            seededCourseCount = courses.Count;
+            _logger.LogInformation("Successfully seeded {Count} courses into SQL Server.", seededCourseCount);
         }
-    }
 
-    private static string HashPassword(string password)
-    {
-        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(password));
-        return Convert.ToBase64String(bytes);
+        return (seededCatCount, seededArticleCount, seededBookCount, seededCourseCount);
     }
 }

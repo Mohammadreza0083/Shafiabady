@@ -38,12 +38,39 @@ public class DatabaseSeeder
     {
         try
         {
-            var adminSeeded = await SeedAdminUserAsync();
-            var (catCount, articleCount, bookCount, courseCount) = await SeedNonSensitiveEntitiesAsync();
+            if (_context.Database.IsRelational())
+            {
+                var strategy = _context.Database.CreateExecutionStrategy();
+                await strategy.ExecuteAsync(async () =>
+                {
+                    await using var transaction = await _context.Database.BeginTransactionAsync();
+                    try
+                    {
+                        var adminSeeded = await SeedAdminUserAsync();
+                        var (catCount, articleCount, bookCount, courseCount) = await SeedNonSensitiveEntitiesAsync();
+                        await transaction.CommitAsync();
 
-            _logger.LogInformation(
-                "Database seeding completed successfully. Summary: {AdminCount} admin user, {CatCount} categories, {ArticleCount} articles, {BookCount} books, {CourseCount} courses.",
-                adminSeeded ? 1 : 0, catCount, articleCount, bookCount, courseCount);
+                        _logger.LogInformation(
+                            "Database seeding completed successfully. Summary: {AdminCount} admin user, {CatCount} categories, {ArticleCount} articles, {BookCount} books, {CourseCount} courses.",
+                            adminSeeded ? 1 : 0, catCount, articleCount, bookCount, courseCount);
+                    }
+                    catch (Exception ex)
+                    {
+                        await transaction.RollbackAsync();
+                        _logger.LogError(ex, "Transaction rolled back due to error during database seeding.");
+                        throw;
+                    }
+                });
+            }
+            else
+            {
+                var adminSeeded = await SeedAdminUserAsync();
+                var (catCount, articleCount, bookCount, courseCount) = await SeedNonSensitiveEntitiesAsync();
+
+                _logger.LogInformation(
+                    "Database seeding completed successfully. Summary: {AdminCount} admin user, {CatCount} categories, {ArticleCount} articles, {BookCount} books, {CourseCount} courses.",
+                    adminSeeded ? 1 : 0, catCount, articleCount, bookCount, courseCount);
+            }
         }
         catch (Exception ex)
         {

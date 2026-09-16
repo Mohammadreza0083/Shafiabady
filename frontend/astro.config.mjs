@@ -9,9 +9,8 @@ const isVercel = process.env.VERCEL === '1' || Boolean(process.env.VERCEL);
 // https://astro.build/config
 export default defineConfig({
   site: 'https://shafieiabadi.ir',
-  // In Astro 5, output: "static" replaces "hybrid" — routes are pre-rendered by default,
-  // while routes with `export const prerender = false;` are on-demand SSR.
-  output: 'static',
+  // In Astro 5, output: 'server' enables on-demand SSR by default for dynamic catalog & admin routes
+  output: 'server',
   adapter: isVercel
     ? vercel({
         webAnalytics: { enabled: false },

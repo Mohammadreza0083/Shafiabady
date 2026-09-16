@@ -6,6 +6,8 @@
     "dev": "npm --prefix frontend run dev",
     "build": "npm --prefix frontend run build",
     "preview": "npm --prefix frontend run preview",
-    "bot": "uvicorn main:app --app-dir telegram-bot --reload --port 8000"
+    "bot": "uvicorn main:app --app-dir telegram-bot --reload --port 8000",
+    "test:load": "k6 run tests/k6/load-test.js",
+    "test:load:docker": "docker run --rm -i --network=shafieiabadi-net grafana/k6 run - <tests/k6/load-test.js"
   }
 }

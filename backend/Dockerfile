@@ -28,6 +28,10 @@ RUN dotnet publish ShafieiAbadi.Api.csproj -c Release -o /app/publish /p:UseAppH
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS runtime
 WORKDIR /app
 
+# Install curl for container health check
+USER root
+RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
+
 # Configure runtime environment variables
 ENV ASPNETCORE_URLS=http://+:5000 \
     PORT=5000 \

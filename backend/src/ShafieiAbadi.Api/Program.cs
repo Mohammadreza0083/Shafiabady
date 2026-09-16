@@ -1,7 +1,9 @@
 using System.Reflection;
 using System.Text;
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -95,14 +97,43 @@ builder.Services.AddAuthorization();
 // 4. Add Controllers
 builder.Services.AddControllers();
 
-// 5. Configure CORS Policy
+// 5. Configure Built-in ASP.NET Core Rate Limiting
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    // Fixed-window rate limiter for sensitive authentication endpoints (5 requests per 1 minute)
+    options.AddFixedWindowLimiter("auth-rate-limit", limiterOptions =>
+    {
+        limiterOptions.PermitLimit = 5;
+        limiterOptions.Window = TimeSpan.FromMinutes(1);
+        limiterOptions.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        limiterOptions.QueueLimit = 0;
+    });
+
+    // Sliding-window limiter for general API traffic
+    options.AddSlidingWindowLimiter("global-sliding", limiterOptions =>
+    {
+        limiterOptions.PermitLimit = 100;
+        limiterOptions.Window = TimeSpan.FromMinutes(1);
+        limiterOptions.SegmentsPerWindow = 4;
+        limiterOptions.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        limiterOptions.QueueLimit = 0;
+    });
+});
+
+// 6. Configure Production-Hardened CORS Policy
 var allowedOrigins = builder.Configuration.GetSection("AllowedCorsOrigins").Get<string[]>() ?? new[]
 {
+    "https://shafieiabadi.ir",
+    "https://www.shafieiabadi.ir",
     "http://localhost:4500",
     "http://localhost:4321",
     "http://localhost:3000",
     "http://127.0.0.1:4500",
-    "http://127.0.0.1:4321"
+    "http://127.0.0.1:4321",
+    "http://localhost:80",
+    "http://127.0.0.1:80"
 };
 
 builder.Services.AddCors(options =>
@@ -110,6 +141,22 @@ builder.Services.AddCors(options =>
     options.AddPolicy("DefaultCorsPolicy", policy =>
     {
         policy.WithOrigins(allowedOrigins)
+            .SetIsOriginAllowed(origin =>
+            {
+                if (string.IsNullOrWhiteSpace(origin)) return false;
+                if (!Uri.TryCreate(origin, UriKind.Absolute, out var uri)) return false;
+
+                // Local development origins
+                if (uri.Host == "localhost" || uri.Host == "127.0.0.1") return true;
+
+                // Production domain & subdomains
+                if (uri.Host == "shafieiabadi.ir" || uri.Host.EndsWith(".shafieiabadi.ir")) return true;
+
+                // Vercel preview environments
+                if (uri.Host.EndsWith(".vercel.app")) return true;
+
+                return false;
+            })
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
@@ -201,8 +248,9 @@ if (app.Environment.IsDevelopment() || true)
     });
 }
 
-// 11. CORS, Authentication, and Authorization Middleware Pipeline
+// 11. CORS, Rate Limiting, Authentication, and Authorization Middleware Pipeline
 app.UseCors("DefaultCorsPolicy");
+app.UseRateLimiter();
 
 app.UseAuthentication();
 app.UseAuthorization();
@@ -212,7 +260,7 @@ app.MapHealthChecks("/health");
 app.MapMetrics("/metrics");
 app.MapControllers();
 
-// 11. Database Migration & Seed Initial Database Records
+// 13. Database Migration & Seed Initial Database Records with Resilient Retry Loop
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -220,15 +268,34 @@ using (var scope = app.Services.CreateScope())
 
     if (dbContext.Database.IsRelational())
     {
-        try
+        const int maxRetryAttempts = 5;
+        var retryDelay = TimeSpan.FromSeconds(3);
+        var migrationSucceeded = false;
+
+        for (var attempt = 1; attempt <= maxRetryAttempts; attempt++)
         {
-            Log.Information("Applying pending SQL Server database migrations...");
-            await dbContext.Database.MigrateAsync();
-            Log.Information("SQL Server database migrations applied successfully.");
+            try
+            {
+                Log.Information("Applying pending SQL Server database migrations (Attempt {Attempt}/{MaxAttempts})...", attempt, maxRetryAttempts);
+                await dbContext.Database.MigrateAsync();
+                Log.Information("SQL Server database migrations applied successfully.");
+                migrationSucceeded = true;
+                break;
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "Failed to connect to SQL Server or apply migrations on attempt {Attempt}/{MaxAttempts}. Retrying in {Delay}s...", attempt, maxRetryAttempts, retryDelay.TotalSeconds);
+                if (attempt < maxRetryAttempts)
+                {
+                    await Task.Delay(retryDelay);
+                }
+            }
         }
-        catch (Exception ex)
+
+        if (!migrationSucceeded)
         {
-            Log.Error(ex, "Failed to connect to SQL Server or apply migrations. Ensure SQL Server is running and reachable on port 1433 (`docker compose up -d sqlserver`) or set 'UseInMemoryDatabase': true in appsettings.");
+            Log.Fatal("Critical failure: Could not apply SQL Server migrations after {MaxAttempts} attempts. Halting startup.", maxRetryAttempts);
+            throw new InvalidOperationException("Failed to connect to SQL Server and apply migrations. Database is unreachable.");
         }
     }
 
@@ -242,6 +309,7 @@ using (var scope = app.Services.CreateScope())
     catch (Exception ex)
     {
         Log.Error(ex, "An error occurred while executing database seeder.");
+        throw;
     }
 }
 

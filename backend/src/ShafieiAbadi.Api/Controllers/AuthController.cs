@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using ShafieiAbadi.Application.Common;
 using ShafieiAbadi.Application.DTOs;
 using ShafieiAbadi.Application.Interfaces;
@@ -23,11 +24,13 @@ public class AuthController : BaseApiController
 
     /// <summary>
     /// Authenticates an administrator, issues secure HttpOnly JWT (5 min) and Refresh Token (1 or 30 days) cookies.
+    /// Protected against brute-force attacks via fixed-window rate limiting.
     /// </summary>
     /// <param name="request">Administrator credentials and RememberMe preference.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>Standardized result containing administrator profile metadata.</returns>
     [HttpPost("login")]
+    [EnableRateLimiting("auth-rate-limit")]
     [ProducesResponseType(typeof(Result<AdminUserDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Result<AdminUserDto>), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Login([FromBody] LoginRequestDto request, CancellationToken ct)
@@ -194,6 +197,7 @@ public class AuthController : BaseApiController
     /// <returns>Standardized result.</returns>
     [HttpPost("change-password")]
     [Authorize]
+    [EnableRateLimiting("auth-rate-limit")]
     [ProducesResponseType(typeof(Result), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Result), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(Result), StatusCodes.Status401Unauthorized)]

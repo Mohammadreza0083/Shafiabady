@@ -53,41 +53,44 @@ export function getApiBaseUrl(): string {
     if ((window as any).__API_BASE_URL__) {
       return normalizeApiUrl((window as any).__API_BASE_URL__);
     }
+    // If accessed through reverse proxy on default ports (e.g. port 80 / 443 / domain)
+    if (window.location.port === '80' || window.location.port === '443' || window.location.port === '') {
+      return `${window.location.origin}/api`;
+    }
     const publicUrl = typeof import.meta !== 'undefined' && import.meta.env?.PUBLIC_API_URL;
     if (publicUrl) {
       return normalizeApiUrl(publicUrl);
     }
-    // If accessed through reverse proxy on default ports (e.g. port 80 / 443)
-    if (window.location.port === '80' || window.location.port === '443' || window.location.port === '') {
-      return `${window.location.origin}/api`;
-    }
     return 'http://localhost:5000/api';
   }
 
-  // Server-side execution (Astro SSR / Node.js)
+  // Server-side execution (Astro SSR / Node.js runtime)
   const ssrUrl =
-    (typeof import.meta !== 'undefined' && import.meta.env && (import.meta.env.SSR_API_URL || import.meta.env.INTERNAL_API_URL)) ||
-    (typeof process !== 'undefined' && (process.env.SSR_API_URL || process.env.INTERNAL_API_URL || process.env.BACKEND_INTERNAL_URL));
+    (typeof process !== 'undefined' && (process.env.INTERNAL_API_URL || process.env.SSR_API_URL || process.env.BACKEND_INTERNAL_URL)) ||
+    (typeof import.meta !== 'undefined' && import.meta.env && (import.meta.env.SSR_API_URL || import.meta.env.INTERNAL_API_URL));
 
   if (ssrUrl) {
     return normalizeApiUrl(ssrUrl);
   }
 
-  const isDocker = typeof process !== 'undefined' && (
+  // Detect container environment (Docker / Docker Compose / Cloud Run)
+  const isContainer = typeof process !== 'undefined' && (
     process.env.IS_DOCKER === 'true' ||
+    process.env.DOCKER === 'true' ||
     process.env.CONTAINER === 'true' ||
-    Boolean(process.env.HOSTNAME && process.env.HOSTNAME.length === 12)
+    Boolean(process.env.HOSTNAME && process.env.HOSTNAME.startsWith('shafieiabadi')) ||
+    (process.env.NODE_ENV === 'production' && !process.env.VERCEL)
   );
+
+  if (isContainer) {
+    return 'http://backend:5000/api';
+  }
 
   const publicUrl =
     (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.PUBLIC_API_URL) ||
     (typeof process !== 'undefined' && process.env.PUBLIC_API_URL);
 
-  if (isDocker && (!publicUrl || publicUrl.includes('localhost') || publicUrl.includes('127.0.0.1'))) {
-    return 'http://backend:5000/api';
-  }
-
-  if (publicUrl) {
+  if (publicUrl && !publicUrl.includes('localhost') && !publicUrl.includes('127.0.0.1')) {
     return normalizeApiUrl(publicUrl);
   }
 

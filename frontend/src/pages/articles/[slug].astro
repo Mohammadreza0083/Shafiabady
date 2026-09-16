@@ -4,6 +4,7 @@ export const prerender = false;
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import CommentList from '../../components/comments/CommentList.astro';
 import { articlesApi, commentsApi } from '../../utils/api';
+import { sanitizeHtml } from '../../utils/sanitize';
 import { EntityType } from '../../types';
 import { mockArticles, mockCommentsTree } from '../../data/mockData';
 
@@ -198,7 +199,7 @@ const articleJsonLd = {
 
     <!-- Main Body Content -->
     <div class="prose prose-lg dark:prose-invert max-w-none text-neutral-800 dark:text-neutral-200 leading-loose space-y-6">
-      <div set:html={article.content} />
+      <div set:html={sanitizeHtml(article.content)} />
     </div>
 
     <!-- Tags -->

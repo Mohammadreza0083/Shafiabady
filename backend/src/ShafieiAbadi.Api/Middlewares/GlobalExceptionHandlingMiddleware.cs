@@ -35,21 +35,37 @@ public class GlobalExceptionHandlingMiddleware
 
     private Task HandleExceptionAsync(HttpContext context, Exception exception)
     {
-        context.Response.ContentType = "application/json";
+        context.Response.ContentType = "application/problem+json";
         context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+
+        var traceId = System.Diagnostics.Activity.Current?.Id ?? context.TraceIdentifier;
 
         var message = _env.IsDevelopment()
             ? $"Internal Server Error: {exception.Message}"
             : "An unexpected error occurred on the server. Please contact the administrator.";
 
-        var response = Result.Failure(message, (int)HttpStatusCode.InternalServerError);
+        var problemDetails = new
+        {
+            type = "https://datatracker.ietf.org/doc/html/rfc7807",
+            title = _env.IsDevelopment() ? $"Internal Server Error: {exception.GetType().Name}" : "Internal Server Error",
+            status = StatusCodes.Status500InternalServerError,
+            detail = message,
+            instance = context.Request.Path.Value,
+            traceId,
+            // Result envelope compatibility for frontend apiFetch and unit tests
+            isSuccess = false,
+            statusCode = StatusCodes.Status500InternalServerError,
+            errorMessage = message,
+            validationErrors = Array.Empty<string>()
+        };
 
         var jsonOptions = new JsonSerializerOptions
         {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            WriteIndented = _env.IsDevelopment()
         };
 
-        var json = JsonSerializer.Serialize(response, jsonOptions);
+        var json = JsonSerializer.Serialize(problemDetails, jsonOptions);
         return context.Response.WriteAsync(json);
     }
 }

@@ -250,6 +250,9 @@ try {
 <script>
   import { booksApi } from '../../../utils/api';
   import { showToast, showAlert } from '../../../utils/ui-dialog';
+  import { enhanceImageUrlInput } from '../../../utils/image-upload';
+
+  enhanceImageUrlInput(document.getElementById('coverImageUrl') as HTMLInputElement | null);
 
   const saveBtn = document.getElementById('btn-save-book');
 
@@ -280,7 +283,7 @@ try {
         publisher,
         publishedYear,
         pagesCount,
-        coverImageUrl,
+        thumbnailUrl: coverImageUrl,
         buyLink: buyLink || null,
         downloadLink: downloadLink || null,
         description,

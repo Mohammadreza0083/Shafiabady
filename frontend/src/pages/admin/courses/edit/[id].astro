@@ -298,6 +298,9 @@ if (!course) {
 <script>
   import { coursesApi } from '../../../../utils/api';
   import { showToast, showAlert } from '../../../../utils/ui-dialog';
+  import { enhanceImageUrlInput } from '../../../../utils/image-upload';
+
+  enhanceImageUrlInput(document.getElementById('thumbnailUrl') as HTMLInputElement | null);
 
   const saveBtn = document.getElementById('btn-save-course');
   const courseId = saveBtn?.getAttribute('data-course-id');

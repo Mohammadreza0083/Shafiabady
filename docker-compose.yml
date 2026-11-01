@@ -44,6 +44,8 @@ services:
       Loki__Uri: "http://loki:3100"
     ports:
       - "5000:5000"
+    volumes:
+      - uploads_data:/app/wwwroot/uploads
     depends_on:
       sqlserver:
         condition: service_healthy
@@ -233,6 +235,8 @@ services:
 # ------------------------------------------------------------------------------
 volumes:
   sqlserver_data:
+    driver: local
+  uploads_data:
     driver: local
   prometheus_data:
     driver: local

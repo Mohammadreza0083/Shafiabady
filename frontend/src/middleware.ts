@@ -33,7 +33,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
   response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
   response.headers.set(
     'Content-Security-Policy',
-    "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self' data: https:; connect-src 'self' http://localhost:* ws://localhost:* https://shafieiabadi.ir https://*.shafieiabadi.ir; frame-ancestors 'none';"
+    "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob: http://localhost:*; font-src 'self' data: https:; connect-src 'self' http://localhost:* ws://localhost:* https://shafieiabadi.ir https://*.shafieiabadi.ir; frame-ancestors 'none';"
   );
 
   return response;

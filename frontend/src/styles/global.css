@@ -87,6 +87,19 @@
 }
 
 @layer components {
+  /* Rich-text content (admin editor + published article body). Restores the element styles Tailwind's preflight resets. */
+  .prose h1 { @apply text-3xl font-extrabold mt-8 mb-4 leading-snug text-neutral-950 dark:text-white; }
+  .prose h2 { @apply text-2xl font-bold mt-7 mb-3 leading-snug text-neutral-950 dark:text-white; }
+  .prose h3 { @apply text-xl font-bold mt-6 mb-3 leading-snug text-neutral-900 dark:text-neutral-100; }
+  .prose p { @apply my-3; }
+  .prose a { @apply text-apple-blue underline underline-offset-4; }
+  .prose ul { @apply list-disc pr-6 my-3 space-y-1; }
+  .prose ol { @apply list-decimal pr-6 my-3 space-y-1; }
+  .prose blockquote { @apply border-r-4 border-apple-blue/60 pr-4 my-4 italic text-neutral-600 dark:text-neutral-400; }
+  .prose pre { @apply bg-neutral-900 text-neutral-100 rounded-2xl p-4 my-4 overflow-x-auto text-sm font-mono; direction: ltr; text-align: left; }
+  .prose img { @apply rounded-2xl my-4 max-w-full h-auto mx-auto block; }
+  .prose > :first-child, .prose > div > :first-child { @apply mt-0; }
+
   /* Apple Frosted Glass */
   .apple-glass {
     background-color: rgba(255, 255, 255, 0.72);

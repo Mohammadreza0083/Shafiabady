@@ -255,9 +255,8 @@ app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// 12. Health Check, Prometheus Metrics, and API Controllers Endpoints
+// 12. Health Check and API Controllers Endpoints
 app.MapHealthChecks("/health");
-app.MapMetrics("/metrics");
 app.MapControllers();
 
 // 13. Database Migration & Seed Initial Database Records with Resilient Retry Loop
@@ -313,9 +312,14 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
+// 14. Serve Prometheus Metrics on a separate internal port (not published outside the Docker network)
+var metricsPort = builder.Configuration.GetValue("Metrics:Port", 9091);
+using var metricServer = new KestrelMetricServer(port: metricsPort);
+metricServer.Start();
+
 try
 {
-    Log.Information("Starting ShafieiAbadi.Api Web Host on port {Port}...", builder.Configuration["PORT"] ?? "5000");
+    Log.Information("Starting ShafieiAbadi.Api Web Host on port {Port} (metrics on internal port {MetricsPort})...", builder.Configuration["PORT"] ?? "5000", metricsPort);
     app.Run();
 }
 catch (Exception ex)

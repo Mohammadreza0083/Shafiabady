@@ -4,11 +4,11 @@ global:
   scrape_timeout: 10s
 
 scrape_configs:
-  # Scrape .NET 9 API metrics
+  # Scrape .NET 9 API metrics (internal-only metrics port, not published to the host)
   - job_name: 'shafieiabadi-api'
     metrics_path: '/metrics'
     static_configs:
-      - targets: ['backend:5000']
+      - targets: ['backend:9091']
         labels:
           application: 'ShafieiAbadi.Api'
           environment: 'production'

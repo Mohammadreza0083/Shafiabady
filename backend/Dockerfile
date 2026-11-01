@@ -42,8 +42,8 @@ ENV ASPNETCORE_URLS=http://+:5000 \
 # Copy published binaries from build stage
 COPY --from=build /app/publish .
 
-# Expose HTTP port 5000
-EXPOSE 5000
+# Expose HTTP port 5000 and internal Prometheus metrics port 9091 (do not publish 9091 to the host)
+EXPOSE 5000 9091
 
 # Enforce security best practice: run as non-root user
 USER $APP_UID

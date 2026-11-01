@@ -277,6 +277,9 @@ if (!book) {
 <script>
   import { booksApi } from '../../../../utils/api';
   import { showToast, showAlert } from '../../../../utils/ui-dialog';
+  import { enhanceImageUrlInput } from '../../../../utils/image-upload';
+
+  enhanceImageUrlInput(document.getElementById('thumbnailUrl') as HTMLInputElement | null);
 
   const saveBtn = document.getElementById('btn-save-book');
   const bookId = saveBtn?.getAttribute('data-book-id');

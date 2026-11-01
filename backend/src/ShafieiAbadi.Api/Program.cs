@@ -231,6 +231,20 @@ app.UseForwardedHeaders();
 // 8. Global Exception Handling Middleware
 app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 
+// 8.1 Serve admin-uploaded images (covers, thumbnails, inline content images) from wwwroot/uploads
+var uploadsRoot = Path.Combine(app.Environment.WebRootPath ?? Path.Combine(app.Environment.ContentRootPath, "wwwroot"), "uploads");
+Directory.CreateDirectory(uploadsRoot);
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(uploadsRoot),
+    RequestPath = ShafieiAbadi.Api.Controllers.UploadsController.PublicPathPrefix,
+    OnPrepareResponse = ctx =>
+    {
+        ctx.Context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+        ctx.Context.Response.Headers["Cache-Control"] = "public, max-age=31536000, immutable";
+    }
+});
+
 // 9. Serilog HTTP Request Logging & Prometheus Metrics
 app.UseSerilogRequestLogging();
 app.UseRouting();

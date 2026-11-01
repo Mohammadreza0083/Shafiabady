@@ -2,6 +2,7 @@
 export const prerender = false;
 
 import AdminLayout from '../../../layouts/AdminLayout.astro';
+import RichTextToolbar from '../../../components/RichTextToolbar.astro';
 import { categoriesApi } from '../../../utils/api';
 import type { CategoryDto } from '../../../types';
 
@@ -199,21 +200,7 @@ try {
           </span>
         </div>
 
-        <!-- Custom Quick Action Toolbar -->
-        <div class="flex flex-wrap items-center gap-1.5 p-2 bg-neutral-50 dark:bg-neutral-800 rounded-2xl border border-black/5 dark:border-white/10 text-neutral-700 dark:text-neutral-300 text-xs">
-          <button type="button" class="toolbar-btn px-2.5 py-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 font-bold" data-command="bold">B</button>
-          <button type="button" class="toolbar-btn px-2.5 py-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 italic" data-command="italic">I</button>
-          <button type="button" class="toolbar-btn px-2.5 py-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 underline" data-command="underline">U</button>
-          <div class="w-[1px] h-4 bg-neutral-300 dark:bg-neutral-700 mx-1"></div>
-          <button type="button" class="toolbar-btn px-2.5 py-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/10" data-command="formatBlock" data-val="H2">H2</button>
-          <button type="button" class="toolbar-btn px-2.5 py-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/10" data-command="formatBlock" data-val="H3">H3</button>
-          <div class="w-[1px] h-4 bg-neutral-300 dark:bg-neutral-700 mx-1"></div>
-          <button type="button" class="toolbar-btn px-2.5 py-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/10" data-command="insertUnorderedList">• لیست</button>
-          <button type="button" class="toolbar-btn px-2.5 py-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/10" data-command="insertOrderedList">۱. شماره‌دار</button>
-          <div class="w-[1px] h-4 bg-neutral-300 dark:bg-neutral-700 mx-1"></div>
-          <button type="button" class="toolbar-btn px-2.5 py-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 font-mono" data-command="formatBlock" data-val="PRE">&lt;/&gt; کد</button>
-          <button type="button" class="toolbar-btn px-2.5 py-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/10" id="btn-insert-link">🔗 درج لینک</button>
-        </div>
+        <RichTextToolbar />
 
         <!-- Editable WYSIWYG Content Area -->
         <div
@@ -233,27 +220,15 @@ try {
 <script>
   import { articlesApi } from '../../../utils/api';
   import { showToast, showAlert } from '../../../utils/ui-dialog';
+  import { enhanceImageUrlInput } from '../../../utils/image-upload';
+  import { initRichEditor } from '../../../utils/rich-editor';
+
+  enhanceImageUrlInput(document.getElementById('thumbnailUrl') as HTMLInputElement | null);
 
   const editor = document.getElementById('editor-content');
   const publishBtn = document.getElementById('btn-publish');
 
-  document.querySelectorAll('.toolbar-btn').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const command = btn.getAttribute('data-command');
-      const val = btn.getAttribute('data-val') || '';
-      if (command) {
-        document.execCommand(command, false, val);
-        editor?.focus();
-      }
-    });
-  });
-
-  document.getElementById('btn-insert-link')?.addEventListener('click', () => {
-    const url = prompt('آدرس اینترنتی لینک را وارد کنید (https://...):');
-    if (url) {
-      document.execCommand('createLink', false, url);
-    }
-  });
+  initRichEditor(editor);
 
   publishBtn?.addEventListener('click', async () => {
     const titleInput = document.getElementById('title') as HTMLInputElement;

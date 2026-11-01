@@ -1,0 +1,33 @@
+---
+// Formatting toolbar for the admin rich-text editor. Behaviour is wired up by initRichEditor() in utils/rich-editor.ts.
+const btn = 'toolbar-btn px-2.5 py-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/10';
+const divider = 'w-[1px] h-4 bg-neutral-300 dark:bg-neutral-700 mx-1';
+---
+
+<div
+  id="editor-toolbar"
+  class="sticky top-16 z-10 flex flex-wrap items-center gap-1.5 p-2 bg-neutral-50/95 dark:bg-neutral-800/95 backdrop-blur rounded-2xl border border-black/5 dark:border-white/10 text-neutral-700 dark:text-neutral-300 text-xs"
+>
+  <button type="button" class={`${btn} font-bold`} data-command="bold" title="پررنگ">B</button>
+  <button type="button" class={`${btn} italic`} data-command="italic" title="مورب">I</button>
+  <button type="button" class={`${btn} underline`} data-command="underline" title="زیرخط">U</button>
+  <div class={divider}></div>
+  <button type="button" class={`${btn} font-extrabold`} data-command="formatBlock" data-val="H1" title="عنوان ۱">H1</button>
+  <button type="button" class={`${btn} font-bold`} data-command="formatBlock" data-val="H2" title="عنوان ۲">H2</button>
+  <button type="button" class={`${btn} font-semibold`} data-command="formatBlock" data-val="H3" title="عنوان ۳">H3</button>
+  <button type="button" class={btn} data-command="formatBlock" data-val="P" title="متن معمولی">¶ متن</button>
+  <button type="button" class={btn} data-command="formatBlock" data-val="BLOCKQUOTE" title="نقل قول">❝ نقل قول</button>
+  <div class={divider}></div>
+  <button type="button" class={btn} data-command="insertUnorderedList">• لیست</button>
+  <button type="button" class={btn} data-command="insertOrderedList">۱. شماره‌دار</button>
+  <div class={divider}></div>
+  <button type="button" class={`${btn} font-mono`} data-command="formatBlock" data-val="PRE">&lt;/&gt; کد</button>
+  <button type="button" class={btn} id="btn-insert-link">🔗 درج لینک</button>
+  <button type="button" class={btn} id="btn-insert-image" title="آپلود یا انتخاب تصویر و درج در محل نشانگر">🖼️ درج تصویر</button>
+  <div class={divider}></div>
+  <button type="button" class={btn} data-command="undo" title="واگرد">↶</button>
+  <button type="button" class={btn} data-command="redo" title="ازنو">↷</button>
+</div>
+<p class="text-[11px] text-neutral-400">
+  می‌توانید تصویر را در هر جای متن با دکمه «درج تصویر»، کپی/پیست یا کشیدن و رها کردن فایل قرار دهید.
+</p>

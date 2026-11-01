@@ -42,6 +42,9 @@ ENV ASPNETCORE_URLS=http://+:5000 \
 # Copy published binaries from build stage
 COPY --from=build /app/publish .
 
+# Writable directory for admin-uploaded images (mounted as a persistent volume in docker-compose)
+RUN mkdir -p /app/wwwroot/uploads && chown -R $APP_UID /app/wwwroot
+
 # Expose HTTP port 5000 and internal Prometheus metrics port 9091 (do not publish 9091 to the host)
 EXPOSE 5000 9091
 

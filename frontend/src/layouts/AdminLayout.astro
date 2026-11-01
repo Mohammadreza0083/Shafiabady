@@ -97,8 +97,14 @@ const sidebarLinks = [
   </head>
   <body class="bg-neutral-100 dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 font-sans antialiased min-h-screen flex flex-col md:flex-row">
     
-    <!-- Sidebar -->
-    <aside class="w-full md:w-64 lg:w-72 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-2xl border-b md:border-b-0 md:border-l border-black/5 dark:border-white/10 flex-shrink-0 flex flex-col justify-between p-4 lg:p-6 sticky top-0 md:h-screen z-30">
+    <!-- Mobile Drawer Backdrop -->
+    <div id="admin-sidebar-backdrop" class="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm hidden md:hidden" aria-hidden="true"></div>
+
+    <!-- Sidebar (off-canvas drawer on mobile, static column on md+) -->
+    <aside
+      id="admin-sidebar"
+      class="fixed md:sticky top-0 bottom-0 right-0 md:bottom-auto w-72 max-w-[85vw] md:max-w-none md:w-64 lg:w-72 h-full md:h-screen overflow-y-auto translate-x-full md:translate-x-0 transition-transform duration-300 ease-out bg-white/95 md:bg-white/80 dark:bg-neutral-900/95 md:dark:bg-neutral-900/80 backdrop-blur-2xl border-l border-black/5 dark:border-white/10 flex-shrink-0 flex flex-col justify-between p-4 lg:p-6 z-50 md:z-30 shadow-2xl md:shadow-none"
+    >
       <div>
         <!-- Admin Brand Header -->
         <div class="flex items-center justify-between pb-6 mb-6 border-b border-black/5 dark:border-white/10">
@@ -115,8 +121,18 @@ const sidebarLinks = [
               </span>
             </div>
           </a>
-          <div class="md:hidden">
+          <div class="flex items-center gap-1 md:hidden">
             <ThemeToggle />
+            <button
+              type="button"
+              id="admin-sidebar-close"
+              class="p-2 rounded-xl text-neutral-500 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+              aria-label="بستن منو"
+            >
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
         </div>
 
@@ -194,11 +210,26 @@ const sidebarLinks = [
     <!-- Main Content Area -->
     <div class="flex-grow flex flex-col min-h-screen overflow-x-hidden">
       <!-- Top Bar -->
-      <header class="h-16 bg-white/60 dark:bg-neutral-900/60 backdrop-blur-xl border-b border-black/5 dark:border-white/10 px-6 lg:px-10 flex items-center justify-between sticky top-0 z-20">
-        <div class="flex items-center gap-2 text-xs text-neutral-400">
-          <a href="/admin" class="hover:text-neutral-700 dark:hover:text-neutral-300">مدیریت</a>
-          <span>/</span>
-          <span class="text-neutral-800 dark:text-neutral-200 font-semibold">{title}</span>
+      <header class="h-16 bg-white/60 dark:bg-neutral-900/60 backdrop-blur-xl border-b border-black/5 dark:border-white/10 px-4 sm:px-6 lg:px-10 flex items-center justify-between gap-3 sticky top-0 z-20">
+        <div class="flex items-center gap-3 min-w-0">
+          <!-- Hamburger toggle (mobile only) -->
+          <button
+            type="button"
+            id="admin-sidebar-toggle"
+            class="md:hidden p-2 -mr-1 rounded-xl text-neutral-700 dark:text-neutral-200 hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+            aria-label="باز کردن منو"
+            aria-controls="admin-sidebar"
+            aria-expanded="false"
+          >
+            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          <div class="flex items-center gap-2 text-xs text-neutral-400 min-w-0">
+            <a href="/admin" class="hover:text-neutral-700 dark:hover:text-neutral-300">مدیریت</a>
+            <span>/</span>
+            <span class="text-neutral-800 dark:text-neutral-200 font-semibold truncate">{title}</span>
+          </div>
         </div>
 
         <div class="flex items-center gap-2.5">
@@ -211,7 +242,7 @@ const sidebarLinks = [
           <button
             type="button"
             id="admin-change-password-btn"
-            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-neutral-700 dark:text-neutral-300 hover:text-apple-blue dark:hover:text-apple-blue hover:bg-apple-blue/10 dark:hover:bg-apple-blue/20 border border-black/10 dark:border-white/10 transition-colors shadow-sm"
+            class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-neutral-700 dark:text-neutral-300 hover:text-apple-blue dark:hover:text-apple-blue hover:bg-apple-blue/10 dark:hover:bg-apple-blue/20 border border-black/10 dark:border-white/10 transition-colors shadow-sm"
             title="تغییر کلمه عبور"
           >
             <svg class="w-4 h-4 text-apple-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -235,7 +266,7 @@ const sidebarLinks = [
       </header>
 
       <!-- Main Slot -->
-      <main class="p-6 lg:p-10 flex-grow">
+      <main class="p-4 sm:p-6 lg:p-10 flex-grow">
         <slot />
       </main>
     </div>
@@ -317,6 +348,31 @@ const sidebarLinks = [
       }
 
       setupSilentRefresh();
+
+      // Mobile Hamburger Drawer Logic
+      const sidebar = document.getElementById('admin-sidebar');
+      const sidebarBackdrop = document.getElementById('admin-sidebar-backdrop');
+      const sidebarToggle = document.getElementById('admin-sidebar-toggle');
+
+      function setSidebarOpen(open: boolean) {
+        sidebar?.classList.toggle('translate-x-full', !open);
+        sidebarBackdrop?.classList.toggle('hidden', !open);
+        sidebarToggle?.setAttribute('aria-expanded', String(open));
+        document.body.classList.toggle('overflow-hidden', open);
+      }
+
+      sidebarToggle?.addEventListener('click', () => setSidebarOpen(true));
+      document.getElementById('admin-sidebar-close')?.addEventListener('click', () => setSidebarOpen(false));
+      sidebarBackdrop?.addEventListener('click', () => setSidebarOpen(false));
+      sidebar?.querySelectorAll('a, #sidebar-change-password-btn').forEach((el) =>
+        el.addEventListener('click', () => setSidebarOpen(false))
+      );
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') setSidebarOpen(false);
+      });
+      window.matchMedia('(min-width: 768px)').addEventListener('change', (e) => {
+        if (e.matches) setSidebarOpen(false);
+      });
 
       // Listen for comment count updates to keep sidebar badge in sync reactively
       window.addEventListener('comment-count-updated', (e: any) => {

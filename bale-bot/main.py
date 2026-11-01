@@ -1,8 +1,8 @@
 import asyncio
 import contextlib
-import html
 import logging
 import os
+import re
 from datetime import datetime
 from typing import Any, Dict, Optional
 
@@ -11,23 +11,21 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, ConfigDict, Field
-from telegram import Bot
-from telegram.constants import ParseMode
-from telegram.error import TelegramError
 
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
 )
-logger = logging.getLogger("telegram_webhook_service")
+logger = logging.getLogger("bale_webhook_service")
 
 # Load environment variables
 load_dotenv()
 
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "269309616")
-TELEGRAM_ADMIN_CHAT_ID = os.getenv("TELEGRAM_ADMIN_CHAT_ID", TELEGRAM_CHAT_ID or "269309616")
+BALE_BOT_TOKEN = os.getenv("BALE_BOT_TOKEN")
+BALE_CHAT_ID = os.getenv("BALE_CHAT_ID")
+BALE_ADMIN_CHAT_ID = os.getenv("BALE_ADMIN_CHAT_ID") or BALE_CHAT_ID
+BALE_API_BASE = os.getenv("BALE_API_BASE", "https://tapi.bale.ai").rstrip("/")
 ALLOWED_ORIGINS_STR = os.getenv("ALLOWED_ORIGINS", "http://localhost:4500,http://127.0.0.1:4500,http://localhost:3000")
 ALLOWED_ORIGINS = [origin.strip() for origin in ALLOWED_ORIGINS_STR.split(",") if origin.strip()]
 
@@ -36,13 +34,53 @@ BACKEND_HEALTH_URL = os.getenv("BACKEND_HEALTH_URL", "http://backend:5000/health
 FRONTEND_HEALTH_URL = os.getenv("FRONTEND_HEALTH_URL", "http://frontend:4500/")
 HEALTH_CHECK_INTERVAL_SECONDS = int(os.getenv("HEALTH_CHECK_INTERVAL_SECONDS", "120"))
 
-if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
-    logger.warning("TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID is not configured properly in environment")
+if not BALE_BOT_TOKEN or not BALE_CHAT_ID:
+    logger.warning("BALE_BOT_TOKEN or BALE_CHAT_ID is not configured properly in environment")
 
-# Initialize Telegram Bot instance
-bot: Optional[Bot] = None
-if TELEGRAM_BOT_TOKEN:
-    bot = Bot(token=TELEGRAM_BOT_TOKEN)
+
+class BaleApiError(Exception):
+    """Raised when the Bale Bot API rejects a request or is unreachable."""
+
+
+async def send_bale_message(chat_id: str, text: str) -> None:
+    """Sends a Markdown-formatted text message through the Bale Bot API (Telegram-compatible sendMessage)."""
+    if not BALE_BOT_TOKEN:
+        raise BaleApiError("BALE_BOT_TOKEN is not configured")
+
+    url = f"{BALE_API_BASE}/bot{BALE_BOT_TOKEN}/sendMessage"
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            response = await client.post(url, json={"chat_id": chat_id, "text": text})
+    except httpx.HTTPError as exc:
+        # Never include the request URL in the error: it contains the bot token
+        raise BaleApiError(type(exc).__name__) from None
+
+    try:
+        body = response.json()
+    except ValueError:
+        body = {}
+
+    if response.status_code != 200 or not body.get("ok", False):
+        description = body.get("description") or f"HTTP {response.status_code}"
+        raise BaleApiError(description)
+
+
+_MARKDOWN_SPECIALS = re.compile(r"[*`\[\]]")
+_SAFE_EMAIL = re.compile(r"^[^\s()\[\]<>]+@[^\s()\[\]<>]+$")
+
+
+def md_escape(value: str) -> str:
+    """Neutralises Bale Markdown control characters in user-supplied text."""
+    # Underscores become a fullwidth look-alike so names and addresses stay readable without toggling italics
+    return _MARKDOWN_SPECIALS.sub(" ", value).replace("_", "＿")
+
+
+def md_email(value: str) -> str:
+    """Renders an email as a mailto link so the exact address survives Markdown escaping."""
+    email = value.strip()
+    if _SAFE_EMAIL.match(email):
+        return f"[{md_escape(email)}](mailto:{email})"
+    return md_escape(email)
 
 # In-memory health state tracking for monitored services
 service_states: Dict[str, Dict[str, Any]] = {
@@ -63,70 +101,55 @@ service_states: Dict[str, Dict[str, Any]] = {
 }
 
 
-async def send_emergency_telegram_alert(service_name: str, url: str, error_msg: str, failure_count: int) -> None:
-    """Dispatches high-priority emergency failure alerts to Telegram admin chat."""
-    if not bot or not TELEGRAM_ADMIN_CHAT_ID:
-        logger.error("Cannot send emergency alert: Telegram bot or admin chat ID is missing")
+async def send_emergency_bale_alert(service_name: str, url: str, error_msg: str, failure_count: int) -> None:
+    """Dispatches high-priority emergency failure alerts to the Bale admin chat."""
+    if not BALE_BOT_TOKEN or not BALE_ADMIN_CHAT_ID:
+        logger.error("Cannot send emergency alert: Bale bot token or admin chat ID is missing")
         return
 
     now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    safe_service = html.escape(service_name)
-    safe_url = html.escape(url)
-    safe_error = html.escape(error_msg)
 
     alert_text = (
-        "🚨 <b>هشدار اضطراری زیرساخت: قطع یا اختلال در سرویس</b>\n"
+        "🚨 *هشدار اضطراری زیرساخت: قطع یا اختلال در سرویس*\n"
         "━━━━━━━━━━━━━━━━━━\n"
-        f"🌐 <b>سرویس آسیب‌دیده:</b> <code>{safe_service}</code>\n"
-        f"🔗 <b>آدرس بررسی:</b> <code>{safe_url}</code>\n"
-        f"⚠️ <b>خطای دریافتی:</b> <code>{safe_error}</code>\n"
-        f"🔢 <b>تعداد خطاهای متوالی:</b> {failure_count}\n"
+        f"🌐 *سرویس آسیب‌دیده:* {md_escape(service_name)}\n"
+        f"🔗 *آدرس بررسی:* {md_escape(url)}\n"
+        f"⚠️ *خطای دریافتی:* {md_escape(error_msg)}\n"
+        f"🔢 *تعداد خطاهای متوالی:* {failure_count}\n"
         "━━━━━━━━━━━━━━━━━━\n"
-        f"⏱ <i>زمان ثبت رخداد: {now_str}</i>\n"
-        "<i>لطفاً وضعیت کانتینرها و لاگ‌های سرور را بررسی فرمایید.</i>"
+        f"⏱ _زمان ثبت رخداد: {now_str}_\n"
+        "_لطفاً وضعیت کانتینرها و لاگ‌های سرور را بررسی فرمایید._"
     )
 
     try:
-        await bot.send_message(
-            chat_id=TELEGRAM_ADMIN_CHAT_ID,
-            text=alert_text,
-            parse_mode=ParseMode.HTML,
-            disable_web_page_preview=True
-        )
-        logger.info("Dispatched emergency alert for %s to chat %s", service_name, TELEGRAM_ADMIN_CHAT_ID)
+        await send_bale_message(BALE_ADMIN_CHAT_ID, alert_text)
+        logger.info("Dispatched emergency alert for %s to chat %s", service_name, BALE_ADMIN_CHAT_ID)
     except Exception as exc:
-        logger.error("Failed to send emergency Telegram alert: %s", str(exc), exc_info=True)
+        logger.error("Failed to send emergency Bale alert: %s", str(exc))
 
 
-async def send_recovery_telegram_alert(service_name: str, url: str) -> None:
-    """Dispatches recovery notification to Telegram admin when service returns to healthy state."""
-    if not bot or not TELEGRAM_ADMIN_CHAT_ID:
+async def send_recovery_bale_alert(service_name: str, url: str) -> None:
+    """Dispatches recovery notification to the Bale admin when a service returns to a healthy state."""
+    if not BALE_BOT_TOKEN or not BALE_ADMIN_CHAT_ID:
         return
 
     now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    safe_service = html.escape(service_name)
-    safe_url = html.escape(url)
 
     recovery_text = (
-        "✅ <b>اطلاعیه بازیابی سرویس: وضعیت پایدار شد</b>\n"
+        "✅ *اطلاعیه بازیابی سرویس: وضعیت پایدار شد*\n"
         "━━━━━━━━━━━━━━━━━━\n"
-        f"🌐 <b>سرویس:</b> <code>{safe_service}</code>\n"
-        f"🔗 <b>آدرس بررسی:</b> <code>{safe_url}</code>\n"
-        "📊 <b>وضعیت کنونی:</b> پایدار (200 OK)\n"
+        f"🌐 *سرویس:* {md_escape(service_name)}\n"
+        f"🔗 *آدرس بررسی:* {md_escape(url)}\n"
+        "📊 *وضعیت کنونی:* پایدار (200 OK)\n"
         "━━━━━━━━━━━━━━━━━━\n"
-        f"⏱ <i>زمان بازیابی: {now_str}</i>"
+        f"⏱ _زمان بازیابی: {now_str}_"
     )
 
     try:
-        await bot.send_message(
-            chat_id=TELEGRAM_ADMIN_CHAT_ID,
-            text=recovery_text,
-            parse_mode=ParseMode.HTML,
-            disable_web_page_preview=True
-        )
-        logger.info("Dispatched recovery notification for %s to chat %s", service_name, TELEGRAM_ADMIN_CHAT_ID)
+        await send_bale_message(BALE_ADMIN_CHAT_ID, recovery_text)
+        logger.info("Dispatched recovery notification for %s to chat %s", service_name, BALE_ADMIN_CHAT_ID)
     except Exception as exc:
-        logger.error("Failed to send recovery Telegram alert: %s", str(exc), exc_info=True)
+        logger.error("Failed to send recovery Bale alert: %s", str(exc))
 
 
 async def ping_service(client: httpx.AsyncClient, service_name: str, config: Dict[str, Any]) -> None:
@@ -143,7 +166,7 @@ async def ping_service(client: httpx.AsyncClient, service_name: str, config: Dic
                 config["is_healthy"] = True
                 config["failure_count"] = 0
                 config["last_error"] = None
-                await send_recovery_telegram_alert(service_name, url)
+                await send_recovery_bale_alert(service_name, url)
             else:
                 config["failure_count"] = 0
                 config["last_error"] = None
@@ -157,7 +180,7 @@ async def ping_service(client: httpx.AsyncClient, service_name: str, config: Dic
             # Alert on first failure or periodic reminders every 5 failures
             if config["is_healthy"] or config["failure_count"] % 5 == 1:
                 config["is_healthy"] = False
-                await send_emergency_telegram_alert(service_name, url, err_msg, config["failure_count"])
+                await send_emergency_bale_alert(service_name, url, err_msg, config["failure_count"])
 
     except (httpx.ConnectError, httpx.TimeoutException, httpx.NetworkError, Exception) as exc:
         err_msg = f"{type(exc).__name__}: {str(exc) or 'Connection failed / Timeout'}"
@@ -168,7 +191,7 @@ async def ping_service(client: httpx.AsyncClient, service_name: str, config: Dic
         # Alert on first failure or periodic reminders
         if config["is_healthy"] or config["failure_count"] % 5 == 1:
             config["is_healthy"] = False
-            await send_emergency_telegram_alert(service_name, url, err_msg, config["failure_count"])
+            await send_emergency_bale_alert(service_name, url, err_msg, config["failure_count"])
 
 
 async def health_monitor_daemon() -> None:
@@ -199,10 +222,10 @@ async def health_monitor_daemon() -> None:
 @contextlib.asynccontextmanager
 async def lifespan(fastapi_app: FastAPI):
     """FastAPI application lifespan context managing background monitor daemon."""
-    logger.info("Starting up Telegram Bot & Alert Microservice...")
+    logger.info("Starting up Bale Bot & Alert Microservice...")
     monitor_task = asyncio.create_task(health_monitor_daemon())
     yield
-    logger.info("Shutting down Telegram Bot microservice...")
+    logger.info("Shutting down Bale Bot microservice...")
     monitor_task.cancel()
     try:
         await monitor_task
@@ -212,7 +235,7 @@ async def lifespan(fastapi_app: FastAPI):
 
 # Initialize FastAPI App with Lifespan
 app = FastAPI(
-    title="ShafieiAbadi Telegram Bot & Health Daemon",
+    title="ShafieiAbadi Bale Bot & Health Daemon",
     description="Microservice for Contact Webhook dispatch and Proactive Infrastructure Health Alerting",
     version="2.0.0",
     lifespan=lifespan
@@ -233,7 +256,7 @@ class ContactRequest(BaseModel):
     email: str = Field(..., min_length=3, description="Sender's email address")
     message: str = Field(..., min_length=1, description="Message content")
     phone: Optional[str] = Field(default=None, description="Sender's contact phone number", validation_alias="phoneNumber")
-    telegram_id: Optional[str] = Field(default=None, description="Sender's Telegram handle", validation_alias="telegramId")
+    bale_id: Optional[str] = Field(default=None, description="Sender's Bale username", validation_alias="baleId")
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -241,33 +264,33 @@ class ContactRequest(BaseModel):
     )
 
 
-def format_telegram_message(payload: ContactRequest) -> str:
-    """Safely format contact submission into Telegram HTML."""
-    safe_name = html.escape(payload.name.strip())
-    safe_email = html.escape(payload.email.strip())
-    safe_message = html.escape(payload.message.strip())
-    safe_phone = html.escape(payload.phone.strip()) if payload.phone and payload.phone.strip() else "ثبت نشده"
+def format_bale_message(payload: ContactRequest) -> str:
+    """Safely format contact submission into Bale Markdown."""
+    safe_name = md_escape(payload.name.strip())
+    safe_email = md_email(payload.email)
+    safe_message = md_escape(payload.message.strip())
+    safe_phone = md_escape(payload.phone.strip()) if payload.phone and payload.phone.strip() else "ثبت نشده"
 
-    raw_telegram = payload.telegram_id.strip() if payload.telegram_id else ""
-    if raw_telegram:
-        clean_handle = raw_telegram.lstrip("@")
-        safe_telegram = f'<a href="https://t.me/{html.escape(clean_handle)}">@{html.escape(clean_handle)}</a>'
+    raw_bale = payload.bale_id.strip() if payload.bale_id else ""
+    clean_handle = re.sub(r"[^A-Za-z0-9_]", "", raw_bale.lstrip("@"))
+    if clean_handle:
+        safe_bale = f"[@{clean_handle}](https://ble.ir/{clean_handle})"
     else:
-        safe_telegram = "ثبت نشده"
+        safe_bale = "ثبت نشده"
 
     now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     return (
-        "📬 <b>پیام جدید از فرم تماس وب‌سایت</b>\n"
+        "📬 *پیام جدید از فرم تماس وب‌سایت*\n"
         "━━━━━━━━━━━━━━━━━━\n"
-        f"👤 <b>نام فرستنده:</b> {safe_name}\n"
-        f"📧 <b>ایمیل:</b> <code>{safe_email}</code>\n"
-        f"📱 <b>شماره تماس:</b> <code>{safe_phone}</code>\n"
-        f"✈️ <b>تلگرام:</b> {safe_telegram}\n\n"
-        "💬 <b>متن پیام:</b>\n"
-        f"<blockquote>{safe_message}</blockquote>\n"
+        f"👤 *نام فرستنده:* {safe_name}\n"
+        f"📧 *ایمیل:* {safe_email}\n"
+        f"📱 *شماره تماس:* {safe_phone}\n"
+        f"💬 *آیدی بله:* {safe_bale}\n\n"
+        "📝 *متن پیام:*\n"
+        f"{safe_message}\n"
         "━━━━━━━━━━━━━━━━━━\n"
-        f"⏱ <i>زمان ثبت: {now_str}</i>"
+        f"⏱ _زمان ثبت: {now_str}_"
     )
 
 
@@ -278,9 +301,9 @@ async def health_check():
     all_healthy = all(svc["is_healthy"] for svc in service_states.values())
     return {
         "status": "healthy" if all_healthy else "degraded",
-        "service": "telegram-contact-and-alert-daemon",
-        "bot_configured": bool(TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID),
-        "target_admin_chat_id": TELEGRAM_ADMIN_CHAT_ID,
+        "service": "bale-contact-and-alert-daemon",
+        "bot_configured": bool(BALE_BOT_TOKEN and BALE_CHAT_ID),
+        "target_admin_chat_id": BALE_ADMIN_CHAT_ID,
         "monitored_services": service_states,
         "timestamp": datetime.now().isoformat()
     }
@@ -288,33 +311,28 @@ async def health_check():
 
 @app.post("/contact-webhook", status_code=status.HTTP_200_OK)
 async def handle_contact_webhook(payload: ContactRequest):
-    """Receive contact form payload and dispatch to Telegram admin chat."""
-    if not bot or not TELEGRAM_CHAT_ID:
-        logger.error("Telegram bot is not configured on the server")
+    """Receive contact form payload and dispatch to the Bale admin chat."""
+    if not BALE_BOT_TOKEN or not BALE_CHAT_ID:
+        logger.error("Bale bot is not configured on the server")
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="سرویس ربات تلگرام در حال حاضر پیکربندی نشده است."
+            detail="سرویس ربات بله در حال حاضر پیکربندی نشده است."
         )
 
-    formatted_text = format_telegram_message(payload)
+    formatted_text = format_bale_message(payload)
 
     try:
-        logger.info("Forwarding contact message from '%s' (%s) to Telegram chat %s", payload.name, payload.email, TELEGRAM_CHAT_ID)
-        await bot.send_message(
-            chat_id=TELEGRAM_CHAT_ID,
-            text=formatted_text,
-            parse_mode=ParseMode.HTML,
-            disable_web_page_preview=True
-        )
+        logger.info("Forwarding contact message from '%s' (%s) to Bale chat %s", payload.name, payload.email, BALE_CHAT_ID)
+        await send_bale_message(BALE_CHAT_ID, formatted_text)
         return {
             "success": True,
             "message": "پیام شما با موفقیت دریافت و ارسال گردید."
         }
-    except TelegramError as te:
-        logger.error("Telegram API error occurred: %s", str(te), exc_info=True)
+    except BaleApiError as be:
+        logger.error("Bale API error occurred: %s", str(be))
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"خطا در ارتباط با سرور تلگرام: {str(te)}"
+            detail="خطا در ارتباط با سرور بله. لطفاً دوباره تلاش کنید."
         )
     except Exception as exc:
         logger.error("Unexpected error handling webhook: %s", str(exc), exc_info=True)
@@ -328,5 +346,5 @@ if __name__ == "__main__":
     import uvicorn
     port = int(os.getenv("PORT", 8000))
     host = os.getenv("HOST", "0.0.0.0")
-    logger.info("Starting Telegram Bot microservice on %s:%s", host, port)
+    logger.info("Starting Bale Bot microservice on %s:%s", host, port)
     uvicorn.run("main:app", host=host, port=port, reload=True)

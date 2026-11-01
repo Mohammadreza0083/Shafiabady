@@ -1,5 +1,6 @@
 ---
 import Button from './Button.astro';
+import { expertiseTopics } from '../../data/expertise';
 
 export interface SlideItem {
   tag?: string;
@@ -11,54 +12,23 @@ export interface SlideItem {
   gradient?: string;
   glowColor1?: string;
   glowColor2?: string;
+  image?: { src: string; alt: string; width: number; height: number };
 }
 
 interface Props {
   slides?: SlideItem[];
 }
 
-const defaultSlides: SlideItem[] = [
-  {
-    tag: 'آموزش و تدریس',
-    title: 'مدرس و استاد دانشگاه',
-    description: '۲۵ سال تدریس و تجربه در حوزههای تخصصی کامپیوتر و هوش مصنوعی، همراه با برگزاری دورههای تخصصی برای سازمانها و شرکتها.',
-    primaryBtn: { text: 'اطلاعات بیشتر', href: '/about' },
-    badge: '۲۵ سال سابقه دانشگاهی',
-    gradient: 'from-blue-600/10 via-indigo-500/5 to-transparent dark:from-blue-900/20 dark:via-indigo-900/10 dark:to-transparent',
-    glowColor1: 'bg-blue-500/15 dark:bg-blue-500/25',
-    glowColor2: 'bg-indigo-400/15 dark:bg-purple-500/20',
-  },
-  {
-    tag: 'مشاوره و نوآوری',
-    title: 'مشاور کسبوکار',
-    description: 'مشاوره تخصصی در زمینه توسعه کسبوکار، نوآوری و تحول دیجیتال با رویکرد عملی و متناسب با نیازهای روز بازار.',
-    primaryBtn: { text: 'اطلاعات بیشتر', href: '/about' },
-    badge: 'تحول دیجیتال و استراتژی',
-    gradient: 'from-emerald-600/10 via-teal-500/5 to-transparent dark:from-emerald-900/20 dark:via-teal-900/10 dark:to-transparent',
-    glowColor1: 'bg-emerald-500/15 dark:bg-emerald-500/25',
-    glowColor2: 'bg-teal-400/15 dark:bg-cyan-500/20',
-  },
-  {
-    tag: 'تألیفات و پژوهش',
-    title: 'نویسنده',
-    description: '۳۹ مقاله علمی معتبر و دو کتاب کاربردی در زمینه هوش مصنوعی، با هدف انتقال دانش و کاربردهای آن در دنیای واقعی.',
-    primaryBtn: { text: 'اطلاعات بیشتر', href: '/books' },
-    badge: '۳۹ مقاله علمی و ۲ کتاب',
-    gradient: 'from-sky-600/10 via-cyan-500/5 to-transparent dark:from-sky-900/20 dark:via-cyan-900/10 dark:to-transparent',
-    glowColor1: 'bg-sky-500/15 dark:bg-sky-500/25',
-    glowColor2: 'bg-teal-400/15 dark:bg-cyan-500/20',
-  },
-  {
-    tag: 'کوچینگ و رهبری',
-    title: 'بیزینس کوچ',
-    description: '۵ سال تجربه کوچینگ با مدرک بینالمللی، همراهی کسبوکارها برای شناسایی پتانسیلهای رشد و دستیابی به اهداف بلندمدت.',
-    primaryBtn: { text: 'اطلاعات بیشتر', href: '/about' },
-    badge: 'مدرک بین‌المللی کوچینگ',
-    gradient: 'from-purple-600/10 via-blue-500/5 to-transparent dark:from-purple-900/20 dark:via-blue-900/10 dark:to-transparent',
-    glowColor1: 'bg-purple-500/15 dark:bg-purple-500/25',
-    glowColor2: 'bg-blue-400/15 dark:bg-indigo-500/20',
-  },
-];
+const defaultSlides: SlideItem[] = expertiseTopics.map((topic) => ({
+  tag: topic.tag,
+  title: topic.title,
+  description: topic.sliderText,
+  primaryBtn: { text: 'اطلاعات بیشتر', href: `/expertise/${topic.slug}` },
+  gradient: topic.gradient,
+  glowColor1: topic.glowColor1,
+  glowColor2: topic.glowColor2,
+  image: topic.image,
+}));
 
 const slides = Astro.props.slides || defaultSlides;
 ---
@@ -67,7 +37,7 @@ const slides = Astro.props.slides || defaultSlides;
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     
     <!-- Slides Viewport with Guaranteed Minimum Height to Prevent Container Collapse -->
-    <div class="relative w-full min-h-[490px] sm:min-h-[440px] md:min-h-[420px] lg:min-h-[450px] flex items-center justify-center">
+    <div class="relative w-full min-h-[640px] sm:min-h-[700px] lg:min-h-[480px] flex items-center justify-center">
       {
         slides.map((slide, index) => {
           const isInitialActive = index === 0;
@@ -81,61 +51,81 @@ const slides = Astro.props.slides || defaultSlides;
               data-slide-index={index}
               aria-hidden={isInitialActive ? 'false' : 'true'}
             >
-              <div class={`relative w-full h-full rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-12 lg:p-16 border border-black/5 dark:border-white/10 overflow-hidden bg-gradient-to-br ${slide.gradient || 'from-blue-600/10 via-indigo-500/5 to-transparent'} bg-white/80 dark:bg-neutral-900/80 backdrop-blur-2xl shadow-xl dark:shadow-2xl flex flex-col justify-center`}>
-                
+              <div class={`relative w-full h-full rounded-3xl sm:rounded-[2.5rem] border border-black/5 dark:border-white/10 overflow-hidden bg-gradient-to-br ${slide.gradient || 'from-blue-600/10 via-indigo-500/5 to-transparent'} bg-white/80 dark:bg-neutral-900/80 backdrop-blur-2xl shadow-xl dark:shadow-2xl`}>
+
                 <!-- Ambient Apple Glow Background Orbs -->
                 <div class={`absolute -top-24 -left-24 w-80 sm:w-96 h-80 sm:h-96 ${slide.glowColor1 || 'bg-apple-blue/15 dark:bg-apple-blue/20'} rounded-full blur-3xl pointer-events-none transition-all duration-700`}></div>
                 <div class={`absolute -bottom-24 -right-24 w-80 sm:w-96 h-80 sm:h-96 ${slide.glowColor2 || 'bg-sky-400/15 dark:bg-purple-500/15'} rounded-full blur-3xl pointer-events-none transition-all duration-700`}></div>
 
-                <div class="relative z-10 max-w-3xl mx-auto text-center flex flex-col items-center">
-                  
-                  <!-- Badge Tag -->
-                  {(slide.tag || slide.badge) && (
-                    <div class="inline-flex items-center gap-2 px-3.5 py-1.5 sm:px-4 sm:py-1.5 rounded-full text-xs font-semibold tracking-wide bg-apple-blue/10 text-apple-blue dark:bg-apple-blue-dark/20 dark:text-apple-blue-dark mb-5 sm:mb-6 border border-apple-blue/15 shadow-sm transition-transform duration-300 hover:scale-105">
-                      <span class="w-2 h-2 rounded-full bg-apple-blue dark:bg-apple-blue-dark animate-pulse"></span>
-                      {slide.tag && <span>{slide.tag}</span>}
-                      {slide.tag && slide.badge && <span class="text-neutral-400 dark:text-neutral-500">•</span>}
-                      {slide.badge && <span class="font-normal text-neutral-600 dark:text-neutral-400">{slide.badge}</span>}
+                <div class={`relative z-10 h-full grid grid-cols-1 ${slide.image ? 'lg:grid-cols-12' : ''}`}>
+
+                  <!-- Text Column (right side in RTL) -->
+                  <div class={`order-2 lg:order-1 flex flex-col justify-center items-center text-center px-6 pb-8 pt-2 sm:px-12 sm:pb-12 ${slide.image ? 'lg:col-span-7 lg:items-start lg:text-right lg:py-14 lg:pr-16 lg:pl-4' : 'lg:p-16 max-w-3xl mx-auto'}`}>
+
+                    <!-- Badge Tag -->
+                    {(slide.tag || slide.badge) && (
+                      <div class="inline-flex items-center gap-2 px-3.5 py-1.5 sm:px-4 sm:py-1.5 rounded-full text-xs font-semibold tracking-wide bg-apple-blue/10 text-apple-blue dark:bg-apple-blue-dark/20 dark:text-apple-blue-dark mb-5 sm:mb-6 border border-apple-blue/15 shadow-sm transition-transform duration-300 hover:scale-105">
+                        <span class="w-2 h-2 rounded-full bg-apple-blue dark:bg-apple-blue-dark animate-pulse"></span>
+                        {slide.tag && <span>{slide.tag}</span>}
+                        {slide.tag && slide.badge && <span class="text-neutral-400 dark:text-neutral-500">•</span>}
+                        {slide.badge && <span class="font-normal text-neutral-600 dark:text-neutral-400">{slide.badge}</span>}
+                      </div>
+                    )}
+
+                    <!-- Main Heading (Single H1 on page for SEO, H2 for secondary slides) -->
+                    {
+                      index === 0 ? (
+                        <h1 class="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight text-neutral-950 dark:text-white leading-[1.3] sm:leading-[1.25] mb-4 sm:mb-6">
+                          {slide.title}
+                        </h1>
+                      ) : (
+                        <h2 class="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight text-neutral-950 dark:text-white leading-[1.3] sm:leading-[1.25] mb-4 sm:mb-6">
+                          {slide.title}
+                        </h2>
+                      )
+                    }
+
+                    <!-- Subtitle Description -->
+                    <p class="text-sm sm:text-base md:text-lg lg:text-xl text-neutral-600 dark:text-neutral-300 max-w-2xl font-normal leading-relaxed mb-6 sm:mb-9">
+                      {slide.description}
+                    </p>
+
+                    <!-- Call to Action Buttons -->
+                    {(slide.primaryBtn || slide.secondaryBtn) && (
+                      <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 sm:gap-4 w-full sm:w-auto">
+                        {slide.primaryBtn && (
+                          <Button href={slide.primaryBtn.href} variant="primary" size="lg" className="w-full sm:w-auto justify-center">
+                            <span>{slide.primaryBtn.text}</span>
+                            <svg class="w-4 h-4 transform rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                            </svg>
+                          </Button>
+                        )}
+                        {slide.secondaryBtn && (
+                          <Button href={slide.secondaryBtn.href} variant="secondary" size="lg" className="w-full sm:w-auto justify-center">
+                            <span>{slide.secondaryBtn.text}</span>
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  <!-- Portrait Column (left side in RTL, anchored to the card's bottom edge) -->
+                  {slide.image && (
+                    <div class="order-1 lg:order-2 lg:col-span-5 relative flex items-end justify-center h-56 sm:h-72 lg:h-full pt-6 lg:pt-10 overflow-hidden">
+                      <img
+                        src={slide.image.src}
+                        alt={slide.image.alt}
+                        width={slide.image.width}
+                        height={slide.image.height}
+                        loading={isInitialActive ? 'eager' : 'lazy'}
+                        fetchpriority={isInitialActive ? 'high' : 'auto'}
+                        decoding="async"
+                        class="h-full w-auto max-w-full object-contain object-bottom drop-shadow-2xl select-none"
+                        draggable="false"
+                      />
                     </div>
                   )}
-
-                  <!-- Main Heading (Single H1 on page for SEO, H2 for secondary slides) -->
-                  {
-                    index === 0 ? (
-                      <h1 class="text-2xl sm:text-4xl md:text-5xl lg:text-5xl font-black tracking-tight text-neutral-950 dark:text-white leading-[1.3] sm:leading-[1.2] mb-5 sm:mb-6">
-                        {slide.title}
-                      </h1>
-                    ) : (
-                      <h2 class="text-2xl sm:text-4xl md:text-5xl lg:text-5xl font-black tracking-tight text-neutral-950 dark:text-white leading-[1.3] sm:leading-[1.2] mb-5 sm:mb-6">
-                        {slide.title}
-                      </h2>
-                    )
-                  }
-
-                  <!-- Subtitle Description -->
-                  <p class="text-sm sm:text-base md:text-lg lg:text-xl text-neutral-600 dark:text-neutral-300 max-w-2xl font-normal leading-relaxed mb-7 sm:mb-9">
-                    {slide.description}
-                  </p>
-
-                  <!-- Call to Action Buttons -->
-                  {(slide.primaryBtn || slide.secondaryBtn) && (
-                    <div class="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 w-full sm:w-auto">
-                      {slide.primaryBtn && (
-                        <Button href={slide.primaryBtn.href} variant="primary" size="lg" className="w-full sm:w-auto justify-center">
-                          <span>{slide.primaryBtn.text}</span>
-                          <svg class="w-4 h-4 transform rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                          </svg>
-                        </Button>
-                      )}
-                      {slide.secondaryBtn && (
-                        <Button href={slide.secondaryBtn.href} variant="secondary" size="lg" className="w-full sm:w-auto justify-center">
-                          <span>{slide.secondaryBtn.text}</span>
-                        </Button>
-                      )}
-                    </div>
-                  )}
-
                 </div>
               </div>
             </div>
@@ -216,7 +206,7 @@ const slides = Astro.props.slides || defaultSlides;
 
     let currentIndex = 0;
     let autoPlayTimer: any = null;
-    const AUTOPLAY_INTERVAL = 3000; // 3-second continuous universal auto-play
+    const AUTOPLAY_INTERVAL = 6000; // 6-second auto-play: slides carry a portrait plus longer copy
 
     function updateSlider(newIndex: number) {
       // Bounds normalization

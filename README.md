@@ -1,11 +1,11 @@
 # Personal Branding & Educational Platform
 
-> A modern, high-performance personal branding and educational platform featuring an Apple-inspired minimalist design, Clean Architecture, and seamless Telegram integration.
+> A modern, high-performance personal branding and educational platform featuring an Apple-inspired minimalist design, Clean Architecture, and seamless Bale (بله) messenger integration.
 
 ## 🌟 Overview & Architecture
 - **Frontend:** [Astro.js](https://astro.build/) in Hybrid mode (`output: 'hybrid'`), [TailwindCSS](https://tailwindcss.com/), Vazirmatn Persian typography, Swiper.js Hero slider.
 - **Backend API (Phase 2):** .NET 8/9 Web API implementing Clean Architecture, DDD, TDD, EF Core, SQL Server.
-- **Telegram Bot Service (Phase 3):** Python microservice (`python-telegram-bot`) for Contact Us notifications and interactive management.
+- **Bale Bot Service (Phase 3):** Python FastAPI microservice calling the Bale Bot API (`tapi.bale.ai`) for Contact Us notifications and interactive management.
 - **Infrastructure:** Docker, Nginx.
 
 ## 🚀 Key Features (Frontend - Phase 1)

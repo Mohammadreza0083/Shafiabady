@@ -91,18 +91,18 @@ services:
       - shafieiabadi-net
 
   # ----------------------------------------------------------------------------
-  # 4. Python FastAPI Telegram Bot & Proactive Health Monitor Daemon
+  # 4. Python FastAPI Bale Bot & Proactive Health Monitor Daemon
   # ----------------------------------------------------------------------------
-  telegram-bot:
+  bale-bot:
     build:
-      context: ./telegram-bot
+      context: ./bale-bot
       dockerfile: Dockerfile
-    container_name: shafieiabadi-telegram-bot
+    container_name: shafieiabadi-bale-bot
     restart: unless-stopped
     environment:
-      TELEGRAM_BOT_TOKEN: "${TELEGRAM_BOT_TOKEN}"
-      TELEGRAM_CHAT_ID: "${TELEGRAM_CHAT_ID:-269309616}"
-      TELEGRAM_ADMIN_CHAT_ID: "${TELEGRAM_ADMIN_CHAT_ID:-269309616}"
+      BALE_BOT_TOKEN: "${BALE_BOT_TOKEN}"
+      BALE_CHAT_ID: "${BALE_CHAT_ID}"
+      BALE_ADMIN_CHAT_ID: "${BALE_ADMIN_CHAT_ID}"
       BACKEND_HEALTH_URL: "http://backend:5000/health"
       FRONTEND_HEALTH_URL: "http://frontend:4500/"
       HEALTH_CHECK_INTERVAL_SECONDS: "120"
@@ -143,7 +143,7 @@ services:
         condition: service_healthy
       frontend:
         condition: service_healthy
-      telegram-bot:
+      bale-bot:
         condition: service_started
     healthcheck:
       test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://127.0.0.1/health || exit 1"]

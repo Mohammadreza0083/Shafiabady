@@ -1,0 +1,65 @@
+---
+import Button from './ui/Button.astro';
+import { contactEmail } from '../data/site';
+
+interface Props {
+  badge?: string;
+  title?: string;
+  text?: string;
+  buttonText?: string;
+}
+
+const {
+  badge = 'گفت‌وگو و همکاری',
+  title = 'درباره یک ایده یا همکاری گفت‌وگو کنیم',
+  text = 'اگر برای آموزش مدیران، به‌کارگیری هوش مصنوعی یا توسعه کسب‌وکار فناورانه به دنبال همراهی هستید، خوشحال می‌شوم درباره نیاز و هدف شما گفت‌وگو کنیم.',
+  buttonText = 'شروع گفت‌وگو',
+} = Astro.props;
+---
+
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 sm:pb-24">
+  <div class="relative rounded-3xl sm:rounded-[2.5rem] bg-neutral-950 text-white overflow-hidden shadow-2xl">
+    <!-- Glow effect -->
+    <div class="absolute -top-32 -left-32 w-80 h-80 bg-apple-blue/30 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute -bottom-32 -right-32 w-80 h-80 bg-purple-500/30 rounded-full blur-3xl pointer-events-none"></div>
+
+    <div class="relative z-10 grid grid-cols-1 lg:grid-cols-12 items-stretch">
+      <!-- Text (right in RTL) -->
+      <div class="lg:col-span-7 p-8 sm:p-14 lg:pl-4 flex flex-col items-center lg:items-start text-center lg:text-right justify-center">
+        <span class="inline-flex items-center px-4 py-1.5 rounded-full text-xs font-semibold bg-white/10 backdrop-blur-md text-white mb-6 border border-white/10">
+          {badge}
+        </span>
+        <h2 class="text-2xl sm:text-4xl font-black tracking-tight leading-tight mb-5">
+          {title}
+        </h2>
+        <p class="text-neutral-400 text-sm sm:text-base leading-relaxed mb-8 max-w-xl">
+          {text}
+        </p>
+        <div class="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+          <Button href="/contact" variant="primary" size="lg" className="w-full sm:w-auto">
+            <span>{buttonText}</span>
+            <svg class="w-4 h-4 transform rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+            </svg>
+          </Button>
+          <a href={`mailto:${contactEmail}`} class="text-sm text-neutral-400 hover:text-white transition-colors font-mono dir-ltr" dir="ltr">
+            {contactEmail}
+          </a>
+        </div>
+      </div>
+
+      <!-- Portrait (left in RTL) -->
+      <div class="hidden lg:flex lg:col-span-5 items-end justify-center pt-10 pl-8">
+        <img
+          src="/images/portraits/podium.webp"
+          alt="دکتر محمد حسین شفیع‌آبادی در حال سخنرانی"
+          width="1161"
+          height="1000"
+          loading="lazy"
+          decoding="async"
+          class="w-full max-w-md h-auto object-contain object-bottom drop-shadow-2xl"
+        />
+      </div>
+    </div>
+  </div>
+</section>

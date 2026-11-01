@@ -5,6 +5,8 @@ import ArticleCard from '../components/cards/ArticleCard.astro';
 import BookCard from '../components/cards/BookCard.astro';
 import CourseCard from '../components/cards/CourseCard.astro';
 import Button from '../components/ui/Button.astro';
+import ContactCta from '../components/ContactCta.astro';
+import { profileUrls } from '../data/site';
 import { articlesApi, booksApi, coursesApi } from '../utils/api';
 import { mockArticles, mockBooks, mockCourses } from '../data/mockData';
 
@@ -36,6 +38,8 @@ try {
   featuredCourses = mockCourses.slice(0, 3);
 }
 
+const homeDescription = 'دکتر محمد حسین شفیع‌آبادی؛ عضو هیئت علمی دانشگاه و استراتژیست توسعه کسب‌وکارهای فناورانه. هوش مصنوعی کاربردی، تحول دیجیتال، پیوند دانشگاه و صنعت و آموزش مدیران.';
+
 const homeJsonLd = {
   '@context': 'https://schema.org',
   '@graph': [
@@ -44,27 +48,24 @@ const homeJsonLd = {
       '@id': 'https://shafieiabadi.ir/#website',
       'url': 'https://shafieiabadi.ir',
       'name': 'دکتر محمد حسین شفیع‌آبادی',
-      'description': 'پلتفرم تخصصی مهندسی نرم‌افزار، معماری تمیز (Clean Architecture)، دات‌نت و وب مدرن.',
+      'description': homeDescription,
       'inLanguage': 'fa-IR',
     },
     {
       '@type': 'Person',
       '@id': 'https://shafieiabadi.ir/#person',
       'name': 'دکتر محمد حسین شفیع‌آبادی',
-      'jobTitle': 'استاد دانشگاه و پژوهشگر مهندسی نرم‌افزار',
-      'description': 'طراح و معمار ارشد سیستم‌های نرم‌افزاری، نویسنده کتاب‌های مرجع معماری تمیز و مدرس دوره‌های تخصصی دات‌نت.',
+      'jobTitle': 'عضو هیئت علمی دانشگاه | استراتژیست توسعه کسب‌وکارهای فناورانه',
+      'description': 'عضو هیئت علمی و فعال حوزه هوش مصنوعی، تحول دیجیتال و توسعه کسب‌وکارهای فناورانه؛ همراه مدیران و سازمان‌ها در یادگیری، تصمیم‌گیری و اجرای راهکارهای کاربردی.',
       'url': 'https://shafieiabadi.ir',
-      'sameAs': [
-        'https://t.me',
-        'https://github.com',
-      ],
+      'image': 'https://shafieiabadi.ir/images/portraits/thoughtful.webp',
+      'sameAs': profileUrls,
       'knowsAbout': [
-        'Clean Architecture',
-        'Domain-Driven Design (DDD)',
-        'Test-Driven Development (TDD)',
-        '.NET 9',
-        'Microservices',
-        'Distributed Systems',
+        'هوش مصنوعی',
+        'تحول دیجیتال',
+        'توسعه کسب‌وکارهای فناورانه',
+        'آموزش مدیران',
+        'آینده‌پژوهی',
       ],
     },
   ],
@@ -72,10 +73,10 @@ const homeJsonLd = {
 ---
 
 <BaseLayout
-  description="پلتفرم برندینگ شخصی و آموزش تخصصی مهندسی نرم‌افزار، معماری تمیز (Clean Architecture)، دات‌نت و وب مدرن - دکتر محمد حسین شفیع‌آبادی."
+  description={homeDescription}
   jsonLd={homeJsonLd}
 >
-  <!-- Top Hero Banner Slider (Apple-Inspired with Swiper.js) -->
+  <!-- Top Hero Banner Slider: four expertise topics with portraits -->
   <HeroSlider />
 
   <!-- Section 1: Featured Articles -->
@@ -83,10 +84,10 @@ const homeJsonLd = {
     <div class="flex flex-col sm:flex-row sm:items-end justify-between mb-12 gap-4">
       <div>
         <span class="text-xs font-bold text-apple-blue dark:text-apple-blue-dark uppercase tracking-widest block mb-2">
-          دانش و مقالات تخصصی
+          دیدگاه‌ها و تجربه‌ها
         </span>
         <h2 class="text-2xl sm:text-4xl font-extrabold text-neutral-950 dark:text-white tracking-tight">
-          تازه‌ترین مقالات معماری و توسعه
+          تازه‌ترین مقالات و تحلیل‌ها
         </h2>
       </div>
       <Button href="/articles" variant="secondary" size="md">
@@ -108,10 +109,10 @@ const homeJsonLd = {
       <div class="flex flex-col sm:flex-row sm:items-end justify-between mb-12 gap-4">
         <div>
           <span class="text-xs font-bold text-apple-blue dark:text-apple-blue-dark uppercase tracking-widest block mb-2">
-            تألیفات و کتب مرجع
+            کتاب‌ها و تألیفات
           </span>
           <h2 class="text-2xl sm:text-4xl font-extrabold text-neutral-950 dark:text-white tracking-tight">
-            کتاب‌های تخصصی مهندسی نرم‌افزار
+            آثاری در زمینه هوش مصنوعی و کسب‌وکار
           </h2>
         </div>
         <Button href="/books" variant="secondary" size="md">
@@ -136,7 +137,7 @@ const homeJsonLd = {
           آکادمی و دوره‌های آموزشی
         </span>
         <h2 class="text-2xl sm:text-4xl font-extrabold text-neutral-950 dark:text-white tracking-tight">
-          دوره‌های کاربردی برای توسعه‌دهندگان ارشد
+          دوره‌های کاربردی برای مدیران و متخصصان
         </h2>
       </div>
       <Button href="/courses" variant="secondary" size="md">
@@ -152,30 +153,6 @@ const homeJsonLd = {
     </div>
   </section>
 
-  <!-- Section 4: Apple-Inspired CTA Banner -->
-  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 sm:pb-24">
-    <div class="relative rounded-3xl sm:rounded-[2.5rem] p-8 sm:p-16 bg-neutral-950 text-white overflow-hidden shadow-2xl text-center flex flex-col items-center">
-      <!-- Glow effect -->
-      <div class="absolute -top-32 -left-32 w-80 h-80 bg-apple-blue/30 rounded-full blur-3xl pointer-events-none"></div>
-      <div class="absolute -bottom-32 -right-32 w-80 h-80 bg-purple-500/30 rounded-full blur-3xl pointer-events-none"></div>
-
-      <div class="relative z-10 max-w-2xl mx-auto">
-        <span class="inline-flex items-center px-4 py-1.5 rounded-full text-xs font-semibold bg-white/10 backdrop-blur-md text-white mb-6 border border-white/10">
-          مشاوره و طراحی معماری
-        </span>
-        <h2 class="text-2xl sm:text-4xl md:text-5xl font-black tracking-tight leading-tight mb-6">
-          آماده ارتقای معماری سیستم‌های سازمانی خود هستید؟
-        </h2>
-        <p class="text-neutral-400 text-sm sm:text-base leading-relaxed mb-8">
-          برای بازطراحی سیستم‌های قدیمی، مهاجرت به میکروسرویس‌ها، یا استقرار استانداردهای Clean Architecture و TDD در تیم‌های مهندسی با من در ارتباط باشید.
-        </p>
-        <Button href="/contact" variant="primary" size="lg">
-          <span>شروع همکاری و مشاوره</span>
-          <svg class="w-4 h-4 transform rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-          </svg>
-        </Button>
-      </div>
-    </div>
-  </section>
+  <!-- Section 4: Contact CTA -->
+  <ContactCta />
 </BaseLayout>

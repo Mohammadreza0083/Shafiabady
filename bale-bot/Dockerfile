@@ -1,5 +1,5 @@
 # ==============================================================================
-# Production Dockerfile for ShafieiAbadi Python Telegram Bot & Health Daemon
+# Production Dockerfile for ShafieiAbadi Python Bale Bot & Health Daemon
 # ==============================================================================
 
 FROM python:3.11-slim

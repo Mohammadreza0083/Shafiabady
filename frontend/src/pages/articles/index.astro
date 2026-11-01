@@ -15,12 +15,7 @@ const allOption: CategoryOption = { id: '', title: 'همه', slug: 'all' };
 
 let categories: CategoryOption[] = [
   allOption,
-  { id: 'cat-001', title: 'معماری نرم‌افزار', slug: 'software-architecture' },
-  { id: 'cat-002', title: 'طراحی سیستم', slug: 'system-design' },
-  { id: 'cat-003', title: 'کیفیت و تست', slug: 'quality-and-testing' },
-  { id: 'cat-004', title: 'میکروسرویس', slug: 'microservices' },
-  { id: 'cat-005', title: 'فرانت‌اند مدرن', slug: 'modern-frontend' },
-  { id: 'cat-006', title: 'پایگاه داده', slug: 'database' },
+  ...mockCategories.map((cat) => ({ id: cat.id, title: cat.title, slug: cat.slug })),
 ];
 
 try {
@@ -88,20 +83,20 @@ try {
 ---
 
 <BaseLayout
-  title="مقالات تخصصی مهندسی نرم‌افزار و معماری"
-  description="مجموعه مقالات تخصصی در حوزه Clean Architecture، Domain-Driven Design، میکروسرویس‌ها و تکنیک‌های پیشرفته دات‌نت."
+  title="مقالات و تحلیل‌های تخصصی"
+  description="نگاهی کاربردی به هوش مصنوعی، تحول دیجیتال، آموزش و توسعه کسب‌وکارهای فناورانه؛ از روندهای روز تا تجربه‌های اجرایی."
 >
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
     <!-- Header Section -->
     <div class="text-center max-w-3xl mx-auto mb-12">
       <span class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-apple-blue/10 text-apple-blue dark:bg-apple-blue-dark/20 dark:text-apple-blue-dark mb-4">
-        دانشنامه و تجربیات معماری
+        دیدگاه‌ها و تجربه‌ها
       </span>
       <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-neutral-950 dark:text-white tracking-tight leading-tight mb-4">
         مقالات و تحلیل‌های تخصصی
       </h1>
       <p class="text-base sm:text-lg text-neutral-600 dark:text-neutral-400">
-        جستارها و راهنماهای گام‌به‌گام درباره سیستم‌های توزیع‌شده، اصول DDD، تست‌نویسی TDD و مدرن‌ترین راهکارهای دات‌نت.
+        نگاهی کاربردی به هوش مصنوعی، تحول دیجیتال، آموزش و توسعه کسب‌وکارهای فناورانه؛ از روندهای روز تا تجربه‌های اجرایی.
       </p>
     </div>
 
@@ -179,7 +174,7 @@ try {
     const title = article.title || '';
     const slug = article.slug || '';
     const summary = article.summary || '';
-    const categoryName = article.categoryTitle || 'معماری نرم‌افزار';
+    const categoryName = article.categoryTitle || 'هوش مصنوعی';
     const readTime = article.readTimeMinutes ? `${article.readTimeMinutes} دقیقه` : '۵ دقیقه';
     const authorName = article.authorName || 'دکتر محمد حسین شفیع‌آبادی';
     const authorInitial = authorName ? authorName.trim().charAt(0) : 'ش';

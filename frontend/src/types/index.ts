@@ -326,7 +326,7 @@ export interface ContactFormData {
   fullName: string;
   email: string;
   phoneNumber?: string;
-  telegramId?: string;
+  baleId?: string;
   message: string;
 }
 

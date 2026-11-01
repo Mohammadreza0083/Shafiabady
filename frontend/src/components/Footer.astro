@@ -1,5 +1,24 @@
 ---
+import { socialLinks } from '../data/site';
+
 const currentYear = new Date().getFullYear();
+
+const siteLinks = [
+  { href: '/about', label: 'درباره من' },
+  { href: '/articles', label: 'مقالات' },
+  { href: '/books', label: 'کتاب‌ها' },
+  { href: '/courses', label: 'دوره‌های آموزشی' },
+  { href: '/contact', label: 'تماس' },
+];
+
+const icons: Record<string, string> = {
+  email: '<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" fill="none" stroke="currentColor" stroke-width="2"/><path d="m22 6-10 7L2 6" fill="none" stroke="currentColor" stroke-width="2"/>',
+  instagram: '<rect x="2" y="2" width="20" height="20" rx="5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="17.5" cy="6.5" r="1.2"/>',
+  linkedin: '<path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.34V9h3.42v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.07 2.07 0 1 1 0-4.13 2.07 2.07 0 0 1 0 4.13zM7.12 20.45H3.56V9h3.56v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.73V1.73C24 .77 23.2 0 22.22 0z"/>',
+  github: '<path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>',
+};
+
+const linkClass = 'text-neutral-600 dark:text-neutral-400 hover:text-apple-blue dark:hover:text-apple-blue-dark transition-colors';
 ---
 
 <footer class="w-full border-t border-black/5 dark:border-white/10 bg-apple-surface dark:bg-neutral-950 transition-colors duration-300 mt-20">
@@ -16,66 +35,45 @@ const currentYear = new Date().getFullYear();
           </span>
         </div>
         <p class="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed max-w-md">
-          پلتفرم شخصی اشتراک دانش مهندسی نرم‌افزار، معماری‌های پیشرفته کلین و سیستم‌های مقیاس‌پذیر در اکوسیستم دات‌نت، وب مدرن و هوش مصنوعی.
+          عضو هیئت علمی و فعال حوزه هوش مصنوعی، تحول دیجیتال و توسعه کسب‌وکارهای فناورانه؛ همراه مدیران و سازمان‌ها در یادگیری، تصمیم‌گیری و اجرای راهکارهای کاربردی.
         </p>
       </div>
 
-      <!-- Col 2: Fast Links -->
+      <!-- Col 2: Site Sections -->
       <div>
         <h4 class="text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 mb-4">
-          بخش‌های وب‌سایت
+          بخش‌های سایت
         </h4>
         <ul class="space-y-2 text-sm">
-          <li>
-            <a href="/articles" class="text-neutral-600 dark:text-neutral-400 hover:text-apple-blue dark:hover:text-apple-blue-dark transition-colors">
-              مقالات تخصصی
-            </a>
-          </li>
-          <li>
-            <a href="/books" class="text-neutral-600 dark:text-neutral-400 hover:text-apple-blue dark:hover:text-apple-blue-dark transition-colors">
-              کتاب‌ها و تألیفات
-            </a>
-          </li>
-          <li>
-            <a href="/courses" class="text-neutral-600 dark:text-neutral-400 hover:text-apple-blue dark:hover:text-apple-blue-dark transition-colors">
-              دوره‌های آموزشی
-            </a>
-          </li>
-          <li>
-            <a href="/about" class="text-neutral-600 dark:text-neutral-400 hover:text-apple-blue dark:hover:text-apple-blue-dark transition-colors">
-              درباره من و رزومه
-            </a>
-          </li>
+          {siteLinks.map((link) => (
+            <li>
+              <a href={link.href} class={linkClass}>{link.label}</a>
+            </li>
+          ))}
         </ul>
       </div>
 
-      <!-- Col 3: Contact & Telegram -->
+      <!-- Col 3: Contact Channels -->
       <div>
         <h4 class="text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 mb-4">
-          ارتباط و شبکه‌ها
+          راه‌های ارتباط
         </h4>
         <ul class="space-y-2 text-sm">
           <li>
-            <a href="/contact" class="text-neutral-600 dark:text-neutral-400 hover:text-apple-blue dark:hover:text-apple-blue-dark transition-colors">
-              فرم تماس مستقیم
-            </a>
+            <a href="/contact" class={linkClass}>فرم تماس</a>
           </li>
-          <li>
-            <a href="https://t.me" target="_blank" rel="noopener noreferrer" class="text-neutral-600 dark:text-neutral-400 hover:text-apple-blue dark:hover:text-apple-blue-dark transition-colors flex items-center gap-1.5">
-              <span>کانال تلگرام</span>
-              <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.19-.08-.05-.19-.02-.27 0-.12.03-1.99 1.27-5.62 3.72-.53.36-1.01.54-1.44.53-.47-.01-1.38-.27-2.05-.49-.83-.27-1.49-.42-1.43-.88.03-.24.38-.49 1.03-.75 4.04-1.76 6.74-2.92 8.09-3.5 3.85-1.6 4.65-1.88 5.17-1.89.11 0 .37.03.54.17.14.12.18.28.2.45-.02.07-.02.2-.04.38z"/>
-              </svg>
-            </a>
-          </li>
-          <li>
-            <a href="https://github.com" target="_blank" rel="noopener noreferrer" class="text-neutral-600 dark:text-neutral-400 hover:text-apple-blue dark:hover:text-apple-blue-dark transition-colors flex items-center gap-1.5">
-              <span>گیت‌هاب</span>
-              <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
-                <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
-              </svg>
-            </a>
-          </li>
+          {socialLinks.map((link) => (
+            <li>
+              <a
+                href={link.href}
+                {...(link.id === 'email' ? {} : { target: '_blank', rel: 'noopener noreferrer' })}
+                class={`${linkClass} flex items-center gap-1.5`}
+              >
+                <span>{link.label}</span>
+                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true" set:html={icons[link.id]} />
+              </a>
+            </li>
+          ))}
         </ul>
       </div>
     </div>

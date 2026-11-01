@@ -37,7 +37,7 @@ appsettings.Development.json
 appsettings.Local.json
 secrets.json
 
-# Python / Telegram Bot
+# Python / Bale Bot
 __pycache__/
 *.py[cod]
 *$py.class

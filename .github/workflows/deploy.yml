@@ -59,16 +59,16 @@ jobs:
         working-directory: frontend
         run: npm run build
 
-      # --- 3. Python Telegram Bot & Health Daemon Verification ---
+      # --- 3. Python Bale Bot & Health Daemon Verification ---
       - name: Setup Python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: 'pip'
-          cache-dependency-path: telegram-bot/requirements.txt
+          cache-dependency-path: bale-bot/requirements.txt
 
       - name: Install Python Dependencies & Verify Syntax
-        working-directory: telegram-bot
+        working-directory: bale-bot
         run: |
           pip install --upgrade pip
           pip install -r requirements.txt
@@ -138,7 +138,7 @@ jobs:
   #
   #             echo "   - .NET API Health Status: $BACKEND_OK"
   #             echo "   - Astro Frontend Status: $FRONTEND_OK"
-  #             echo "   - Telegram Bot Status: $BOT_OK"
+  #             echo "   - Bale Bot Status: $BOT_OK"
   #
   #             if [ "$BACKEND_OK" = "200" ] && [ "$FRONTEND_OK" = "200" ] && [ "$BOT_OK" = "200" ]; then
   #               echo "✅ All service health checks passed successfully!"

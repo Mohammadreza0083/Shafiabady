@@ -1,6 +1,9 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Button from '../components/ui/Button.astro';
+import { profileUrls } from '../data/site';
+
+const aboutText = 'کار من پیوند دادن دانش روز هوش مصنوعی و تجربه‌های موفق صنعت در جهان با نیاز واقعی کسب‌وکارهاست؛ با آموزش مدیران و طراحی راهکارهای کاربردی کمک می‌کنم فناوری از یک ایده جذاب به تصمیم‌های بهتر، اقدام مؤثر و رشد پایدار تبدیل شود.';
 
 const aboutJsonLd = {
   '@context': 'https://schema.org',
@@ -8,13 +11,11 @@ const aboutJsonLd = {
   'mainEntity': {
     '@type': 'Person',
     'name': 'محمد حسین شفیع آبادی',
-    'jobTitle': 'دکتری کامپیوتر، عضو هیات علمی دانشگاه، رئیس دانشکده هوش مصنوعی و مشاور تحول دیجیتال',
-    'description': 'دکتـری کامپیوتر، عضو هیات علمی دانشـگاه، مشاور مدیریت در حوزه فناوری اطلاعات و توسعه کسب و کار، چابک سازی فرآیندهای سازمانی، تحول چابک ، تحول دیجیتال و بیزینس کوچ.',
+    'jobTitle': 'عضو هیئت علمی دانشگاه، رئیس دانشکده هوش مصنوعی و فناوری‌های پیشرفته و استراتژیست توسعه کسب‌وکارهای فناورانه',
+    'description': aboutText,
     'url': 'https://shafieiabadi.ir/about',
-    'sameAs': [
-      'https://t.me',
-      'https://github.com',
-    ],
+    'image': 'https://shafieiabadi.ir/images/portraits/thoughtful.webp',
+    'sameAs': profileUrls,
     'alumniOf': [
       {
         '@type': 'EducationalOrganization',
@@ -33,10 +34,9 @@ const aboutJsonLd = {
       'هوش مصنوعی (Artificial Intelligence)',
       'معماری سیستم‌های کامپیوتری',
       'تحول دیجیتال (Digital Transformation)',
-      'چابک سازی فرآیندهای سازمانی',
-      'تحول چابک (Agile Transformation)',
-      'بیزینس کوچینگ (Business Coaching)',
-      'مشاوره مدیریت و توسعه کسب و کار',
+      'توسعه کسب‌وکارهای فناورانه',
+      'آموزش مدیران',
+      'پیوند دانشگاه و صنعت',
       'آینده‌پژوهی'
     ],
   },
@@ -45,199 +45,173 @@ const aboutJsonLd = {
 
 <BaseLayout
   title="درباره من"
-  description="بیوگرافی، سوابق تحصیلی، دانشگاهی و مشاوره‌ای دکتر محمد حسین شفیع‌آبادی - رئیس دانشکده هوش مصنوعی و مشاور تحول دیجیتال."
+  description="درباره دکتر محمد حسین شفیع‌آبادی؛ عضو هیئت علمی دانشگاه، رئیس دانشکده هوش مصنوعی و فناوری‌های پیشرفته و همراه مدیران در به‌کارگیری هوش مصنوعی و توسعه کسب‌وکارهای فناورانه."
   pageType="profile"
   jsonLd={aboutJsonLd}
 >
   <!-- Floating Apple-Style Slide Indicator (Desktop) -->
   <nav aria-label="راهنمای اسلایدها" class="fixed left-6 top-1/2 -translate-y-1/2 z-40 hidden lg:flex flex-col items-center gap-3 bg-white/70 dark:bg-black/60 backdrop-blur-xl p-2.5 rounded-full border border-black/5 dark:border-white/10 shadow-apple-md transition-opacity duration-300">
-    <a href="#slide-1" class="slide-nav-dot w-2.5 h-2.5 rounded-full bg-apple-blue transition-all duration-300 hover:scale-125" title="معرفی و شعار" data-slide="slide-1"></a>
-    <a href="#slide-2" class="slide-nav-dot w-2.5 h-2.5 rounded-full bg-neutral-300 dark:bg-neutral-700 transition-all duration-300 hover:scale-125 hover:bg-apple-blue" title="معرفی و بیوگرافی" data-slide="slide-2"></a>
-    <a href="#slide-3" class="slide-nav-dot w-2.5 h-2.5 rounded-full bg-neutral-300 dark:bg-neutral-700 transition-all duration-300 hover:scale-125 hover:bg-apple-blue" title="سوابق دانشگاهی و مشاوره‌ای" data-slide="slide-3"></a>
+    <a href="#slide-1" class="slide-nav-dot w-2.5 h-2.5 rounded-full bg-apple-blue transition-all duration-300 hover:scale-125" title="درباره من" data-slide="slide-1"></a>
+    <a href="#slide-2" class="slide-nav-dot w-2.5 h-2.5 rounded-full bg-neutral-300 dark:bg-neutral-700 transition-all duration-300 hover:scale-125 hover:bg-apple-blue" title="از شناخت فناوری تا خلق ارزش" data-slide="slide-2"></a>
+    <a href="#slide-3" class="slide-nav-dot w-2.5 h-2.5 rounded-full bg-neutral-300 dark:bg-neutral-700 transition-all duration-300 hover:scale-125 hover:bg-apple-blue" title="از آموزش و پژوهش تا کسب‌وکار" data-slide="slide-3"></a>
     <a href="#slide-4" class="slide-nav-dot w-2.5 h-2.5 rounded-full bg-neutral-300 dark:bg-neutral-700 transition-all duration-300 hover:scale-125 hover:bg-apple-blue" title="سوابق تحصیلی" data-slide="slide-4"></a>
-    <a href="#slide-5" class="slide-nav-dot w-2.5 h-2.5 rounded-full bg-neutral-300 dark:bg-neutral-700 transition-all duration-300 hover:scale-125 hover:bg-apple-blue" title="زندگی شخصی و ارتباط" data-slide="slide-5"></a>
+    <a href="#slide-5" class="slide-nav-dot w-2.5 h-2.5 rounded-full bg-neutral-300 dark:bg-neutral-700 transition-all duration-300 hover:scale-125 hover:bg-apple-blue" title="فراتر از نقش‌های حرفه‌ای و گفت‌وگو" data-slide="slide-5"></a>
   </nav>
 
   <!-- Full-Screen Scrollable Presentation Container -->
   <div id="slides-container" class="snap-container h-[calc(100vh-4rem)] overflow-y-auto snap-y snap-mandatory scroll-smooth relative">
     
-    <!-- Slide 1: Welcome / Identity & Header Quote -->
+    <!-- Slide 1: Identity, Portrait & About Statement -->
     <section id="slide-1" class="slide-section snap-start min-h-[calc(100vh-4rem)] flex items-center justify-center relative p-6 sm:p-10 lg:p-12 overflow-hidden">
       <!-- Glow Gradients -->
       <div class="absolute -top-32 left-1/2 -translate-x-1/2 w-96 h-96 bg-apple-blue/15 dark:bg-apple-blue/20 rounded-full blur-3xl pointer-events-none"></div>
       <div class="absolute -bottom-24 right-1/4 w-72 h-72 bg-purple-500/10 dark:bg-purple-500/15 rounded-full blur-3xl pointer-events-none"></div>
 
-      <div class="max-w-4xl mx-auto text-center relative z-10 flex flex-col items-center w-full">
-        <!-- Monogram Badge -->
-        <div class="relative mb-6 group">
-          <div class="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-gradient-to-tr from-apple-blue to-blue-600 flex items-center justify-center text-white text-4xl sm:text-5xl font-black shadow-2xl shadow-apple-blue/30 transform group-hover:scale-105 transition-transform duration-300 border border-white/20">
-            ش
-          </div>
-          <div class="absolute -bottom-2 -right-2 w-8 h-8 rounded-full bg-emerald-500 border-2 border-white dark:border-black flex items-center justify-center text-white shadow-md" title="فعال و در دسترس">
-            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="20 6 9 17 4 12" />
+      <div class="max-w-6xl mx-auto relative z-10 w-full grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+        <!-- Text (right in RTL) -->
+        <div class="lg:col-span-7 flex flex-col items-center lg:items-start text-center lg:text-right order-2 lg:order-1">
+          <span class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs sm:text-sm font-semibold bg-apple-blue/10 text-apple-blue dark:bg-apple-blue-dark/20 dark:text-apple-blue-dark mb-4 border border-apple-blue/20 backdrop-blur-md">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect width="16" height="16" x="4" y="4" rx="2" />
+              <rect width="6" height="6" x="9" y="9" rx="1" />
+              <path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3" />
             </svg>
+            عضو هیئت علمی دانشگاه • استراتژیست توسعه کسب‌وکارهای فناورانه
+          </span>
+
+          <h1 class="text-3xl sm:text-5xl md:text-6xl font-black text-neutral-950 dark:text-white tracking-tight leading-tight mb-6">
+            محمد حسین شفیع آبادی
+          </h1>
+
+          <!-- About Statement Box -->
+          <div class="apple-glass-card p-6 sm:p-8 rounded-3xl w-full relative border border-black/5 dark:border-white/10 shadow-apple-lg mb-6 group hover:border-apple-blue/40 transition-all duration-300">
+            <span class="text-xs font-bold text-apple-blue dark:text-apple-blue-dark uppercase tracking-widest block mb-3">
+              درباره من
+            </span>
+            <p class="text-base sm:text-lg md:text-xl text-neutral-800 dark:text-neutral-100 font-medium leading-loose">
+              {aboutText}
+            </p>
           </div>
-        </div>
-        
-        <!-- Category Pill -->
-        <span class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs sm:text-sm font-semibold bg-apple-blue/10 text-apple-blue dark:bg-apple-blue-dark/20 dark:text-apple-blue-dark mb-4 border border-apple-blue/20 backdrop-blur-md">
-          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect width="16" height="16" x="4" y="4" rx="2" />
-            <rect width="6" height="6" x="9" y="9" rx="1" />
-            <path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3" />
-          </svg>
-          رئیس دانشکده هوش مصنوعی • مشاور مدیریت و تحول دیجیتال
-        </span>
 
-        <h1 class="text-3xl sm:text-5xl md:text-6xl font-black text-neutral-950 dark:text-white tracking-tight leading-tight mb-6">
-          محمد حسین شفیع آبادی
-        </h1>
+          <!-- Quick Summary Badges -->
+          <div class="flex flex-wrap items-center justify-center lg:justify-start gap-2 sm:gap-3 text-xs sm:text-sm text-neutral-600 dark:text-neutral-300 font-medium mb-4">
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800/80 border border-black/5 dark:border-white/5">
+              🎓 عضو هیئت علمی از ۱۳۸۴
+            </span>
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800/80 border border-black/5 dark:border-white/5">
+              🤖 رئیس دانشکده هوش مصنوعی
+            </span>
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800/80 border border-black/5 dark:border-white/5">
+              ⚡ تحول دیجیتال
+            </span>
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800/80 border border-black/5 dark:border-white/5">
+              📚 آموزش مدیران
+            </span>
+          </div>
 
-        <!-- Header Quote Box -->
-        <div class="apple-glass-card p-6 sm:p-8 rounded-3xl max-w-3xl w-full text-center relative border border-black/5 dark:border-white/10 shadow-apple-lg mb-8 group hover:border-apple-blue/40 transition-all duration-300">
-          <div class="w-10 h-10 rounded-2xl bg-apple-blue/10 text-apple-blue dark:bg-apple-blue-dark/20 dark:text-apple-blue-dark flex items-center justify-center mx-auto mb-4">
-            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z" />
+          <!-- Scroll Indicator -->
+          <a href="#slide-2" class="animate-bounce mt-2 text-neutral-400 hover:text-apple-blue transition-colors focus:outline-none" aria-label="اسلاید بعدی">
+            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
             </svg>
-          </div>
-          <p class="text-base sm:text-xl md:text-2xl text-neutral-800 dark:text-neutral-100 font-medium leading-relaxed mb-4 font-sans">
-            «دکتـری کامپیوتر، عضو هیات علمی دانشـگاه، مشاور مدیریت در حوزه فناوری اطلاعات و توسعه کسب و کار، چابک سازی فرآیندهای سازمانی، تحول چابک ، تحول دیجیتال و بیزینس کوچ»
-          </p>
-          <div class="flex items-center justify-center gap-2 text-xs sm:text-sm font-bold text-apple-blue dark:text-apple-blue-dark">
-            <span>—</span>
-            <span>محمد حسین شفیع آبادی</span>
-          </div>
+          </a>
         </div>
 
-        <!-- Quick Summary Badges -->
-        <div class="flex flex-wrap items-center justify-center gap-2 sm:gap-3 text-xs sm:text-sm text-neutral-600 dark:text-neutral-300 font-medium mb-4">
-          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800/80 border border-black/5 dark:border-white/5">
-            🎓 ۲۰ سال سابقه هیأت علمی
-          </span>
-          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800/80 border border-black/5 dark:border-white/5">
-            🤖 رئیس دانشکده هوش مصنوعی
-          </span>
-          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800/80 border border-black/5 dark:border-white/5">
-            ⚡ تحول چابک و دیجیتال
-          </span>
-          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800/80 border border-black/5 dark:border-white/5">
-            📚 نویسنده و آینده‌پژوه
-          </span>
+        <!-- Portrait (left in RTL) -->
+        <div class="lg:col-span-5 order-1 lg:order-2 flex justify-center">
+          <div class="relative w-60 sm:w-80 lg:w-full max-w-md">
+            <div class="absolute inset-x-6 bottom-0 top-1/4 rounded-[2.5rem] bg-gradient-to-tr from-apple-blue/25 to-purple-500/15 dark:from-apple-blue/30 dark:to-purple-500/20 blur-sm"></div>
+            <img
+              src="/images/portraits/thoughtful.webp"
+              alt="پرتره دکتر محمد حسین شفیع‌آبادی"
+              width="1074"
+              height="1000"
+              loading="eager"
+              fetchpriority="high"
+              decoding="async"
+              class="relative w-full h-auto object-contain drop-shadow-2xl"
+            />
+          </div>
         </div>
-
-        <!-- Scroll Indicator -->
-        <a href="#slide-2" class="animate-bounce mt-4 text-neutral-400 hover:text-apple-blue transition-colors focus:outline-none" aria-label="اسلاید بعدی">
-          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-          </svg>
-        </a>
       </div>
     </section>
 
-    <!-- Slide 2: Full Biography (معرفی و بیوگرافی - چشم‌انداز، تألیفات و هوش مصنوعی) -->
+    <!-- Slide 2: Values & Approach (از شناخت فناوری تا خلق ارزش در کسب‌وکار) -->
     <section id="slide-2" class="slide-section snap-start min-h-[calc(100vh-4rem)] flex items-center justify-center relative p-6 sm:p-10 lg:p-12 bg-neutral-50/60 dark:bg-neutral-900/40">
       <div class="max-w-5xl mx-auto w-full">
         <div class="text-center mb-8 sm:mb-10">
           <span class="text-xs font-bold text-apple-blue dark:text-apple-blue-dark uppercase tracking-widest block mb-2">
-            معرفی و بیوگرافی
+            نگاه و رویکرد
           </span>
           <h2 class="text-2xl sm:text-4xl font-extrabold text-neutral-950 dark:text-white tracking-tight">
-            آینده‌پژوهی، رسالت تکنولوژی و اثرگذاری در کسب‌وکار
+            از شناخت فناوری تا خلق ارزش در کسب‌وکار
           </h2>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <!-- Card 1: آینده‌اندیشی و بهبود زندگی -->
-          <div class="apple-glass-card p-6 sm:p-8 rounded-3xl text-right flex flex-col justify-between hover:border-apple-blue/30 transition-all duration-300">
-            <div>
-              <div class="w-12 h-12 rounded-2xl bg-blue-500/10 text-apple-blue dark:text-apple-blue-dark flex items-center justify-center font-bold mb-5 shadow-sm">
-                <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
-                  <path d="M5 3v4" />
-                  <path d="M19 17v4" />
-                  <path d="M3 5h4" />
-                  <path d="M17 19h4" />
-                </svg>
-              </div>
-              <h3 class="text-lg font-bold text-neutral-900 dark:text-white mb-3 flex items-center gap-2">
-                <span>آینده‌اندیشی و فناوری</span>
-              </h3>
-              <p class="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">
-                محمد حسین شفیع آبادی آیندهاندیش، استاد دانشگاه و کارشناس در حوزههای کسبوکار و فناوری است که عشق به استفاده از فناوری برای بهبود زندگی انسانها را دارد.
-              </p>
+          <!-- Right box: فناوری در خدمت انسان و کسب‌وکار -->
+          <div class="apple-glass-card p-6 sm:p-8 rounded-3xl text-right flex flex-col hover:border-apple-blue/30 transition-all duration-300">
+            <div class="w-12 h-12 rounded-2xl bg-blue-500/10 text-apple-blue dark:text-apple-blue-dark flex items-center justify-center font-bold mb-5 shadow-sm">
+              <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+              </svg>
             </div>
-            <div class="mt-4 pt-4 border-t border-black/5 dark:border-white/5 flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">
-              <span class="w-2 h-2 rounded-full bg-apple-blue"></span>
-              فناوری در خدمت انسان
-            </div>
+            <h3 class="text-lg font-bold text-neutral-900 dark:text-white mb-3">
+              فناوری در خدمت انسان و کسب‌وکار
+            </h3>
+            <p class="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">
+              باور دارم ارزش فناوری زمانی آشکار می‌شود که زندگی و کار را بهتر کند. در فعالیت‌های آموزشی، پژوهشی و مشاوره‌ای‌ام تلاش می‌کنم هوش مصنوعی را به نیازهای واقعی مدیران و سازمان‌ها پیوند بدهم.
+            </p>
           </div>
-
-          <!-- Card 2: تألیفات و آخرین کتاب -->
-          <div class="apple-glass-card p-6 sm:p-8 rounded-3xl text-right flex flex-col justify-between hover:border-purple-500/30 transition-all duration-300">
-            <div>
-              <div class="w-12 h-12 rounded-2xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center font-bold mb-5 shadow-sm">
-                <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
-                  <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
-                </svg>
-              </div>
-              <h3 class="text-lg font-bold text-neutral-900 dark:text-white mb-3 flex items-center gap-2">
-                <span>تألیفات و نشر دانش</span>
-              </h3>
-              <p class="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed mb-3">
-                او نویسنده چندین کتاب در حوزههای آیندهپژوهشی، کسبوکار و تکنولوژی بوده و با تعدادی از سازمانها و کسبوکارهای کوچک همکاری مشاورهای دارد.
-              </p>
-              <p class="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">
-                او در مجموع بیش از چند هزار دنبالکننده در شبکههای اجتماعی و خبرنامه خود دارد. آخرین کتاب او با عنوان «هوش مصنوعی در کسبوکارهای کوچک» منتشر شده است.
-              </p>
+          <!-- Middle box: آموزش و نشر دانش -->
+          <div class="apple-glass-card p-6 sm:p-8 rounded-3xl text-right flex flex-col hover:border-purple-500/30 transition-all duration-300">
+            <div class="w-12 h-12 rounded-2xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center font-bold mb-5 shadow-sm">
+              <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+              </svg>
             </div>
-            <div class="mt-4 pt-4 border-t border-black/5 dark:border-white/5 flex items-center gap-2 text-xs text-purple-600 dark:text-purple-400 font-medium">
-              <span>📖</span>
-              «هوش مصنوعی در کسبوکارهای کوچک»
-            </div>
+            <h3 class="text-lg font-bold text-neutral-900 dark:text-white mb-3">
+              آموزش و نشر دانش
+            </h3>
+            <p class="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">
+              تدریس، تألیف و انتقال تجربه بخش مهمی از مسیر حرفه‌ای من است. از آموزش دانشجویان تا برگزاری دوره‌های سازمانی برای مدیران، هدفم ساده‌کردن مفاهیم پیچیده و تبدیل آن‌ها به دانشی قابل استفاده است.
+            </p>
           </div>
-
-          <!-- Card 3: تأثیرگذاری در هوش مصنوعی -->
-          <div class="apple-glass-card p-6 sm:p-8 rounded-3xl text-right flex flex-col justify-between hover:border-emerald-500/30 transition-all duration-300">
-            <div>
-              <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold mb-5 shadow-sm">
-                <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <rect width="16" height="16" x="4" y="4" rx="2" />
-                  <rect width="6" height="6" x="9" y="9" rx="1" />
-                  <path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3" />
-                </svg>
-              </div>
-              <h3 class="text-lg font-bold text-neutral-900 dark:text-white mb-3 flex items-center gap-2">
-                <span>ترویج و اجرای هوش مصنوعی</span>
-              </h3>
-              <p class="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">
-                محمد حسین دوست دارد یکی از تأثیرگذاران هوش مصنوعی در شبکههای اجتماعی باشد. او عضوی فعال در سازمان و انجمن هوش مصنوعی است و سعی میکند که تکنولوژیهای مختلف و بهروز را به صاحبان و مدیران کسبوکار معرفی کند و آنها را در سازمان و شرکتهایشان اجرایی کند.
-              </p>
+          <!-- Left box: هوش مصنوعی در عمل -->
+          <div class="apple-glass-card p-6 sm:p-8 rounded-3xl text-right flex flex-col hover:border-emerald-500/30 transition-all duration-300">
+            <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold mb-5 shadow-sm">
+              <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect width="16" height="16" x="4" y="4" rx="2" />
+                <rect width="6" height="6" x="9" y="9" rx="1" />
+                <path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3" />
+              </svg>
             </div>
-            <div class="mt-4 pt-4 border-t border-black/5 dark:border-white/5 flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">
-              <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-              عضو فعال انجمن هوش مصنوعی
-            </div>
+            <h3 class="text-lg font-bold text-neutral-900 dark:text-white mb-3">
+              هوش مصنوعی در عمل
+            </h3>
+            <p class="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">
+              به کسب‌وکارها کمک می‌کنم فرصت‌های کاربرد هوش مصنوعی را بشناسند، مدیران و تیم‌هایشان را آماده کنند و برای اجرای راهکارهای متناسب با نیاز خود مسیر روشنی داشته باشند.
+            </p>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Slide 3: سوابق دانشگاهی، تدریس و مشاوره صنعتی -->
+    <!-- Slide 3: Academic & Industry Path (از آموزش و پژوهش تا توسعه کسب‌وکارهای فناورانه) -->
     <section id="slide-3" class="slide-section snap-start min-h-[calc(100vh-4rem)] flex items-center justify-center relative p-6 sm:p-10 lg:p-12">
       <div class="max-w-5xl mx-auto w-full text-right">
         <div class="text-center mb-8 sm:mb-10">
           <span class="text-xs font-bold text-apple-blue dark:text-apple-blue-dark uppercase tracking-widest block mb-2">
-            سوابق دانشگاهی و سازمانی
+            مسیر حرفه‌ای
           </span>
           <h2 class="text-2xl sm:text-4xl font-extrabold text-neutral-950 dark:text-white tracking-tight">
-            ۲۰ سال تدریس، پژوهش و ریاست دانشکده هوش مصنوعی
+            از آموزش و پژوهش تا توسعه کسب‌وکارهای فناورانه
           </h2>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
-          <!-- Card 1: سابقه دانشگاهی و ۲۰ سال تدریس -->
+          <!-- Right card: مسیر علمی و دانشگاهی -->
           <div class="apple-card p-6 sm:p-8 rounded-3xl flex flex-col justify-between border border-black/5 dark:border-white/10 hover:border-apple-blue/30 transition-all duration-300">
             <div>
               <div class="flex items-center justify-between mb-4">
@@ -248,33 +222,33 @@ const aboutJsonLd = {
                   </svg>
                 </div>
                 <span class="text-xs font-bold px-3 py-1 rounded-full bg-apple-blue/10 text-apple-blue dark:bg-apple-blue-dark/20 dark:text-apple-blue-dark">
-                  ۱۳۸۴ - اکنون (۲۰ سال سابقه)
+                  ۱۳۸۴ - اکنون
                 </span>
               </div>
 
               <h3 class="text-xl font-bold text-neutral-900 dark:text-white mb-3">
-                عضویت هیأت علمی و تربیت متخصصان
+                مسیر علمی و دانشگاهی
               </h3>
 
               <p class="text-sm sm:text-base text-neutral-700 dark:text-neutral-300 leading-relaxed">
-                حسین در تهران متولد شد و در آن رشد پیدا کرد. تحصیلات تکمیلی خود را در رشته مهندسی کامپیوتر گرایش معماری سیستمهای کامپیوتری در مقطع کارشناسی، ارشد و دکتری به ترتیب در دانشگاههای معتبر شهید بهشتی، صنعتی امیرکبیر و علوم و تحقیقات گذراند. وی از سال ۱۳۸۴ عضو هیأت علمی دانشگاه است و در این مدت ۲۰ سال دانشجویان بسیاری را در زمینه مهندسی کامپیوتر و هوش مصنوعی آموزش داده است.
+                از سال ۱۳۸۴ عضو هیئت علمی دانشگاه آزاد اسلامی هستم. تحصیلاتم را در مهندسی کامپیوتر، از کارشناسی سخت‌افزار تا کارشناسی ارشد و دکتری معماری سیستم‌های کامپیوتری، گذرانده‌ام. در کنار تدریس و راهنمایی پژوهش‌ها، اکنون ریاست دانشکده هوش مصنوعی و فناوری‌های پیشرفته و مدیریت گروه مهندسی کامپیوتر واحد اسلامشهر را بر عهده دارم.
               </p>
             </div>
 
             <div class="mt-6 pt-4 border-t border-black/5 dark:border-white/5 flex flex-wrap items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">
               <span class="inline-flex items-center gap-1 bg-neutral-100 dark:bg-neutral-800 px-2.5 py-1 rounded-lg">
-                🏛️ دانشگاه شهید بهشتی
+                عضو هیئت علمی از ۱۳۸۴
               </span>
               <span class="inline-flex items-center gap-1 bg-neutral-100 dark:bg-neutral-800 px-2.5 py-1 rounded-lg">
-                🏛️ صنعتی امیرکبیر
+                رئیس دانشکده هوش مصنوعی
               </span>
               <span class="inline-flex items-center gap-1 bg-neutral-100 dark:bg-neutral-800 px-2.5 py-1 rounded-lg">
-                🏛️ علوم و تحقیقات
+                مدیر گروه مهندسی کامپیوتر
               </span>
             </div>
           </div>
 
-          <!-- Card 2: ریاست دانشکده هوش مصنوعی و مشاوره صنعت -->
+          <!-- Left card: فعالیت در صنعت و آموزش مدیران -->
           <div class="apple-card p-6 sm:p-8 rounded-3xl flex flex-col justify-between border border-black/5 dark:border-white/10 hover:border-apple-blue/30 transition-all duration-300">
             <div>
               <div class="flex items-center justify-between mb-4">
@@ -285,25 +259,28 @@ const aboutJsonLd = {
                   </svg>
                 </div>
                 <span class="text-xs font-bold px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400">
-                  راهبری علمی و صنعتی
+                  صنعت و سازمان‌ها
                 </span>
               </div>
 
               <h3 class="text-xl font-bold text-neutral-900 dark:text-white mb-3">
-                ریاست دانشکده و مشاوره تحول دیجیتال
+                فعالیت در صنعت و آموزش مدیران
               </h3>
 
               <p class="text-sm sm:text-base text-neutral-700 dark:text-neutral-300 leading-relaxed">
-                وی در حال حاضر علاوه بر حضور در دانشگاه به عنوان رئیس دانشکده هوش مصنوعی در صنعت نیز به عنوان مشاور حوزه تکنولوژی، فناوری و تحول دیجیتال فعال میباشد و مشاور چندین سازمان و شرکت در حوزه فناوری اطلاعات است. او همچنین نویسنده چندین کتاب در زمینههای مختلف میباشد و همچنین بیش از ۱۵۰ دانشجوی ارشد و دکتری را در راستای پایاننامه راهنمایی کرده است و مقالات متعددی در مجلات معتبر داخلی و خارجی به چاپ رسانده است.
+                فعالیت من به کلاس درس محدود نمی‌شود. در همکاری با سازمان‌ها و کسب‌وکارها، بر توسعه کسب‌وکارهای فناورانه، تحول دیجیتال و کاربرد عملی هوش مصنوعی تمرکز دارم. همچنین با طراحی و تدریس دوره‌های سازمانی، به مدیران و تیم‌ها کمک می‌کنم فرصت‌های فناوری را بشناسند و برای استفاده از آن‌ها تصمیم‌های روشن‌تری بگیرند.
               </p>
             </div>
 
             <div class="mt-6 pt-4 border-t border-black/5 dark:border-white/5 flex flex-wrap items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">
               <span class="inline-flex items-center gap-1 bg-neutral-100 dark:bg-neutral-800 px-2.5 py-1 rounded-lg">
-                👥 ۱۵۰+ راهنمایی پایان‌نامه ارشد و دکتری
+                توسعه کسب‌وکار
               </span>
               <span class="inline-flex items-center gap-1 bg-neutral-100 dark:bg-neutral-800 px-2.5 py-1 rounded-lg">
-                📄 مقالات معتبر بین‌المللی و داخلی
+                تحول دیجیتال
+              </span>
+              <span class="inline-flex items-center gap-1 bg-neutral-100 dark:bg-neutral-800 px-2.5 py-1 rounded-lg">
+                آموزش مدیران
               </span>
             </div>
           </div>
@@ -427,12 +404,12 @@ const aboutJsonLd = {
       </div>
     </section>
 
-    <!-- Slide 5: Personal Life & Call to Action (زندگی شخصی و شروع همکاری) -->
+    <!-- Slide 5: Beyond Professional Roles & Call to Action -->
     <section id="slide-5" class="slide-section snap-start min-h-[calc(100vh-4rem)] flex items-center justify-center relative p-6 sm:p-10 lg:p-12 bg-gradient-to-br from-blue-600/5 via-neutral-900/5 to-transparent">
       <div class="max-w-5xl mx-auto w-full">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-          
-          <!-- Personal Life Section (Col 6) -->
+
+          <!-- Right box: فراتر از نقش‌های حرفه‌ای -->
           <div class="lg:col-span-6 apple-glass-card p-6 sm:p-8 rounded-3xl text-right border border-black/5 dark:border-white/10 shadow-apple-md">
             <div class="flex items-center gap-3 mb-5">
               <div class="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center shadow-sm">
@@ -442,53 +419,34 @@ const aboutJsonLd = {
               </div>
               <div>
                 <span class="text-xs font-bold text-rose-600 dark:text-rose-400 uppercase tracking-widest block">
-                  زندگی شخصی و خانواده
+                  زندگی و ارزش‌ها
                 </span>
                 <h3 class="text-xl font-bold text-neutral-950 dark:text-white">
-                  ارزش‌های فردی و خانواده
+                  فراتر از نقش‌های حرفه‌ای
                 </h3>
               </div>
             </div>
 
-            <p class="text-sm sm:text-base text-neutral-700 dark:text-neutral-300 leading-relaxed mb-6">
-              در زندگی شخصی، حسین علاقهمند به دنیایی شاد است و اولویت اصلیاش همسر خوبی برای همسرش و پدری دلسوز برای سه فرزندش محمد معین، ثمین و محمد مبین بودن است. او به همراه خانوادهاش، در منطقه ولنجک، در شمال تهران در ایران زندگی میکند.
+            <p class="text-sm sm:text-base text-neutral-700 dark:text-neutral-300 leading-loose">
+              خانواده برای من نقطه اتکا و یادآورِ چراییِ تلاش‌هایم است. باور دارم رشد حرفه‌ای زمانی ارزشمندتر می‌شود که در کنار آن، برای روابط انسانی، یادگیری و کیفیت زندگی نیز وقت بگذاریم.
             </p>
-
-            <div class="space-y-2.5 pt-4 border-t border-black/5 dark:border-white/5 text-xs sm:text-sm text-neutral-600 dark:text-neutral-400">
-              <div class="flex items-center gap-2">
-                <svg class="w-4 h-4 text-rose-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                  <circle cx="9" cy="7" r="4" />
-                  <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                </svg>
-                <span>فرزندان: <strong>محمد معین، ثمین و محمد مبین</strong></span>
-              </div>
-              <div class="flex items-center gap-2">
-                <svg class="w-4 h-4 text-apple-blue" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" />
-                  <circle cx="12" cy="10" r="3" />
-                </svg>
-                <span>محل سکونت: <strong>منطقه ولنجک، شمال تهران، ایران</strong></span>
-              </div>
-            </div>
           </div>
 
-          <!-- CTA Section (Col 6) -->
+          <!-- Left: CTA -->
           <div class="lg:col-span-6 flex flex-col items-center lg:items-start text-center lg:text-right">
             <span class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-apple-blue/10 text-apple-blue dark:bg-apple-blue-dark/20 dark:text-apple-blue-dark mb-4 border border-apple-blue/20">
-              مشاوره، کوچینگ و همکاری سازمانی
+              آموزش، هوش مصنوعی و توسعه کسب‌وکار
             </span>
             <h2 class="text-2xl sm:text-4xl font-black text-neutral-950 dark:text-white tracking-tight mb-4">
-              آماده تحول دیجیتال و چابک‌سازی کسب‌وکار خود هستید؟
+              درباره یک ایده یا همکاری گفت‌وگو کنیم
             </h2>
             <p class="text-sm sm:text-base text-neutral-600 dark:text-neutral-300 leading-relaxed max-w-lg mb-8">
-              برای مشاوره مدیریت در حوزه فناوری اطلاعات، استقرار هوش مصنوعی، چابک‌سازی فرآیندها، بیزینس کوچینگ یا برگزاری دوره‌های سازمانی در ارتباط باشید.
+              اگر برای آموزش مدیران، به‌کارگیری هوش مصنوعی یا توسعه کسب‌وکار فناورانه به دنبال همراهی هستید، خوشحال می‌شوم درباره نیاز و هدف شما گفت‌وگو کنیم.
             </p>
 
             <div class="flex flex-wrap items-center justify-center lg:justify-start gap-3 w-full">
               <Button href="/contact" variant="primary" size="lg">
-                <span>شروع گفتگو و تماس</span>
+                <span>شروع گفت‌وگو</span>
                 <svg class="w-4 h-4 transform rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
                 </svg>

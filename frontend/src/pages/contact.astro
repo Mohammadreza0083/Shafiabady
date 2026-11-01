@@ -1,13 +1,14 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Button from '../components/ui/Button.astro';
+import { socialLinks } from '../data/site';
 ---
 
 <BaseLayout
   title="تماس با من"
-  description="فرم ارتباط مستقیم و ارسال پیام برای مشاوره‌های معماری، آموزش‌های سازمانی و پروژه‌های نرم‌افزاری."
+  description="فرم ارتباط مستقیم برای گفت‌وگو درباره آموزش مدیران، به‌کارگیری هوش مصنوعی، تحول دیجیتال و توسعه کسب‌وکارهای فناورانه."
 >
-  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-20">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-20">
     <!-- Header Section -->
     <div class="text-center max-w-2xl mx-auto mb-12">
       <span class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-apple-blue/10 text-apple-blue dark:bg-apple-blue-dark/20 dark:text-apple-blue-dark mb-4">
@@ -17,12 +18,13 @@ import Button from '../components/ui/Button.astro';
         بیایید با هم گفتگو کنیم
       </h1>
       <p class="text-base sm:text-lg text-neutral-600 dark:text-neutral-400">
-        برای طرح پرسش، درخواست مشاوره معماری یا هماهنگی دوره‌های آموزشی، فرم زیر را تکمیل کنید. پیام شما فوراً از طریق ربات تلگرام اختصاصی بررسی می‌شود.
+        برای طرح پرسش، درخواست همکاری، آموزش سازمانی یا گفت‌وگو درباره یک ایده، فرم زیر را تکمیل کنید. پیام شما مستقیماً در پیام‌رسان بله به دست من می‌رسد.
       </p>
     </div>
 
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
     <!-- Contact Form Card -->
-    <div class="apple-glass-card p-8 sm:p-12 rounded-[2.5rem] shadow-xl">
+    <div class="lg:col-span-8 apple-glass-card p-8 sm:p-12 rounded-[2.5rem] shadow-xl">
       <form id="contact-form" class="space-y-6">
         <!-- Row 1: Name & Email -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -55,7 +57,7 @@ import Button from '../components/ui/Button.astro';
           </div>
         </div>
 
-        <!-- Row 2: Phone & Telegram ID (Optional) -->
+        <!-- Row 2: Phone & Bale ID (Optional) -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
           <div>
             <label for="phoneNumber" class="block text-xs font-bold text-neutral-700 dark:text-neutral-300 mb-2 flex items-center justify-between">
@@ -72,16 +74,16 @@ import Button from '../components/ui/Button.astro';
           </div>
 
           <div>
-            <label for="telegramId" class="block text-xs font-bold text-neutral-700 dark:text-neutral-300 mb-2 flex items-center justify-between">
-              <span>آیدی تلگرام</span>
+            <label for="baleId" class="block text-xs font-bold text-neutral-700 dark:text-neutral-300 mb-2 flex items-center justify-between">
+              <span>آیدی بله</span>
               <span class="text-[10px] font-normal text-neutral-400">اختیاری</span>
             </label>
             <div class="relative flex items-center">
               <span class="absolute right-4 text-sm text-neutral-400 font-mono">@</span>
               <input
                 type="text"
-                id="telegramId"
-                name="telegramId"
+                id="baleId"
+                name="baleId"
                 placeholder="username"
                 class="w-full pr-8 pl-4 py-3 rounded-2xl bg-white/70 dark:bg-neutral-800/70 border border-black/10 dark:border-white/10 text-sm text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-apple-blue/50 transition-all text-left dir-ltr font-mono"
               />
@@ -125,6 +127,41 @@ import Button from '../components/ui/Button.astro';
         </div>
       </form>
     </div>
+
+    <!-- Side: Portrait & Direct Channels -->
+    <aside class="lg:col-span-4 flex flex-col gap-6">
+      <div class="relative hidden lg:flex justify-center rounded-[2.5rem] overflow-hidden bg-gradient-to-b from-apple-blue/10 via-purple-500/5 to-transparent border border-black/5 dark:border-white/10 pt-8 h-[420px]">
+        <img
+          src="/images/portraits/full-body.webp"
+          alt="دکتر محمد حسین شفیع‌آبادی"
+          width="713"
+          height="1400"
+          loading="lazy"
+          decoding="async"
+          class="h-[560px] w-auto max-w-none object-contain object-top drop-shadow-2xl"
+        />
+      </div>
+      <div class="apple-glass-card p-6 sm:p-8 rounded-3xl">
+        <h2 class="text-base font-bold text-neutral-900 dark:text-white mb-4">راه‌های ارتباط مستقیم</h2>
+        <ul class="space-y-3 text-sm">
+          {socialLinks.map((link) => (
+            <li>
+              <a
+                href={link.href}
+                {...(link.id === 'email' ? {} : { target: '_blank', rel: 'noopener noreferrer' })}
+                class="flex items-center justify-between gap-3 text-neutral-700 dark:text-neutral-300 hover:text-apple-blue dark:hover:text-apple-blue-dark transition-colors"
+              >
+                <span class="font-medium">{link.label}</span>
+                <span class="text-xs text-neutral-400 font-mono truncate" dir="ltr">
+                  {link.href.replace(/^mailto:/, '').replace(/^https:\/\/(www\.)?/, '')}
+                </span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </aside>
+    </div>
   </div>
 </BaseLayout>
 
@@ -149,7 +186,7 @@ import Button from '../components/ui/Button.astro';
         name: (formData.get('fullName') as string || '').trim(),
         email: (formData.get('email') as string || '').trim(),
         phone: (formData.get('phoneNumber') as string || '').trim() || null,
-        telegram_id: (formData.get('telegramId') as string || '').trim() || null,
+        bale_id: (formData.get('baleId') as string || '').trim() || null,
         message: (formData.get('message') as string || '').trim(),
       };
 
@@ -179,7 +216,7 @@ import Button from '../components/ui/Button.astro';
         const result = await response.json().catch(() => ({}));
 
         if (response.ok && result.success !== false) {
-          showToast('success', '✨ پیام شما با موفقیت به ربات تلگرام ارسال شد. در اسرع وقت با شما تماس گرفته خواهد شد.');
+          showToast('success', '✨ پیام شما با موفقیت در پیام‌رسان بله ارسال شد. در اسرع وقت با شما تماس گرفته خواهد شد.');
           form.reset();
         } else {
           const errMsg = result.detail || result.message || 'خطا در پردازش درخواست.';
